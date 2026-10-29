@@ -236,6 +236,15 @@ Read-side audit ("who read what") is likewise not implemented in v0.1, and is
 not claimed as novel: independent verification found no prior implementation in
 the five projects checked, but "no precedent" is not a shipped capability.
 
+## Roadmap, contributing, security
+
+The backlog is public as GitHub issues (batch ingest, vector retrieval, MCP
+server, auth/multi-tenancy, read-side audit, expiry scheduler, Windows locking,
+edge benchmarks). See [CONTRIBUTING.md](CONTRIBUTING.md) for the rules — the
+short version is: docs must equal code, no unverified claims, never fabricate an
+evidence hash. Security posture: local single-tenant file store, **no auth**, no
+network — see [SECURITY.md](SECURITY.md).
+
 ## License
 
 MIT. See [LICENSE](LICENSE).
