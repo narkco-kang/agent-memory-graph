@@ -123,6 +123,16 @@ One rule is enforced *before* that feature exists: adopted nodes carry
 conflict. Deleting a fact on the strength of a timestamp we never had would be
 worse than having no TTL at all.
 
+## Measurement, not marketing
+
+`experiments/valid_from_bias/` measures whether transaction time can stand in for
+fact time. For facts written 3 / 10 / 30 days after they became true, the
+`changes[].at` proxy is off by exactly that lag (20/20 exceed 1 day; the
+zero-lag control group is 0/10). That is why `valid_from` is never back-filled
+from the change log, and why v0.2 has to accept an explicit fact-time input
+instead of inferring it. The numbers are asserted in CI, so the safety feature
+cannot be quietly removed later.
+
 ## Layout
 
 ```
@@ -138,6 +148,7 @@ src/amg/
   adopt.py     legacy graph -> amg/v1, never fabricating evidence
   cli.py       13 commands, exit codes 0/1/2/3
 tests/         unittest, run with `python -m unittest discover -s tests -v`
+experiments/   reproducible measurements behind the design decisions
 tools/check_doc_symbols.py  CI gate: every documented capability needs a symbol
 ```
 

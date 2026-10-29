@@ -1,0 +1,523 @@
+{
+  "schema": "group-kg/v1",
+  "group": "valid-from-bias-fixture",
+  "session": "",
+  "goal": "measure changes[].at vs true fact time",
+  "updatedAt": "2026-10-31T09:00:00+00:00",
+  "rev": 30,
+  "nodes": [
+    {
+      "id": "fact.3d-01",
+      "type": "task",
+      "label": "fact recorded 3d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:3d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-02T09:00:00+00:00"
+    },
+    {
+      "id": "fact.3d-02",
+      "type": "task",
+      "label": "fact recorded 3d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:3d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-03T09:00:00+00:00"
+    },
+    {
+      "id": "fact.3d-03",
+      "type": "task",
+      "label": "fact recorded 3d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:3d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-04T09:00:00+00:00"
+    },
+    {
+      "id": "fact.3d-04",
+      "type": "task",
+      "label": "fact recorded 3d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:3d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-05T09:00:00+00:00"
+    },
+    {
+      "id": "fact.3d-05",
+      "type": "task",
+      "label": "fact recorded 3d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:3d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-06T09:00:00+00:00"
+    },
+    {
+      "id": "fact.3d-06",
+      "type": "task",
+      "label": "fact recorded 3d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:3d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-07T09:00:00+00:00"
+    },
+    {
+      "id": "fact.3d-07",
+      "type": "task",
+      "label": "fact recorded 3d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:3d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-08T09:00:00+00:00"
+    },
+    {
+      "id": "fact.10d-01",
+      "type": "task",
+      "label": "fact recorded 10d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:10d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-09T09:00:00+00:00"
+    },
+    {
+      "id": "fact.10d-02",
+      "type": "task",
+      "label": "fact recorded 10d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:10d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-10T09:00:00+00:00"
+    },
+    {
+      "id": "fact.10d-03",
+      "type": "task",
+      "label": "fact recorded 10d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:10d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-11T09:00:00+00:00"
+    },
+    {
+      "id": "fact.10d-04",
+      "type": "task",
+      "label": "fact recorded 10d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:10d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-12T09:00:00+00:00"
+    },
+    {
+      "id": "fact.10d-05",
+      "type": "task",
+      "label": "fact recorded 10d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:10d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-13T09:00:00+00:00"
+    },
+    {
+      "id": "fact.10d-06",
+      "type": "task",
+      "label": "fact recorded 10d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:10d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-14T09:00:00+00:00"
+    },
+    {
+      "id": "fact.10d-07",
+      "type": "task",
+      "label": "fact recorded 10d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:10d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-15T09:00:00+00:00"
+    },
+    {
+      "id": "fact.30d-01",
+      "type": "task",
+      "label": "fact recorded 30d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:30d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-16T09:00:00+00:00"
+    },
+    {
+      "id": "fact.30d-02",
+      "type": "task",
+      "label": "fact recorded 30d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:30d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-17T09:00:00+00:00"
+    },
+    {
+      "id": "fact.30d-03",
+      "type": "task",
+      "label": "fact recorded 30d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:30d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-18T09:00:00+00:00"
+    },
+    {
+      "id": "fact.30d-04",
+      "type": "task",
+      "label": "fact recorded 30d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:30d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-19T09:00:00+00:00"
+    },
+    {
+      "id": "fact.30d-05",
+      "type": "task",
+      "label": "fact recorded 30d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:30d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-20T09:00:00+00:00"
+    },
+    {
+      "id": "fact.30d-06",
+      "type": "task",
+      "label": "fact recorded 30d late",
+      "status": "open",
+      "source": "experiment:valid_from_bias:30d",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-21T09:00:00+00:00"
+    },
+    {
+      "id": "fact.control-01",
+      "type": "task",
+      "label": "fact recorded on time",
+      "status": "open",
+      "source": "experiment:valid_from_bias:control",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-22T09:00:00+00:00"
+    },
+    {
+      "id": "fact.control-02",
+      "type": "task",
+      "label": "fact recorded on time",
+      "status": "open",
+      "source": "experiment:valid_from_bias:control",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-23T09:00:00+00:00"
+    },
+    {
+      "id": "fact.control-03",
+      "type": "task",
+      "label": "fact recorded on time",
+      "status": "open",
+      "source": "experiment:valid_from_bias:control",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-24T09:00:00+00:00"
+    },
+    {
+      "id": "fact.control-04",
+      "type": "task",
+      "label": "fact recorded on time",
+      "status": "open",
+      "source": "experiment:valid_from_bias:control",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-25T09:00:00+00:00"
+    },
+    {
+      "id": "fact.control-05",
+      "type": "task",
+      "label": "fact recorded on time",
+      "status": "open",
+      "source": "experiment:valid_from_bias:control",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-26T09:00:00+00:00"
+    },
+    {
+      "id": "fact.control-06",
+      "type": "task",
+      "label": "fact recorded on time",
+      "status": "open",
+      "source": "experiment:valid_from_bias:control",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-27T09:00:00+00:00"
+    },
+    {
+      "id": "fact.control-07",
+      "type": "task",
+      "label": "fact recorded on time",
+      "status": "open",
+      "source": "experiment:valid_from_bias:control",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-28T09:00:00+00:00"
+    },
+    {
+      "id": "fact.control-08",
+      "type": "task",
+      "label": "fact recorded on time",
+      "status": "open",
+      "source": "experiment:valid_from_bias:control",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-29T09:00:00+00:00"
+    },
+    {
+      "id": "fact.control-09",
+      "type": "task",
+      "label": "fact recorded on time",
+      "status": "open",
+      "source": "experiment:valid_from_bias:control",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-30T09:00:00+00:00"
+    },
+    {
+      "id": "fact.control-10",
+      "type": "task",
+      "label": "fact recorded on time",
+      "status": "open",
+      "source": "experiment:valid_from_bias:control",
+      "note": "ground truth lives in truth.json, not in the graph",
+      "updatedAt": "2026-10-31T09:00:00+00:00"
+    }
+  ],
+  "edges": [],
+  "changes": [
+    {
+      "at": "2026-10-02T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.3d-01",
+      "rev": 1,
+      "note": ""
+    },
+    {
+      "at": "2026-10-03T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.3d-02",
+      "rev": 2,
+      "note": ""
+    },
+    {
+      "at": "2026-10-04T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.3d-03",
+      "rev": 3,
+      "note": ""
+    },
+    {
+      "at": "2026-10-05T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.3d-04",
+      "rev": 4,
+      "note": ""
+    },
+    {
+      "at": "2026-10-06T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.3d-05",
+      "rev": 5,
+      "note": ""
+    },
+    {
+      "at": "2026-10-07T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.3d-06",
+      "rev": 6,
+      "note": ""
+    },
+    {
+      "at": "2026-10-08T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.3d-07",
+      "rev": 7,
+      "note": ""
+    },
+    {
+      "at": "2026-10-09T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.10d-01",
+      "rev": 8,
+      "note": ""
+    },
+    {
+      "at": "2026-10-10T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.10d-02",
+      "rev": 9,
+      "note": ""
+    },
+    {
+      "at": "2026-10-11T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.10d-03",
+      "rev": 10,
+      "note": ""
+    },
+    {
+      "at": "2026-10-12T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.10d-04",
+      "rev": 11,
+      "note": ""
+    },
+    {
+      "at": "2026-10-13T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.10d-05",
+      "rev": 12,
+      "note": ""
+    },
+    {
+      "at": "2026-10-14T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.10d-06",
+      "rev": 13,
+      "note": ""
+    },
+    {
+      "at": "2026-10-15T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.10d-07",
+      "rev": 14,
+      "note": ""
+    },
+    {
+      "at": "2026-10-16T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.30d-01",
+      "rev": 15,
+      "note": ""
+    },
+    {
+      "at": "2026-10-17T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.30d-02",
+      "rev": 16,
+      "note": ""
+    },
+    {
+      "at": "2026-10-18T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.30d-03",
+      "rev": 17,
+      "note": ""
+    },
+    {
+      "at": "2026-10-19T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.30d-04",
+      "rev": 18,
+      "note": ""
+    },
+    {
+      "at": "2026-10-20T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.30d-05",
+      "rev": 19,
+      "note": ""
+    },
+    {
+      "at": "2026-10-21T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.30d-06",
+      "rev": 20,
+      "note": ""
+    },
+    {
+      "at": "2026-10-22T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.control-01",
+      "rev": 21,
+      "note": ""
+    },
+    {
+      "at": "2026-10-23T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.control-02",
+      "rev": 22,
+      "note": ""
+    },
+    {
+      "at": "2026-10-24T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.control-03",
+      "rev": 23,
+      "note": ""
+    },
+    {
+      "at": "2026-10-25T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.control-04",
+      "rev": 24,
+      "note": ""
+    },
+    {
+      "at": "2026-10-26T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.control-05",
+      "rev": 25,
+      "note": ""
+    },
+    {
+      "at": "2026-10-27T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.control-06",
+      "rev": 26,
+      "note": ""
+    },
+    {
+      "at": "2026-10-28T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.control-07",
+      "rev": 27,
+      "note": ""
+    },
+    {
+      "at": "2026-10-29T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.control-08",
+      "rev": 28,
+      "note": ""
+    },
+    {
+      "at": "2026-10-30T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.control-09",
+      "rev": 29,
+      "note": ""
+    },
+    {
+      "at": "2026-10-31T09:00:00+00:00",
+      "by": "fixture",
+      "op": "add-node",
+      "target": "fact.control-10",
+      "rev": 30,
+      "note": ""
+    }
+  ]
+}
