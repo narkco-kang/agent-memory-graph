@@ -1,5 +1,7 @@
 # agent-memory-graph (`amg`)
 
+[![ci](https://github.com/narkco-kang/agent-memory-graph/actions/workflows/ci.yml/badge.svg)](https://github.com/narkco-kang/agent-memory-graph/actions/workflows/ci.yml)
+
 **Append-only, evidence-gated semantic memory graph for multi-agent workflows.**
 
 A single-file memory layer for agent teams: what was decided, who is doing what,
