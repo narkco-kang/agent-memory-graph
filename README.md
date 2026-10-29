@@ -11,6 +11,8 @@ on what evidence, and what has expired. No server, no database, no dependencies
 ```bash
 pip install -e .
 amg init ./mem --group my-team --goal "ship the thing"
+# bulk write: one load, one atomic write, all-or-nothing
+amg import ./mem --from nodes.json
 amg add   ./mem --id task.a --type task --label "write the parser" --source "standup 2026-10-29"
 amg status ./mem task.a in_progress --note "started, branch feat/parser"
 amg search ./mem "parser" --json

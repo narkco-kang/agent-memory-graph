@@ -34,11 +34,23 @@ graph size.
 Every write reloads, re-serializes and atomically replaces the whole file, so a
 single write costs O(n): roughly 8 µs per existing node at 5k.
 
-**Bulk ingest is therefore quadratic.** Summing the measured per-write cost gives
-about **6–7 minutes** to ingest 10,000 nodes one `add_node` at a time. This is a
-computed extrapolation from the measured linear per-write cost at 1k/5k, *not* a
-measured end-to-end run. The fix is a batch API (one load, N appends, one write),
-not a faster serializer.
+**Bulk ingest was therefore quadratic.** Summing the measured per-write cost gave
+about **6–7 minutes** to ingest 10,000 nodes one `add_node` at a time (a computed
+extrapolation, not an end-to-end run). The fix is a batch API — one load, N
+appends, one write — not a faster serializer.
+
+## Batch ingest (`amg import` / `Memory.add_many`)
+
+| nodes | wall time | per node |
+|---|---|---|
+| 1,000 | 0.01 s | 0.01 ms |
+| 5,000 | 0.05 s | 0.01 ms |
+| 10,000 | 0.10 s | 0.01 ms |
+
+Measured, not extrapolated: 10,000 nodes in **0.10 s**, roughly four orders of
+magnitude faster than repeated single writes. The batch is all-or-nothing: every
+node and edge is validated with the same gates before the file is written, so a
+single bad record rejects the whole batch and leaves the graph byte-identical.
 
 Edges add roughly 10% to the read paths — and only because `check`/`audit`
 validate their endpoints. **There is no traversal API and no relationship-aware

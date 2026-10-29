@@ -94,7 +94,23 @@ def main():
                            "mean_add_ms": round(twenty, 1)})
         print(write_rows[-1])
 
-    out = {"read": rows, "write": write_rows,
+    # batch path: one load, N appends, one write
+    batch_rows = []
+    for n in (1000, 5000, 10000):
+        path = os.path.join(tempfile.mkdtemp(prefix="amg-bench-b-"), "mem")
+        m = Memory.init(path, "bench")
+        payload = [{"id": f"task.b{i:06d}", "type": "task", "label": "batch probe",
+                    "source": "bench", "evidence": [{"locator": "path:README.md",
+                    "content_sha256": SHA, "captured_at": "2026-10-20T10:00:00+08:00"}]}
+                   for i in range(n)]
+        t0 = time.perf_counter()
+        res = m.add_many(payload)
+        secs = time.perf_counter() - t0
+        batch_rows.append({"nodes": res["nodes"], "seconds": round(secs, 2),
+                           "per_node_ms": round(secs * 1000 / n, 3)})
+        print(batch_rows[-1])
+
+    out = {"read": rows, "write": write_rows, "batch": batch_rows,
            "note": "single host, local disk, median of 3; synthetic schema-valid nodes"}
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "result.json"), "w") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=2)

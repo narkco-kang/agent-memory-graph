@@ -9,6 +9,10 @@ CLI surface changes, so the next release is 0.2.0.
 
 ### Added
 
+- `amg import` / `Memory.add_many`: batch writes that validate the whole batch
+  before touching the file (one load, N appends, one atomic replace), removing
+  the quadratic cost of importing node by node.
+
 - **Explicit fact time**: `amg add --valid-from ISO8601 [--valid-until ISO8601]`
   and `Memory.add_node(valid_from=..., valid_until=...)`. Values are stored
   verbatim; `valid_time_known` is `true` iff `valid_from` was supplied.

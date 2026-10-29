@@ -9,7 +9,7 @@ from .const import EXIT_ERROR, EXIT_IO, EXIT_OK, EXIT_USAGE
 from .errors import LockTimeout, ProtocolError
 from .memory import Memory
 
-COMMANDS = ["init", "add", "status", "link", "search", "digest", "check", "audit",
+COMMANDS = ["init", "add", "import", "status", "link", "search", "digest", "check", "audit",
             "export", "doctor", "migrate", "adopt", "expire", "version"]
 
 
@@ -55,6 +55,26 @@ def cmd_add(a):
                       conclusion=True if a.conclusion else None,
                       by=a.by, **kwargs)
     _print(f"added {node['id']} [{node['type']}/{node['status']}]", a.json)
+    return EXIT_OK
+
+
+def cmd_import(a):
+    m = Memory.open(a.dir)
+    try:
+        with open(a.from_file, "r", encoding="utf-8") as fh:
+            data = json.load(fh)
+    except FileNotFoundError:
+        raise ProtocolError("E_BAD_FILE", f"batch file not found: {a.from_file}")
+    except json.JSONDecodeError as exc:
+        raise ProtocolError("E_BAD_BATCH", f"batch file is not valid JSON: {exc}")
+    if isinstance(data, list):
+        nodes, edges = data, []
+    elif isinstance(data, dict):
+        nodes, edges = data.get("nodes"), data.get("edges") or []
+    else:
+        raise ProtocolError("E_BAD_BATCH", "batch file must be a list of nodes or an object with nodes/edges")
+    res = m.add_many(nodes, edges, by=a.by)
+    _print(f"imported {res['nodes']} node(s), {res['edges']} edge(s) -> rev {res['rev']}", a.json)
     return EXIT_OK
 
 
@@ -179,6 +199,7 @@ def cmd_migrate(a):
 USAGE_EXIT_CODES = frozenset({
     "E_NO_GRAPH", "E_BAD_TYPE", "E_BAD_STATUS", "E_BAD_LAYER", "E_BAD_EDGE",
     "E_BAD_FORMAT", "E_BAD_ID", "E_EXISTS", "E_RULE_APPLIES", "E_RULE_EXPIRES",
+    "E_BAD_BATCH", "E_BAD_FILE",
     "E_USE_SUPERSEDE", "E_BAD_SUPERSEDE", "E_BAD_VALID_TIME", "E_BAD_VALID_RANGE",
     # adopt-specific (added with the adoption tool; they mean "wrong input",
     # not "bad content"): pointing adopt at an already-amg graph
@@ -285,6 +306,11 @@ def build_parser():
                    help="declare that an L4 rule never expires (explicit, not a default)")
     s.add_argument("--by", default="cli")
     s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_add)
+
+    s = sub.add_parser("import"); s.add_argument("dir")
+    s.add_argument("--from", dest="from_file", required=True, help="JSON file with nodes[] and optional edges[]")
+    s.add_argument("--by", default="cli"); s.add_argument("--json", action="store_true")
+    s.set_defaults(func=cmd_import)
 
     s = sub.add_parser("status"); s.add_argument("dir"); s.add_argument("id")
     s.add_argument("new_status"); s.add_argument("--note", required=True)

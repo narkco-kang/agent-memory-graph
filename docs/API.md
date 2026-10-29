@@ -8,6 +8,7 @@ capability named here has no code symbol.
 ```
 amg init   <dir> --group NAME [--goal TEXT]          # refuses to overwrite
 amg add    <dir> --id --type --label --source [--status --owner --note --evidence ...]
+amg import <dir> --from FILE.json                   # batch: all-or-nothing, one write
                     [--valid-from ISO8601] [--valid-until ISO8601]
 amg status <dir> <id> <new-status> --note TEXT       # note required (IR-4)
 amg link   <dir> --from ID --to ID --kind KIND
@@ -25,6 +26,13 @@ amg version
 
 `--evidence` takes `locator|content_sha256|captured_at[|grade]` (repeatable).
 
+`amg import` takes a JSON file shaped as `{"nodes": [...], "edges": [...]}` (a
+bare list is treated as `nodes`). It is **all-or-nothing**: every node and edge is
+validated with the same gates as a single write, and the file is written once
+only if the whole batch passes. Duplicate ids (against the graph or inside the
+batch), unknown enums, missing sources and conclusion-typed `done` nodes without
+evidence reject the entire batch.
+
 Exit codes: `0` success/clean, `1` protocol violation or conflicts, `2` usage,
 `3` lock timeout or IO failure.
 
@@ -37,7 +45,7 @@ fail loudly instead of guessing, and `tests/test_exit_codes.py` scans
 
 | exit | codes | meaning |
 |---|---|---|
-| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG`* | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
+| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE`* | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
 | `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* | the evidence gate rejected the content, or the graph would break an invariant |
 | `0` | — | success / clean `check` / clean `audit` |
 | `3` | — | lock timeout or IO failure (not a `ProtocolError`) |

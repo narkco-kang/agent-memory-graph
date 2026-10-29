@@ -91,11 +91,17 @@ class Memory:
         self._doc = doc
 
     # ---------- writes ----------
-    def add_node(self, id: str, type: str, label: str, source: str,
-                 status: str = "open", owner=None, note: str = "",
-                 evidence=None, conclusion=None, applies=None,
-                 expires_when=_UNSET, valid_from: str = None, valid_until: str = None,
-                 by: str = "amg") -> dict:
+    def _log_rev(self, doc: dict, rev: int, op: str, target: str, note: str, by: str) -> dict:
+        change = {"at": now(), "by": by, "op": op, "target": target, "rev": rev, "note": note}
+        doc["changes"].append(change)
+        return change
+
+    def _make_node(self, rev: int, id: str, type: str, label: str, source: str,
+                   status: str = "open", owner=None, note: str = "",
+                   evidence=None, conclusion=None, applies=None,
+                   expires_when=_UNSET, valid_from: str = None,
+                   valid_until: str = None) -> dict:
+        """Validate one node and build the stored record. Never touches the doc."""
         if not id or not isinstance(id, str):
             raise ProtocolError("E_BAD_ID", "id must be a non-empty string")
         if type not in NODE_TYPES:
@@ -117,39 +123,119 @@ class Memory:
                 and parse_ts(valid_until) < parse_ts(valid_from)):
             raise ProtocolError("E_BAD_VALID_RANGE",
                                 f"{id}: valid_until {valid_until} is earlier than valid_from {valid_from}")
+        ev = validate_evidence(evidence, rev)
+        if type == "rule":
+            # L4 rules must declare their scope and lifetime explicitly:
+            # an applicable rule with no scope cannot be machine-checked.
+            if not applies:
+                raise ProtocolError("E_RULE_APPLIES", f"{id}: rule nodes require applies")
+            if expires_when is _UNSET:
+                raise ProtocolError("E_RULE_EXPIRES",
+                                    f"{id}: rule nodes must declare expires_when (use None for never)")
+        stamp = now()
+        node = {
+            "id": id, "type": type, "label": label, "status": status,
+            "owner": owner, "source": source, "note": note,
+            "evidence": ev,
+            "conclusion": bool(conclusion) if conclusion is not None else type in {"decision", "artifact"},
+            "evidence_grade": min([e.get("grade", 5) for e in ev], default=None),
+            "valid_from": valid_from, "valid_until": valid_until,
+            "valid_time_known": valid_from is not None,
+            "recorded_at": stamp, "superseded_at": None,
+            "updatedAt": stamp,
+        }
+        if type == "rule":
+            node["applies"] = applies
+            node["expires_when"] = expires_when
+        enforce_conclusion(node, ev)
+        return node
 
+    def add_node(self, id: str, type: str, label: str, source: str,
+                 status: str = "open", owner=None, note: str = "",
+                 evidence=None, conclusion=None, applies=None,
+                 expires_when=_UNSET, valid_from: str = None, valid_until: str = None,
+                 by: str = "amg") -> dict:
         with self.store.transaction() as (doc, commit):
             if any(n["id"] == id for n in doc["nodes"]):
                 raise ProtocolError("E_DUP_ID", f"node id already exists: {id}")
-            ev = validate_evidence(evidence, int(doc.get("rev", 0)) + 1)
-            if type == "rule":
-                # L4 rules must declare their scope and lifetime explicitly:
-                # an applicable rule with no scope cannot be machine-checked.
-                if not applies:
-                    raise ProtocolError("E_RULE_APPLIES", f"{id}: rule nodes require applies")
-                if expires_when is _UNSET:
-                    raise ProtocolError("E_RULE_EXPIRES",
-                                        f"{id}: rule nodes must declare expires_when (use None for never)")
-            stamp = now()
-            node = {
-                "id": id, "type": type, "label": label, "status": status,
-                "owner": owner, "source": source, "note": note,
-                "evidence": ev,
-                "conclusion": bool(conclusion) if conclusion is not None else type in {"decision", "artifact"},
-                "evidence_grade": min([e.get("grade", 5) for e in ev], default=None),
-                "valid_from": valid_from, "valid_until": valid_until,
-                "valid_time_known": valid_from is not None,
-                "recorded_at": stamp, "superseded_at": None,
-                "updatedAt": stamp,
-            }
-            if type == "rule":
-                node["applies"] = applies
-                node["expires_when"] = expires_when
-            enforce_conclusion(node, ev)
+            rev = int(doc.get("rev", 0)) + 1
+            node = self._make_node(rev, id, type, label, source, status=status,
+                                   owner=owner, note=note, evidence=evidence,
+                                   conclusion=conclusion, applies=applies,
+                                   expires_when=expires_when, valid_from=valid_from,
+                                   valid_until=valid_until)
             doc["nodes"].append(node)
-            self._log(doc, "add-node", id, f"type={type} status={status}", by)
+            self._log_rev(doc, rev, "add-node", id, f"type={type} status={status}", by)
             self._commit(doc, commit)
             return {k: v for k, v in node.items()}
+
+    def add_many(self, nodes, edges=None, by: str = "amg") -> dict:
+        """Batch write: validate everything first, then append all and write once.
+
+        All-or-nothing by construction: the document is mutated only after every
+        node and edge has passed the same gates a single write uses. One load,
+        N appends, one atomic replace — this is what makes bulk ingest linear
+        instead of quadratic (see docs/BENCHMARKS.md).
+        """
+        if not nodes:
+            raise ProtocolError("E_BAD_BATCH", "empty batch")
+        if not isinstance(nodes, (list, tuple)):
+            raise ProtocolError("E_BAD_BATCH", "nodes must be a list")
+        edges = list(edges or [])
+        with self.store.transaction() as (doc, commit):
+            existing = {n["id"] for n in doc["nodes"]}
+            seen = set()
+            built = []
+            base = int(doc.get("rev", 0)) + 1
+            for i, raw in enumerate(nodes):
+                if not isinstance(raw, dict):
+                    raise ProtocolError("E_BAD_BATCH", f"nodes[{i}] must be an object")
+                nid = raw.get("id")
+                if nid in existing:
+                    raise ProtocolError("E_DUP_ID", f"node id already exists: {nid}")
+                if nid in seen:
+                    raise ProtocolError("E_DUP_ID", f"node id repeated in batch: {nid}")
+                seen.add(nid)
+                built.append(self._make_node(
+                    base + i,
+                    id=nid,
+                    type=raw.get("type"),
+                    label=raw.get("label"),
+                    source=raw.get("source"),
+                    status=raw.get("status", "open"),
+                    owner=raw.get("owner"),
+                    note=raw.get("note", ""),
+                    evidence=raw.get("evidence"),
+                    conclusion=raw.get("conclusion"),
+                    applies=raw.get("applies"),
+                    expires_when=raw.get("expires_when", _UNSET),
+                    valid_from=raw.get("valid_from"),
+                    valid_until=raw.get("valid_until"),
+                ))
+            known = existing | seen
+            existing_edges = {(e["from"], e["to"], e["kind"]) for e in doc["edges"]}
+            built_edges = []
+            for i, raw in enumerate(edges):
+                if not isinstance(raw, dict):
+                    raise ProtocolError("E_BAD_BATCH", f"edges[{i}] must be an object")
+                frm, to, kind = raw.get("from"), raw.get("to"), raw.get("kind")
+                if kind not in EDGE_KINDS:
+                    raise ProtocolError("E_BAD_EDGE", f"edges[{i}]: unknown edge kind: {kind}")
+                if frm not in known or to not in known:
+                    raise ProtocolError("E_NO_NODE", f"edges[{i}]: endpoint missing ({frm} -> {to})")
+                key = (frm, to, kind)
+                if key in existing_edges or key in {(e["from"], e["to"], e["kind"]) for e in built_edges}:
+                    raise ProtocolError("E_DUP_EDGE", f"edges[{i}]: duplicate edge {key}")
+                built_edges.append({"from": frm, "to": to, "kind": kind})
+            for i, node in enumerate(built):
+                doc["nodes"].append(node)
+                self._log_rev(doc, base + i, "import-node", node["id"],
+                              f"type={node['type']} status={node['status']}", by)
+            doc["edges"].extend(built_edges)
+            doc["rev"] = base + len(built) - 1
+            self._commit(doc, commit)
+            return {"nodes": len(built), "edges": len(built_edges),
+                    "rev": int(doc.get("rev", 0))}
 
     def set_status(self, node_id: str, new_status: str, note: str,
                    evidence=None, by: str = "amg") -> dict:
