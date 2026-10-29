@@ -76,6 +76,12 @@ capabilities that are absent are listed under **Not yet**.
   reachable through L2.
 - Missing-graph errors returned exit code 1 instead of the contractual 2.
 
+### Measured
+
+- Read paths at 1k / 5k / 10k nodes (`check`, `audit`, `search`, `digest`) and
+  per-write cost at 100 / 1k / 5k — see `docs/BENCHMARKS.md`. Write path is O(n)
+  per write, so bulk ingest is quadratic; batch ingest is not implemented.
+
 ### Not yet (do not assume)
 
 - Vector / embedding retrieval (lexical only).

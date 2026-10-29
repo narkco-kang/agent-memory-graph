@@ -1,0 +1,46 @@
+{
+  "read": [
+    {
+      "nodes": 1000,
+      "file_bytes": 859615,
+      "check_ms": 5.6,
+      "audit_ms": 5.0,
+      "search_ms": 5.6,
+      "digest_ms": 5.6
+    },
+    {
+      "nodes": 5000,
+      "file_bytes": 4319617,
+      "check_ms": 28.0,
+      "audit_ms": 28.0,
+      "search_ms": 30.7,
+      "digest_ms": 27.5
+    },
+    {
+      "nodes": 10000,
+      "file_bytes": 8654617,
+      "check_ms": 59.8,
+      "audit_ms": 58.7,
+      "search_ms": 73.9,
+      "digest_ms": 59.4
+    }
+  ],
+  "write": [
+    {
+      "nodes": 100,
+      "first_add_ms": 1.5,
+      "mean_add_ms": 1.3
+    },
+    {
+      "nodes": 1000,
+      "first_add_ms": 7.9,
+      "mean_add_ms": 8.4
+    },
+    {
+      "nodes": 5000,
+      "first_add_ms": 39.1,
+      "mean_add_ms": 39.8
+    }
+  ],
+  "note": "single host, local disk, median of 3; synthetic schema-valid nodes"
+}
