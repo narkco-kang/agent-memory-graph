@@ -31,6 +31,38 @@ def now() -> str:
     return datetime.datetime.now(datetime.timezone.utc).astimezone().isoformat(timespec="seconds")
 
 
+def parse_ts(value):
+    """Parse ISO-8601 into an aware datetime (naive values are treated as UTC).
+
+    Returns None when the value is missing or unparseable, so callers can
+    distinguish "unknown" from "malformed" by validating at the edges.
+    """
+    if not isinstance(value, str) or not value:
+        return None
+    try:
+        parsed = datetime.datetime.fromisoformat(value.replace("Z", "+00:00"))
+    except ValueError:
+        return None
+    if parsed.tzinfo is None:
+        parsed = parsed.replace(tzinfo=datetime.timezone.utc)
+    return parsed
+
+
+def not_yet_valid(node: dict, at: datetime.datetime = None) -> bool:
+    """True when the node's validity window has not started yet.
+
+    An absent or unparseable `valid_from` means *unknown*, not *future*:
+    unknown validity is handled conservatively by expiry and never treated as
+    pending. Only a parsed, future start is "not yet in effect".
+    """
+    start = parse_ts(node.get("valid_from"))
+    if start is None:
+        return False
+    if at is None:
+        at = parse_ts(now())
+    return start > at
+
+
 def is_conclusion(node: dict) -> bool:
     if node.get("conclusion") is not None:
         return bool(node["conclusion"])

@@ -2,18 +2,13 @@
 import datetime
 import hashlib
 
-from .const import is_conclusion
+from .const import is_conclusion, not_yet_valid, parse_ts
 
 STALE_DAYS = 3
 
 
 def _parse(value):
-    if not isinstance(value, str) or not value:
-        return None
-    try:
-        return datetime.datetime.fromisoformat(value.replace("Z", "+00:00"))
-    except ValueError:
-        return None
+    return parse_ts(value)
 
 
 def expiry_eligible(node: dict) -> bool:
@@ -85,6 +80,9 @@ def audit(doc: dict, pin: dict = None, now: datetime.datetime = None) -> dict:
             ts = _parse(n.get("updatedAt"))
             if ts and (now - ts).days >= STALE_DAYS:
                 conflicts.append(f"{nid}: {n.get('status')} untouched for {(now - ts).days}d (limit {STALE_DAYS}d)")
+        if not_yet_valid(n, now):
+            hints.append(f"{nid}: not yet valid (valid_from {n.get('valid_from')} is in the "
+                         f"future) — treated as not yet in effect by retrieval and expiry")
         vu = _parse(n.get("valid_until"))
         if vu and vu <= now and n.get("status") != "superseded":
             if expiry_eligible(n):

@@ -39,6 +39,7 @@ class AuditTests(unittest.TestCase):
         self.m.add_node("decision.e", "decision", "E", source="s", status="done", evidence=[ev()])
         node = self.m.doc["nodes"][0]
         node["valid_until"] = "2020-01-01T00:00:00+08:00"
+        node["valid_time_known"] = True  # v0.2: expiry needs a known validity window
         rep = self.m.audit()
         self.assertTrue(any("valid_until passed" in c for c in rep["conflicts"]))
 

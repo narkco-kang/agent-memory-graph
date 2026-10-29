@@ -4,13 +4,15 @@ Two hard rules (signed, failures.md:118):
 - `superseded` nodes are filtered out for L1/L3/L4. Expiry is a first-class
   citizen, so a stale fact must never come back as an answer. History is not
   lost: it stays in L2 (`changes[]`), which is the only layer that shows it.
+- Nodes whose `valid_from` is in the future are not yet in effect, so they are
+  filtered from L1/L3/L4 too (audit reports them as "not yet valid").
 - Ranking is deliberately two-key: (anchor_present, score). Degraded results are
   returned with anchor_state="none" instead of being silently dropped; `strict`
   is the only path that filters them out.
 """
 import re
 
-from .const import CONCLUSION_TYPES
+from .const import CONCLUSION_TYPES, not_yet_valid
 
 _TOKEN = re.compile(r"[a-z0-9_\-]+")
 _CJK = re.compile(r"[\u3400-\u9fff]")
@@ -38,8 +40,10 @@ def search(doc: dict, query: str, layer: str = "L3", k: int = 10, strict: bool =
     if layer == "L2":
         return _search_changes(doc, toks, k)
 
-    # Hard filter first: a superseded fact is never an answer (L2 keeps history).
-    nodes = [n for n in (doc.get("nodes") or []) if n.get("status") != "superseded"]
+    # Hard filters first: a superseded or not-yet-effective fact is never an
+    # answer (L2 keeps history, so neither rule hides the event log).
+    nodes = [n for n in (doc.get("nodes") or [])
+             if n.get("status") != "superseded" and not not_yet_valid(n)]
     if layer == "L1":
         nodes = [n for n in nodes if n.get("status") in {"open", "in_progress", "blocked", "proposed"}]
     elif layer == "L4":

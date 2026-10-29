@@ -1,18 +1,11 @@
 """Structural invariants (IR-1..IR-4) as machine-checkable rules."""
-import datetime
 
-from .const import EDGE_KINDS, NODE_TYPES, SCHEMA, STATUSES, is_conclusion
+from .const import EDGE_KINDS, NODE_TYPES, SCHEMA, STATUSES, is_conclusion, parse_ts
 from .gate import SHA256_RE
 
 
 def _parse_ts(value):
-    if not isinstance(value, str) or not value:
-        return None
-    try:
-        text = value.replace("Z", "+00:00")
-        return datetime.datetime.fromisoformat(text)
-    except ValueError:
-        return None
+    return parse_ts(value)
 
 
 def check(doc: dict, strict: bool = False) -> dict:

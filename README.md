@@ -53,6 +53,8 @@ Four invariants are enforced by code, not by discipline:
 - Bare strings (`"path:README.md"`) are rejected: they cannot be verified.
 - `grade` 1–5 records how strongly the evidence was verified (1 = reproduced on
   disk / executed; 5 = claim only). Retrieval quality is a *separate* field.
+- Fact time is separate again: `valid_from` / `valid_until` are caller-supplied
+  (or unknown) and are never inferred from the write time.
 
 ## Adopting an existing graph
 
@@ -97,14 +99,37 @@ amg audit  ./mem
 graph, and adds a `supersedes` edge. Active facts whose `valid_until` has passed
 are an audit conflict.
 
+## Fact time vs write time
+
+`changes[].at` is **transaction time** (when the fact was written). It is not
+validity time, and using it as one is measurably wrong: facts written 3/10/30 days
+after they became true are mis-dated by exactly that lag
+(`experiments/valid_from_bias/`, 20/20 facts off by >1 day).
+
+So fact time is an input, never a guess:
+
+```bash
+amg add ./mem --id task.y --type task --label "migration approved" --source "review" \
+    --valid-from 2026-01-15T09:30:00+08:00
+```
+
+- omitted `--valid-from` means **unknown**, not "now" (`valid_time_known: false`);
+- `--valid-until` earlier than `--valid-from` is rejected (exit 2);
+- a **future** `valid_from` is accepted but the fact is *not yet in effect*:
+  `audit` says "not yet valid", retrieval and `digest` exclude it, and expiry
+  ignores it;
+- expiry only ever fires when the validity window is known
+  (`amg.audit.expiry_eligible`) — an unknown window is reported as a hint.
+
 ## Retrieval (v0.1: lexical only)
 
 `amg search ./mem "…" --layer L1|L2|L3|L4 --k 10 [--strict]`
 
 `superseded` nodes are **never returned**: expiry is a first-class citizen, so
 L1/L3/L4 drop them before ranking, and `digest` excludes them while printing
-`superseded excluded: N`. History is not lost — it stays in L2 (`changes[]`),
-which is the only layer that shows it.
+`superseded excluded: N`. Facts whose `valid_from` is still in the future are
+dropped the same way (`not yet valid excluded: N`). History is not lost — it
+stays in L2 (`changes[]`), which is the only layer that shows it.
 
 Ranking is two-key: **(anchor present, score)**. Results without evidence are
 returned by default with `anchor_state: "none"` instead of being dropped —

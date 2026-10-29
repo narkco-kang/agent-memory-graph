@@ -3,6 +3,38 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [Unreleased] — v0.2.0 scope (in progress)
+
+CLI surface changes, so the next release is 0.2.0.
+
+### Added
+
+- **Explicit fact time**: `amg add --valid-from ISO8601 [--valid-until ISO8601]`
+  and `Memory.add_node(valid_from=..., valid_until=...)`. Values are stored
+  verbatim; `valid_time_known` is `true` iff `valid_from` was supplied.
+- `audit` reports a future `valid_from` as **"not yet valid"** (hint, not
+  conflict); retrieval (L1/L3/L4) and `digest` exclude such facts, because they
+  are not yet in effect.
+- New error codes `E_BAD_VALID_TIME` / `E_BAD_VALID_RANGE` (exit 2), added to the
+  explicit classification table and to `docs/API.md`.
+
+### Changed
+
+- **`valid_from` no longer defaults to the write time.** Omitting it means
+  unknown (`null`, `valid_time_known: false`). This is the fix justified by
+  `experiments/valid_from_bias/`: the transaction-time proxy mis-dates lagged
+  facts by exactly the writing lag (20/20 > 1 day).
+- `digest` header now shows both exclusion counts
+  (`superseded excluded: N, not yet valid excluded: M`).
+- Nodes written by 0.1.0 keep their stored `valid_from`; the change affects new
+  writes only.
+
+### Enforced, not just documented
+
+- Expiry still requires a **known** validity window (`amg.audit.expiry_eligible`);
+  an unknown window is a hint, never an automatic expiry.
+- `amg adopt` keeps refusing to infer validity time.
+
 ## [0.1.0] — unreleased (private review)
 
 First working version. Everything below is verified by the test suite on disk;

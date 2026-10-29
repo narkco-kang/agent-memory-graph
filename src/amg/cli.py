@@ -50,6 +50,7 @@ def cmd_add(a):
         kwargs["expires_when"] = None if a.expires_never else a.expires_when
     node = m.add_node(id=a.id, type=a.type, label=a.label, source=a.source,
                       status=a.status, owner=a.owner, note=a.note,
+                      valid_from=a.valid_from, valid_until=a.valid_until,
                       evidence=_evidence_args(a.evidence),
                       conclusion=True if a.conclusion else None,
                       by=a.by, **kwargs)
@@ -178,7 +179,7 @@ def cmd_migrate(a):
 USAGE_EXIT_CODES = frozenset({
     "E_NO_GRAPH", "E_BAD_TYPE", "E_BAD_STATUS", "E_BAD_LAYER", "E_BAD_EDGE",
     "E_BAD_FORMAT", "E_BAD_ID", "E_EXISTS", "E_RULE_APPLIES", "E_RULE_EXPIRES",
-    "E_USE_SUPERSEDE", "E_BAD_SUPERSEDE",
+    "E_USE_SUPERSEDE", "E_BAD_SUPERSEDE", "E_BAD_VALID_TIME", "E_BAD_VALID_RANGE",
     # adopt-specific (added with the adoption tool; they mean "wrong input",
     # not "bad content"): pointing adopt at an already-amg graph
     "E_ALREADY_AMG",
@@ -254,6 +255,10 @@ def build_parser():
     s.add_argument("--owner"); s.add_argument("--note", default="")
     s.add_argument("--evidence", action="append")
     s.add_argument("--conclusion", action="store_true")
+    s.add_argument("--valid-from",
+                   help="fact time (ISO-8601). Omitted = unknown; never the write time")
+    s.add_argument("--valid-until",
+                   help="validity end (ISO-8601); must not precede --valid-from")
     s.add_argument("--applies", help="L4 rule scope, e.g. global / repo:agent-memory-graph")
     s.add_argument("--expires-when", default=None,
                    help="L4 rule lifetime (e.g. 2026-12-31); declare lifetime explicitly")

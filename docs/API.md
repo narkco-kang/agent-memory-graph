@@ -8,6 +8,7 @@ capability named here has no code symbol.
 ```
 amg init   <dir> --group NAME [--goal TEXT]          # refuses to overwrite
 amg add    <dir> --id --type --label --source [--status --owner --note --evidence ...]
+                    [--valid-from ISO8601] [--valid-until ISO8601]
 amg status <dir> <id> <new-status> --note TEXT       # note required (IR-4)
 amg link   <dir> --from ID --to ID --kind KIND
 amg search <dir> "query" [--layer L1|L2|L3|L4] [--k 10] [--strict] [--json]
@@ -35,7 +36,7 @@ fail loudly instead of guessing, and `tests/test_exit_codes.py` scans
 
 | exit | codes | meaning |
 |---|---|---|
-| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_ALREADY_AMG`* | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
+| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG`* | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
 | `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* | the evidence gate rejected the content, or the graph would break an invariant |
 | `0` | — | success / clean `check` / clean `audit` |
 | `3` | — | lock timeout or IO failure (not a `ProtocolError`) |
@@ -56,6 +57,8 @@ from amg import Memory, ProtocolError, LockTimeout
 
 m = Memory.open("./mem")          # Memory.init("./mem", group="t")
 m.add_node(id="task.x", type="task", label="do X", source="group:t 2026-10-29")
+m.add_node(id="task.y", type="task", label="do Y", source="plan",
+           valid_from="2026-01-15T09:30:00+08:00")   # fact time, optional
 m.set_status("task.x", "done", note="pytest green (exit 0)")
 m.add_edge("task.x", "artifact.y", kind="produced_by")
 hits = m.search("concurrency", layer="L3", k=10)
@@ -74,12 +77,16 @@ evidence[], conclusion, evidence_grade,
 valid_from, valid_until, recorded_at, superseded_at, updatedAt
 ```
 
+`valid_from` / `valid_until` are **caller-supplied fact time** (ISO-8601, stored
+verbatim) or `null`. They are never defaulted to the write time: `changes[].at`
+is transaction time, and using it as fact time is measurably wrong (see
+`experiments/valid_from_bias/`). `valid_time_known` is `true` iff `valid_from`
+was supplied; expiry refuses nodes whose validity window is unknown.
+
 Adoption-only fields (present only on nodes created by `amg adopt`):
 `legacy_evidence` (verbatim legacy locator strings), `legacy_source` (the
 placeholder it replaced), `superseded_at_inferred` (`true` when the timestamp was
-taken from `updatedAt`), and `valid_time_known` (`false` when the validity window
-is unknown — every migrated node without a legacy `valid_from`). Absent means
-known, so only `amg adopt` sets `false`.
+taken from `updatedAt`).
 
 `type` ∈ group · member · task · decision · artifact · issue · model · env · question · rule
 `status` ∈ proposed · open · in_progress · done · blocked · superseded
@@ -96,20 +103,27 @@ known, so only `amg adopt` sets `false`.
 ## Expiry and `valid_time_known`
 
 `audit` only reports **conflicts** for expired facts whose validity time is
-known. For `valid_time_known: false` (every migrated node) an expired
-`valid_until` becomes a **hint**, and TTL auto-expiry must refuse the node
-entirely (`amg.audit.expiry_eligible`): expiring it would delete a fact on the
-strength of a timestamp we never had. `audit` also prints a summary hint with the
-count of such nodes. TTL auto-expiry is **not implemented in v0.1**; the refusal
-rule is enforced so the future implementation cannot inherit the bug.
+known. For `valid_time_known: false` (every migrated node, and any node without a
+supplied `valid_from`) an expired `valid_until` becomes a **hint**, and TTL
+auto-expiry must refuse the node entirely (`amg.audit.expiry_eligible`): expiring
+it would delete a fact on the strength of a timestamp we never had. `audit` also
+prints a summary hint with the count of such nodes, and reports a future
+`valid_from` as "not yet valid" (a hint, not a conflict).
+
+Supplying `valid_until` without `valid_from` is accepted but stays
+`valid_time_known: false`, so it cannot trigger an expiry conflict — pass both
+bounds if you want the window to count. TTL auto-expiry is **not implemented**;
+the refusal rule is enforced so a future implementation cannot inherit the bug.
 
 ## Retrieval rules (v0.1)
 
 - L1/L3/L4 **hard-filter `superseded` nodes** (`failures.md:118`, non-negotiable):
   an expired fact is never an answer. L2 is the exception by design — it reads
   `changes[]`, so superseded history stays visible there.
+- Nodes whose `valid_from` is in the future are **not yet in effect**: they are
+  filtered from L1/L3/L4 and from `digest` (audit reports "not yet valid").
 - `digest` excludes superseded nodes and prints `superseded excluded: N` in the
-  header.
+  header (plus `not yet valid excluded: N`).
 - Anchor handling is separate: unanchored hits are returned degraded
   (`anchor_state: "none"`); `--strict` filters those out. `--strict` does not
   re-enable superseded nodes.

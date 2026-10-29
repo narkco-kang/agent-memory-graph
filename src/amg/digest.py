@@ -7,7 +7,7 @@ Superseded nodes are excluded (failures.md:118): the digest is a live view, and
 expired facts belong to L2 history. The excluded count is printed in the header
 so a shrinking graph is visible, not mysterious.
 """
-from .const import CONCLUSION_TYPES
+from .const import CONCLUSION_TYPES, not_yet_valid
 
 NOTE_LIMIT = 200
 LABEL_LIMIT = 80
@@ -36,8 +36,10 @@ def _line(n: dict) -> str:
 
 def build(doc: dict, max_bytes: int = 65536) -> str:
     all_nodes = list(doc.get("nodes") or [])
-    nodes = [n for n in all_nodes if n.get("status") != "superseded"]
-    superseded_excluded = len(all_nodes) - len(nodes)
+    nodes = [n for n in all_nodes
+             if n.get("status") != "superseded" and not not_yet_valid(n)]
+    superseded_excluded = sum(1 for n in all_nodes if n.get("status") == "superseded")
+    pending_excluded = len(all_nodes) - len(nodes) - superseded_excluded
     used = set()
     ordered = []
     for _, pred in PRIORITY:
@@ -50,7 +52,8 @@ def build(doc: dict, max_bytes: int = 65536) -> str:
 
     header = (f"# {doc.get('group', 'memory')} · digest\n"
               f"> rev {doc.get('rev', 0)} | nodes {len(all_nodes)} "
-              f"(superseded excluded: {superseded_excluded}) | "
+              f"(superseded excluded: {superseded_excluded}, "
+              f"not yet valid excluded: {pending_excluded}) | "
               f"edges {len(doc.get('edges') or [])}\n\n")
     reserve = len(b"[truncated 9999 items]\n")  # kept free so the marker cannot overflow
     budget = max_bytes - len(header.encode("utf-8")) - reserve

@@ -6,7 +6,7 @@ from . import digest as digest_mod
 from . import migrate as migrate_mod
 from . import protocol
 from . import retrieval
-from .const import EDGE_KINDS, NODE_TYPES, SCHEMA, STATUSES, now
+from .const import EDGE_KINDS, NODE_TYPES, SCHEMA, STATUSES, now, parse_ts
 from .errors import ProtocolError
 from .gate import enforce_conclusion, validate_evidence
 from .store import Store
@@ -87,7 +87,8 @@ class Memory:
     def add_node(self, id: str, type: str, label: str, source: str,
                  status: str = "open", owner=None, note: str = "",
                  evidence=None, conclusion=None, applies=None,
-                 expires_when=_UNSET, by: str = "amg") -> dict:
+                 expires_when=_UNSET, valid_from: str = None, valid_until: str = None,
+                 by: str = "amg") -> dict:
         if not id or not isinstance(id, str):
             raise ProtocolError("E_BAD_ID", "id must be a non-empty string")
         if type not in NODE_TYPES:
@@ -96,6 +97,19 @@ class Memory:
             raise ProtocolError("E_BAD_STATUS", f"unknown status: {status}")
         if not source or not isinstance(source, str) or source in {"unknown", "manual"}:
             raise ProtocolError("E_NO_SOURCE", "IR-2: every node needs a real source (not 'unknown'/'manual')")
+        # Validity time is supplied by the caller or stays unknown. It is never
+        # defaulted to the write time: `changes[].at` is transaction time, and
+        # treating it as fact time is measurably wrong (see experiments/).
+        if valid_from is not None and parse_ts(valid_from) is None:
+            raise ProtocolError("E_BAD_VALID_TIME",
+                                f"{id}: valid_from is not ISO-8601: {valid_from!r}")
+        if valid_until is not None and parse_ts(valid_until) is None:
+            raise ProtocolError("E_BAD_VALID_TIME",
+                                f"{id}: valid_until is not ISO-8601: {valid_until!r}")
+        if (valid_from is not None and valid_until is not None
+                and parse_ts(valid_until) < parse_ts(valid_from)):
+            raise ProtocolError("E_BAD_VALID_RANGE",
+                                f"{id}: valid_until {valid_until} is earlier than valid_from {valid_from}")
 
         with self.store.transaction() as (doc, commit):
             if any(n["id"] == id for n in doc["nodes"]):
@@ -116,7 +130,8 @@ class Memory:
                 "evidence": ev,
                 "conclusion": bool(conclusion) if conclusion is not None else type in {"decision", "artifact"},
                 "evidence_grade": min([e.get("grade", 5) for e in ev], default=None),
-                "valid_from": stamp, "valid_until": None,
+                "valid_from": valid_from, "valid_until": valid_until,
+                "valid_time_known": valid_from is not None,
                 "recorded_at": stamp, "superseded_at": None,
                 "updatedAt": stamp,
             }
