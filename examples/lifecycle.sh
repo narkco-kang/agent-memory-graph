@@ -32,16 +32,8 @@ echo "exit=$?  (expected 0)"
 step "supersede keeps the old node and stamps its window"
 python3 -m amg.cli add "$DIR" --id decision.limit.v3 --type decision --label "limit is 64 (re-confirmed)" \
   --source "review 2026-10-25" --status done --evidence "$EVID"
-# NOTE: supersede is a library-only operation in v0.2 — there is no CLI command
-# yet (tracked as an open issue). This is the Python entry point:
-python3 - "$DIR" <<'PYEOF'
-import sys
-from amg import Memory
-m = Memory.open(sys.argv[1])
-m.supersede("decision.limit.v2", "decision.limit.v3",
-            note="v3 re-confirms after the window lapsed")
-print("superseded decision.limit.v2 -> decision.limit.v3")
-PYEOF
+python3 -m amg.cli supersede "$DIR" decision.limit.v2 decision.limit.v3 \
+  --note "v3 re-confirms after the window lapsed"
 echo "exit=$?  (expected 0)"
 python3 -m amg.cli search "$DIR" "limit" --json | python3 -c "import json,sys;print('search results:',[(h['id'],h['status']) for h in json.load(sys.stdin)])"
 

@@ -77,3 +77,31 @@ class CliTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class SupersedeCliTests(unittest.TestCase):
+    def setUp(self):
+        self.dir = tempfile.mkdtemp(prefix="amg-sup-")
+
+    def _seed(self):
+        run("init", self.dir, "--group", "t")
+        ev = f"path:README.md|{SHA}|2026-10-30T09:00:00+08:00"
+        run("add", self.dir, "--id", "decision.a", "--type", "decision", "--label", "A",
+            "--source", "s", "--status", "done", "--evidence", ev)
+        run("add", self.dir, "--id", "decision.b", "--type", "decision", "--label", "B",
+            "--source", "s", "--status", "done", "--evidence", ev)
+
+    def test_supersede_keeps_old_node(self):
+        self._seed()
+        res = run("supersede", self.dir, "decision.a", "decision.b", "--note", "b replaces a")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        doc = json.load(open(os.path.join(self.dir, "graph.json"), encoding="utf-8"))
+        old = [n for n in doc["nodes"] if n["id"] == "decision.a"][0]
+        self.assertEqual(old["status"], "superseded")
+        self.assertTrue(old["valid_until"] and old["superseded_at"])
+        self.assertEqual(len(doc["nodes"]), 2)
+
+    def test_supersede_exit_codes(self):
+        self._seed()
+        self.assertEqual(run("supersede", self.dir, "decision.a", "ghost", "--note", "x").returncode, 1)
+        self.assertEqual(run("supersede", self.dir, "decision.a", "decision.a", "--note", "x").returncode, 2)

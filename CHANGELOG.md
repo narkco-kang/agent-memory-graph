@@ -78,7 +78,7 @@ capabilities that are absent are listed under **Not yet**.
   fabricating evidence — legacy strings move to `legacy_evidence`, placeholder
   sources become `adopted:<schema>:<sha12>` provenance, inferred timestamps are
   flagged, identical duplicate edges are merged and counted.
-- 12 (v0.1) + 1 (`adopt`) CLI commands, exit codes 0/1/2/3 with an explicit
+- 16 CLI commands (v0.2 adds `import`, `expire`, `supersede`), exit codes 0/1/2/3 with an explicit
   classification table (no default branch; an unclassified error raises).
 - CI: 68 unit tests, a documentation↔code symbol gate (with mutation tests
   proving the gate can fail), and an end-to-end quickstart script.

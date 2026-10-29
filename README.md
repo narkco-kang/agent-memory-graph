@@ -190,7 +190,7 @@ src/amg/
   audit.py     legacy coverage, staleness, expiry, integrity
   migrate.py   normalize legacy `changes[]` shapes
   adopt.py     legacy graph -> amg/v1, never fabricating evidence
-  cli.py       13 commands, exit codes 0/1/2/3
+  cli.py       16 commands, exit codes 0/1/2/3
 tests/         unittest, run with `python -m unittest discover -s tests -v`
 experiments/   reproducible measurements behind the design decisions
 tools/check_doc_symbols.py  CI gate: every documented capability needs a symbol

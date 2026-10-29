@@ -9,7 +9,7 @@ from .const import EXIT_ERROR, EXIT_IO, EXIT_OK, EXIT_USAGE
 from .errors import LockTimeout, ProtocolError
 from .memory import Memory
 
-COMMANDS = ["init", "add", "import", "status", "link", "search", "digest", "check", "audit",
+COMMANDS = ["init", "add", "import", "status", "supersede", "link", "search", "digest", "check", "audit",
             "export", "doctor", "migrate", "adopt", "expire", "version"]
 
 
@@ -83,6 +83,13 @@ def cmd_status(a):
     res = m.set_status(a.id, a.new_status, note=a.note,
                        evidence=_evidence_args(a.evidence), by=a.by)
     _print(f"{res['id']}: {res['from']} -> {res['to']}", a.json)
+    return EXIT_OK
+
+
+def cmd_supersede(a):
+    m = Memory.open(a.dir)
+    res = m.supersede(a.old_id, a.new_id, note=a.note, by=a.by)
+    _print(f"{res['old']} superseded by {res['new']} (valid_until {res['valid_until']})", a.json)
     return EXIT_OK
 
 
@@ -316,6 +323,12 @@ def build_parser():
     s.add_argument("new_status"); s.add_argument("--note", required=True)
     s.add_argument("--evidence", action="append"); s.add_argument("--by", default="cli")
     s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_status)
+
+    s = sub.add_parser("supersede"); s.add_argument("dir")
+    s.add_argument("old_id"); s.add_argument("new_id")
+    s.add_argument("--note", required=True)
+    s.add_argument("--by", default="cli"); s.add_argument("--json", action="store_true")
+    s.set_defaults(func=cmd_supersede)
 
     s = sub.add_parser("link"); s.add_argument("dir"); s.add_argument("--from", dest="from_id", required=True)
     s.add_argument("--to", dest="to_id", required=True); s.add_argument("--kind", required=True)

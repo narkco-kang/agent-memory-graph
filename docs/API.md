@@ -12,6 +12,7 @@ amg import <dir> --from FILE.json                   # batch: all-or-nothing, one
                     [--valid-from ISO8601] [--valid-until ISO8601]
 amg status <dir> <id> <new-status> --note TEXT       # note required (IR-4)
 amg link   <dir> --from ID --to ID --kind KIND
+amg supersede <dir> OLD NEW --note TEXT            # keep the old node, stamp its window
 amg search <dir> "query" [--layer L1|L2|L3|L4] [--k 10] [--strict] [--json]
 amg digest <dir> [--max-bytes 65536] [--out PATH]
 amg check  <dir> [--strict] [--json]
