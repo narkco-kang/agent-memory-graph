@@ -19,6 +19,7 @@ amg export <dir> [--format json|jsonl]
 amg doctor <dir>                                     # cleans stale tmp files
 amg migrate <dir>                                    # normalizes legacy changes[]
 amg adopt  <src> <dst> [--group NAME] [--drop-dangling] [--pin-out PATH] [--dry-run]
+amg expire <dir> [--apply] [--json]                # opt-in TTL expiry (dry-run default)
 amg version
 ```
 
@@ -64,6 +65,7 @@ m.add_edge("task.x", "artifact.y", kind="produced_by")
 hits = m.search("concurrency", layer="L3", k=10)
 report = m.check(); audit = m.audit()
 adoption = Memory.adopt("./legacy-graph", "./mem", pin_out="./pin.json")
+expiry = m.expire(apply=False)   # dry-run; apply=True to supersede expired facts
 ```
 
 `Memory` is the only entry point; every write takes the lock, writes the whole
@@ -109,6 +111,19 @@ auto-expiry must refuse the node entirely (`amg.audit.expiry_eligible`): expirin
 it would delete a fact on the strength of a timestamp we never had. `audit` also
 prints a summary hint with the count of such nodes, and reports a future
 `valid_from` as "not yet valid" (a hint, not a conflict).
+
+`amg expire <dir> [--apply]` is the opt-in implementation:
+
+- **dry-run by default** — nothing is written without `--apply`;
+- only nodes whose validity window is **known**, whose `valid_until` has passed
+  and that are not already superseded;
+- the action is `status: superseded` + `superseded_at` + one `expire` change
+  record; **no node is ever deleted** (IR-1);
+- idempotent: a second `--apply` reports `applied 0` and writes nothing;
+- unknown validity is skipped and counted, so an adopted graph has **zero**
+  eligible nodes by construction;
+- exit `0`; the report lists eligible ids and the
+  `applied` / `skipped_unknown_validity` / `already_superseded` counts.
 
 Supplying `valid_until` without `valid_from` is accepted but stays
 `valid_time_known: false`, so it cannot trigger an expiry conflict — pass both

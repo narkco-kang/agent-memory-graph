@@ -10,7 +10,7 @@ from .errors import LockTimeout, ProtocolError
 from .memory import Memory
 
 COMMANDS = ["init", "add", "status", "link", "search", "digest", "check", "audit",
-            "export", "doctor", "migrate", "adopt", "version"]
+            "export", "doctor", "migrate", "adopt", "expire", "version"]
 
 
 def _evidence_args(values):
@@ -235,6 +235,25 @@ def cmd_adopt(a):
     return EXIT_OK if rep["check"]["ok"] else EXIT_ERROR
 
 
+def cmd_expire(a):
+    m = Memory.open(a.dir)
+    rep = m.expire(apply=a.apply)
+    if a.json:
+        print(json.dumps(rep, ensure_ascii=False, indent=2))
+    else:
+        mode = "apply" if a.apply else "dry-run"
+        print(f"expire ({mode}) {os.path.abspath(a.dir)}")
+        listed = ", ".join(rep["eligible"][:5]) or "—"
+        more = "" if len(rep["eligible"]) <= 5 else f" (+{len(rep['eligible']) - 5} more)"
+        print(f"  eligible {len(rep['eligible'])}: {listed}{more}")
+        print(f"  applied {rep['applied']} | skipped (unknown validity) "
+              f"{rep['skipped_unknown_validity']} | already superseded "
+              f"{rep['already_superseded']} | rev {rep['rev']}")
+        if not a.apply:
+            print("  dry-run: nothing written (use --apply to expire)")
+    return EXIT_OK
+
+
 def cmd_version(a):
     print(f"amg {__version__}")
     return EXIT_OK
@@ -309,6 +328,12 @@ def build_parser():
     s.add_argument("--pin-out", help="write the legacy exemption pin for `amg audit --pin`")
     s.add_argument("--dry-run", action="store_true", help="report only, write nothing")
     s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_adopt)
+
+    s = sub.add_parser("expire", help="supersede nodes whose known validity window ended")
+    s.add_argument("dir")
+    s.add_argument("--apply", action="store_true",
+                   help="write the expiry (default is a dry-run that writes nothing)")
+    s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_expire)
 
     s = sub.add_parser("version"); s.set_defaults(func=cmd_version)
     return p

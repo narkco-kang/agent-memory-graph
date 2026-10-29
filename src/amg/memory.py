@@ -8,6 +8,7 @@ from . import protocol
 from . import retrieval
 from .const import EDGE_KINDS, NODE_TYPES, SCHEMA, STATUSES, now, parse_ts
 from .errors import ProtocolError
+from .audit import expiry_eligible
 from .gate import enforce_conclusion, validate_evidence
 from .store import Store
 
@@ -26,6 +27,12 @@ def _empty(group: str, goal: str = "") -> dict:
         "edges": [],
         "changes": [],
     }
+
+
+def _validity_ended(node: dict, at) -> bool:
+    """True when a parseable `valid_until` is at or before `at`."""
+    end = parse_ts(node.get("valid_until"))
+    return end is not None and end <= at
 
 
 class Memory:
@@ -200,6 +207,60 @@ class Memory:
             self._log(doc, "supersede", old_id, f"superseded by {new_id}: {note}", by)
             self._commit(doc, commit)
             return {"old": old_id, "new": new_id, "valid_until": stamp}
+
+    def expire(self, apply: bool = False, by: str = "amg expire") -> dict:
+        """Supersede nodes whose *known* validity window has ended.
+
+        Dry-run by default: nothing is written unless `apply=True`. Expiry never
+        deletes a node — it sets `status="superseded"`, stamps `superseded_at`
+        and appends one `expire` change record per node, so the action is
+        visible in L2 history. Nodes whose validity window is unknown
+        (`valid_time_known: false`, e.g. everything `amg adopt` migrated) are
+        skipped and counted: an undated fact can never be auto-expired.
+
+        Idempotent: a second `apply=True` run finds nothing eligible.
+        """
+        with self.store.transaction() as (doc, commit):
+            stamp = now()
+            at = parse_ts(stamp)
+            eligible, skipped_unknown, already = [], 0, 0
+            for node in doc["nodes"]:
+                if node.get("status") == "superseded":
+                    already += 1
+                    continue
+                ended = _validity_ended(node, at)
+                if not expiry_eligible(node):
+                    if ended:
+                        skipped_unknown += 1
+                    continue
+                if ended:
+                    eligible.append(node["id"])
+            report = {
+                "dry_run": not apply,
+                "eligible": eligible,
+                "applied": 0,
+                "skipped_unknown_validity": skipped_unknown,
+                "already_superseded": already,
+                "rev": int(doc.get("rev", 0)),
+            }
+            if not apply or not eligible:
+                self._doc = doc
+                return report
+            new_rev = int(doc.get("rev", 0)) + 1
+            for node_id in eligible:
+                node = self._node(doc, node_id)
+                node["status"] = "superseded"
+                node["superseded_at"] = stamp
+                node["updatedAt"] = stamp
+                doc["changes"].append({
+                    "at": stamp, "by": by, "op": "expire", "target": node_id,
+                    "rev": new_rev,
+                    "note": f"valid_until {node.get('valid_until')} passed (auto-expiry)",
+                })
+            self._commit(doc, commit)
+            report["applied"] = len(eligible)
+            report["rev"] = new_rev
+            return report
 
     # ---------- reads ----------
     def search(self, query: str, layer: str = "L3", k: int = 10, strict: bool = False):

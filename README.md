@@ -123,6 +123,19 @@ amg add ./mem --id task.y --type task --label "migration approved" --source "rev
 - expiry only ever fires when the validity window is known
   (`amg.audit.expiry_eligible`) — an unknown window is reported as a hint.
 
+## Automatic expiry is opt-in
+
+```bash
+amg expire ./mem            # dry-run: reports what would expire, writes nothing
+amg expire ./mem --apply    # supersedes expired facts, keeps them in history
+```
+
+Only facts with a **known** validity window can expire. The action marks them
+`superseded` and appends an `expire` record — no node is deleted, and running it
+twice changes nothing. Facts with unknown validity (everything `amg adopt`
+migrates) are skipped and counted, so adoption can never trigger mass expiry.
+There is no background scheduler: expiry happens when you run the command.
+
 ## Retrieval (v0.1: lexical only)
 
 `amg search ./mem "…" --layer L1|L2|L3|L4 --k 10 [--strict]`
@@ -141,8 +154,10 @@ most of the memory. (Superseded filtering is a different rule and is not
 optional; `--strict` does not re-enable expired facts.)
 
 **Not implemented in v0.1** (planned, and documented as such): vector / embedding
-search, MCP server, authentication, multi-tenant isolation, TTL auto-expiry,
-Windows file locking, and any 10k-node benchmark. Do not assume them.
+search, MCP server, authentication, multi-tenant isolation, a TTL scheduler
+(`amg expire` is an explicit opt-in command; nothing expires in the
+background), Windows file locking, and any 10k-node benchmark above 1,063 nodes.
+Do not assume them.
 
 One rule is enforced *before* that feature exists: adopted nodes carry
 `valid_time_known: false`, and expiry must refuse them (`amg.audit.expiry_eligible`)

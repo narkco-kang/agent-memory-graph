@@ -29,6 +29,16 @@ CLI surface changes, so the next release is 0.2.0.
 - Nodes written by 0.1.0 keep their stored `valid_from`; the change affects new
   writes only.
 
+### Added (opt-in expiry)
+
+- `amg expire <dir> [--apply]` and `Memory.expire(apply=False)`: explicit,
+  opt-in TTL expiry. **Dry-run by default** (writes nothing); only nodes with a
+  known validity window whose `valid_until` has passed and that are not already
+  superseded; the action is `status: superseded` + `superseded_at` + one
+  `expire` change record — **no node is ever deleted**; idempotent (second
+  `--apply` = 0 changes); unknown validity is skipped and counted, so a migrated
+  graph has zero eligible nodes. No background scheduler exists.
+
 ### Enforced, not just documented
 
 - Expiry still requires a **known** validity window (`amg.audit.expiry_eligible`);
