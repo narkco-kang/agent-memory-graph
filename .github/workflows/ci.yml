@@ -17,5 +17,7 @@ jobs:
         run: python -m unittest discover -s tests -v
       - name: doc/code symbol gate
         run: python tools/check_doc_symbols.py README.md docs/API.md
-      - name: end-to-end example
-        run: bash examples/quickstart.sh
+      - name: end-to-end examples
+        run: |
+          bash examples/quickstart.sh
+          bash examples/lifecycle.sh
