@@ -34,7 +34,7 @@ def make_node(i, with_evidence=True):
     return node
 
 
-def build(path, n):
+def build(path, n, edges_per_node=0):
     os.makedirs(path, exist_ok=True)
     # 2 change records per node, matching the ratio of the real graph we migrated
     changes = []
@@ -46,7 +46,10 @@ def build(path, n):
                             "note": f"synthetic change {i}.{k}"})
     doc = {"schema": "amg/v1", "group": "bench", "session": "", "goal": "bench",
            "updatedAt": now(), "rev": 2 * n, "nodes": [make_node(i) for i in range(n)],
-           "edges": [], "changes": changes}
+           "edges": [{"from": f"task.n{i:06d}", "to": f"task.n{(i * 7 + 3) % n:06d}",
+                      "kind": "relates_to"}
+                     for i in range(n) for _ in range(edges_per_node)],
+           "changes": changes}
     with open(os.path.join(path, "graph.json"), "w", encoding="utf-8") as fh:
         json.dump(doc, fh, ensure_ascii=False)
     return path
@@ -63,14 +66,14 @@ def timed(fn, repeat=3):
 
 def main():
     rows = []
-    for n in (1000, 5000, 10000):
-        path = build(os.path.join(tempfile.mkdtemp(prefix="amg-bench-"), "mem"), n)
+    for n, epn in ((1000, 0), (1000, 1), (5000, 1), (10000, 0), (10000, 1)):
+        path = build(os.path.join(tempfile.mkdtemp(prefix="amg-bench-"), "mem"), n, epn)
         t_check = timed(lambda: Memory.open(path).check())
         t_audit = timed(lambda: Memory.open(path).audit())
         t_search = timed(lambda: Memory.open(path).search("parser queue", k=10))
         t_digest = timed(lambda: Memory.open(path).digest(max_bytes=65536))
         size = os.path.getsize(os.path.join(path, "graph.json"))
-        rows.append({"nodes": n, "file_bytes": size, "check_ms": round(t_check, 1),
+        rows.append({"nodes": n, "edges": n * epn, "file_bytes": size, "check_ms": round(t_check, 1),
                      "audit_ms": round(t_audit, 1), "search_ms": round(t_search, 1),
                      "digest_ms": round(t_digest, 1)})
         print(rows[-1])

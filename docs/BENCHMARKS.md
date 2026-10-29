@@ -5,16 +5,19 @@ Reproduce with `PYTHONPATH=src python3 benchmarks/bench.py` (it writes
 `benchmarks/result.json`).
 
 The dataset is **synthetic but schema-shaped like a real graph**: 2 change
-records per node (the real graph we migrated had 2,048 changes for 1,027 nodes),
-one evidence object per node, and no edges.
+records per node (the real graph we migrated had 2,048 changes for 1,027 nodes)
+and one evidence object per node. Edge density is varied explicitly, because
+edges turned out to matter less than expected — see below.
 
 ## Read paths (median of 3, in-process)
 
-| nodes | file | `check` | `audit` | `search` L3 | `digest` (64 KiB) |
-|---|---|---|---|---|---|
-| 1,000 | 0.86 MB | 5.6 ms | 5.0 ms | 5.6 ms | 5.6 ms |
-| 5,000 | 4.32 MB | 28.0 ms | 28.0 ms | 30.7 ms | 27.5 ms |
-| 10,000 | 8.65 MB | 59.8 ms | 58.7 ms | 73.9 ms | 59.4 ms |
+| nodes | edges | file | `check` | `audit` | `search` L3 | `digest` (64 KiB) |
+|---|---|---|---|---|---|---|
+| 1,000 | 0 | 0.86 MB | 5.5 ms | 5.3 ms | 5.3 ms | 5.3 ms |
+| 1,000 | 1,000 | 0.93 MB | 6.2 ms | 5.9 ms | 6.2 ms | 5.5 ms |
+| 5,000 | 5,000 | 4.67 MB | 33.1 ms | 29.6 ms | 32.3 ms | 29.9 ms |
+| 10,000 | 0 | 8.65 MB | 58.6 ms | 57.1 ms | 75.7 ms | 58.1 ms |
+| 10,000 | 10,000 | 9.35 MB | 65.5 ms | 63.2 ms | 83.5 ms | 62.9 ms |
 
 Read paths are linear in the number of nodes and changes, and at 10k they stay
 under 100 ms. `digest` output is bounded by its byte budget (65,536 B), not by
@@ -36,6 +39,12 @@ about **6–7 minutes** to ingest 10,000 nodes one `add_node` at a time. This is
 computed extrapolation from the measured linear per-write cost at 1k/5k, *not* a
 measured end-to-end run. The fix is a batch API (one load, N appends, one write),
 not a faster serializer.
+
+Edges add roughly 10% to the read paths — and only because `check`/`audit`
+validate their endpoints. **There is no traversal API and no relationship-aware
+retrieval**, so there is no traversal latency to report. In other words: the
+edges are stored, validated and counted, but never walked. That is a gap, not a
+performance result (tracked as an open issue).
 
 ## Not measured
 
