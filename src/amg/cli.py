@@ -186,13 +186,19 @@ def cmd_audit(a):
 
 
 def cmd_mcp(a):
-    """Serve the graph over stdio as an MCP server. No socket, no auth."""
+    """Serve the graph over stdio as an MCP server. No socket, no auth.
+
+    `--read-only` is enforced twice on purpose: the server refuses the write
+    tools before dispatch, and the `Memory` instance refuses every commit. The
+    second layer is what makes the guarantee independent of the tool list.
+    """
     from . import mcp as mcp_mod
-    m = Memory.open(a.dir)
+    m = Memory.open(a.dir, read_only=a.read_only)
+    mode = "read-only" if a.read_only else "read-write"
     sys.stderr.write(f"amg mcp: serving {os.path.abspath(a.dir)} over stdio "
-                     f"(no network, no auth)\n")
+                     f"(no network, no auth, {mode})\n")
     sys.stderr.flush()
-    return mcp_mod.serve(m)
+    return mcp_mod.serve(m, read_only=a.read_only)
 
 
 def cmd_export(a):
@@ -239,6 +245,9 @@ USAGE_EXIT_CODES = frozenset({
     # adopt-specific (added with the adoption tool; they mean "wrong input",
     # not "bad content"): pointing adopt at an already-amg graph
     "E_ALREADY_AMG",
+    # read-only mode: the caller addressed a capability this session does not
+    # have (same class as E_ALREADY_AMG), not a violation of graph content
+    "E_READ_ONLY",
 })
 ERROR_EXIT_CODES = frozenset({
     "E_NO_SOURCE", "E_NOTE_REQUIRED", "E_EVIDENCE_MISSING", "E_EVIDENCE_FORMAT",
@@ -385,7 +394,10 @@ def build_parser():
     s = sub.add_parser("audit"); s.add_argument("dir"); s.add_argument("--pin")
     s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_audit)
 
-    s = sub.add_parser("mcp"); s.add_argument("dir"); s.set_defaults(func=cmd_mcp)
+    s = sub.add_parser("mcp"); s.add_argument("dir")
+    s.add_argument("--read-only", action="store_true", dest="read_only",
+                   help="refuse write tools; the graph cannot be modified through this session")
+    s.set_defaults(func=cmd_mcp)
 
     s = sub.add_parser("export"); s.add_argument("dir"); s.add_argument("--format", default="json",
                                                                         choices=["json", "jsonl"])

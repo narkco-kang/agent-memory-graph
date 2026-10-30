@@ -14,6 +14,12 @@ Only the latest release receives fixes. This is a v0.x project.
 - `amg mcp` serves the graph over **stdio** to a local MCP client, with no
   authentication of any kind: starting the process grants full read/write. Treat
   it as a local trusted tool, not as a service.
+- `amg mcp --read-only` (or `Memory.open(dir, read_only=True)`) refuses writes:
+  `E_READ_ONLY` at the tool layer and again at the single commit choke point.
+  This bounds one session's blast radius; it is **not** authentication, and it
+  does not stop another process from writing the file. The full analysis,
+  including what is explicitly out of scope, is in
+  [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md).
 - With `--audit-read`, `reads.jsonl` records query text for high-risk reads. It
   is plain text and rotated, not encrypted: do not treat it as a secret store.
 - Do not run it on a shared host with untrusted users, and do not expose the file

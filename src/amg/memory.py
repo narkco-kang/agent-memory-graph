@@ -38,9 +38,12 @@ def _validity_ended(node: dict, at) -> bool:
 
 
 class Memory:
-    def __init__(self, store: Store, doc: dict):
+    def __init__(self, store: Store, doc: dict, read_only: bool = False):
         self.store = store
         self._doc = doc
+        # Read-only is enforced at the single write choke point (`_commit`), not
+        # by each caller, so a new mutating method cannot forget to check it.
+        self.read_only = read_only
 
     # ---------- lifecycle ----------
     @classmethod
@@ -54,9 +57,15 @@ class Memory:
         return cls(store, doc)
 
     @classmethod
-    def open(cls, path: str) -> "Memory":
+    def open(cls, path: str, read_only: bool = False) -> "Memory":
+        """Load an existing graph.
+
+        With `read_only=True` every mutation raises `E_READ_ONLY` before any
+        byte is written. Opening never creates the directory or the file, so a
+        read-only open of a missing graph is `E_NO_GRAPH` and leaves no trace.
+        """
         store = Store(path)
-        return cls(store, store.read())
+        return cls(store, store.read(), read_only=read_only)
 
     @classmethod
     def adopt(cls, src: str, dst: str, group: str = None, drop_dangling: bool = False,
@@ -89,6 +98,10 @@ class Memory:
         return change
 
     def _commit(self, doc: dict, commit) -> None:
+        if self.read_only:
+            raise ProtocolError(
+                "E_READ_ONLY",
+                f"refusing to write {self.store.file}: this instance was opened read-only")
         commit()
         self._doc = doc
 

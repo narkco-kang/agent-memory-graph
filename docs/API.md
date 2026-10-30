@@ -19,7 +19,7 @@ amg digest <dir> [--max-bytes 65536] [--out PATH]
 amg check  <dir> [--strict] [--json]
 amg audit  <dir> [--pin baseline.json] [--json]
 amg export <dir> [--format json|jsonl]
-amg mcp   <dir>                                     # MCP server over stdio (no network)
+amg mcp   <dir> [--read-only]                        # MCP server over stdio (no network)
 amg doctor <dir>                                     # cleans stale tmp files
 amg migrate <dir>                                    # normalizes legacy changes[]
 amg adopt  <src> <dst> [--group NAME] [--drop-dangling] [--pin-out PATH] [--dry-run]
@@ -50,10 +50,14 @@ fail loudly instead of guessing, and `tests/test_exit_codes.py` scans
 
 | exit | codes | meaning |
 |---|---|---|
-| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
+| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
 | `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* | the evidence gate rejected the content, or the graph would break an invariant |
 | `0` | — | success / clean `check` / clean `audit` |
 | `3` | — | lock timeout or IO failure (not a `ProtocolError`) |
+
+`E_READ_ONLY` is `2` and not `1`: asking a read-only session to write is the
+caller addressing a capability that session does not have (the same class as
+`E_ALREADY_AMG`), not graph content violating the protocol.
 
 `*` adopt-specific codes: `E_ALREADY_AMG` means `adopt` was pointed at an
 `amg/v1` graph (wrong target); `E_ADOPT_UNSUPPORTED` / `E_ADOPT_DANGLING` mean
@@ -87,6 +91,14 @@ eight tools: `memory_search`, `memory_add`, `memory_status`, `memory_supersede`,
 - **no authentication.** Whoever can start the process can read and write the
   graph. It is a local, trusted, single-user tool; do not wrap it in a network
   transport without adding an authorization layer first.
+- **`--read-only`** refuses the write tools (`E_READ_ONLY`, returned as
+  `isError: true`) and advertises only the five read tools. The guarantee is
+  enforced twice: the server refuses before dispatch, and the underlying
+  `Memory` refuses every commit — so a tool added later cannot silently reopen
+  the write path. Tested by hashing `graph.json` before and after a session that
+  attempts every write tool (`tests/test_readonly.py`). It does **not**
+  authenticate the client and does not stop another process from writing the
+  file: see [THREAT-MODEL.md](THREAT-MODEL.md) §5.
 - stdout carries protocol frames only; diagnostics go to stderr.
 
 ## Read-side audit (opt-in, v0.3)
@@ -107,6 +119,7 @@ and are not logged.
 from amg import Memory, ProtocolError, LockTimeout
 
 m = Memory.open("./mem")          # Memory.init("./mem", group="t")
+ro = Memory.open("./mem", read_only=True)   # every write raises E_READ_ONLY
 m.add_node(id="task.x", type="task", label="do X", source="group:t 2026-10-29")
 m.add_node(id="task.y", type="task", label="do Y", source="plan",
            valid_from="2026-01-15T09:30:00+08:00")   # fact time, optional

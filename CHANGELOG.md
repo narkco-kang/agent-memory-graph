@@ -16,12 +16,26 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
 - **Windows and macOS are tested, not assumed**: CI runs the suite on
   `ubuntu-latest`, `macos-latest` and `windows-latest`; the lock has a `msvcrt`
   implementation with a cross-process exclusivity test.
+- **Read-only mode** (`amg mcp <dir> --read-only`, `Memory.open(dir, read_only=True)`):
+  write tools are refused with `E_READ_ONLY` before dispatch, only the five read
+  tools are advertised, and the underlying `Memory` refuses every commit, so the
+  guarantee does not depend on the tool list staying correct. Verified by a
+  digest-before/after test that attempts every write tool.
+- `docs/THREAT-MODEL.md`: assets, trust boundaries, actor model, threat table,
+  what read-only does not cover, and the accepted risks (no tamper evidence,
+  read tools unthrottled, same-user file access).
 - `docs/SCHEDULING.md`: cron/systemd usage, rollback, and why there is no daemon.
 
 ### Fixed
 
 - Windows: cp1252 console crashed on status glyphs; directory `fsync` raised
   `PermissionError` on non-POSIX filesystems.
+
+### Notes
+
+- `E_READ_ONLY` is classified as exit `2` (wrong call), not `1` (bad content):
+  the same class as `E_ALREADY_AMG`. The exit-code table has no default, so an
+  unclassified code still fails loudly.
 
 ## [0.2.0] — 2026-10-30
 

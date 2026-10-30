@@ -254,6 +254,14 @@ through the same library entry points, so the evidence gate applies unchanged.
 **There is no authentication**: whoever can start the process can read and write
 the graph. Do not put a network transport in front of it without authorization.
 
+`amg mcp <dir> --read-only` refuses the write tools and advertises only the five
+read tools. It is enforced twice — the server refuses before dispatch, and the
+`Memory` instance refuses every commit — so an agent that was told by page
+content to "remember this" cannot write through the session it was given. It is
+a blast-radius limit for one session, not authentication: it does not stop a
+second process, and it does not stop disclosure. See
+[docs/THREAT-MODEL.md](docs/THREAT-MODEL.md).
+
 ## Read-side audit (opt-in)
 
 Writes are always logged in `changes[]`; reads are not, unless you ask for it.
@@ -276,7 +284,8 @@ server, auth/multi-tenancy, read-side audit, expiry scheduler, Windows locking,
 edge benchmarks). See [CONTRIBUTING.md](CONTRIBUTING.md) for the rules — the
 short version is: docs must equal code, no unverified claims, never fabricate an
 evidence hash. Security posture: local single-tenant file store, **no auth**, no
-network — see [SECURITY.md](SECURITY.md).
+network — see [SECURITY.md](SECURITY.md) and [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md)
+(assets, actors, what read-only does and does not cover, accepted risks).
 
 ## License
 

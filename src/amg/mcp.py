@@ -8,6 +8,10 @@ Design constraints, on purpose:
   uses, so the evidence gate, IR-2 and IR-4 apply unchanged.
 - **no authentication**, therefore: local, trusted, single user. This is stated
   in the README and in SECURITY.md rather than implied.
+- **optional read-only mode.** `--read-only` refuses the write tools before
+  dispatch (and the underlying `Memory` refuses every commit anyway), so a
+  prompt-injected client cannot mutate the graph through this server. It does
+  not protect the file from other processes: see docs/THREAT-MODEL.md.
 
 stdout carries protocol messages only; anything diagnostic goes to stderr, so a
 client never sees a corrupted frame.
@@ -16,9 +20,23 @@ import json
 import sys
 
 from . import __version__
+from .errors import ProtocolError
 
 PROTOCOL_VERSION = "2025-06-18"
 SERVER_INFO = {"name": "amg", "version": __version__}
+
+# Every advertised tool must land in exactly one of these sets (a test asserts
+# the partition is complete), so a new tool cannot be added without deciding
+# whether `--read-only` may expose it.
+READ_TOOLS = frozenset({
+    "memory_search", "memory_related", "memory_check", "memory_audit", "memory_digest",
+})
+WRITE_TOOLS = frozenset({"memory_add", "memory_status", "memory_supersede"})
+
+READ_ONLY_INSTRUCTIONS = (
+    "read-only: this server refuses memory_add, memory_status and memory_supersede. "
+    "The graph file cannot be modified through this session."
+)
 
 TOOLS = [
     {
@@ -96,7 +114,18 @@ class JsonRpcError(Exception):
         super().__init__(message)
 
 
-def _call_tool(memory, name: str, args: dict):
+def tools(read_only: bool = False):
+    """Advertised tool list. Hiding write tools is UX, not enforcement."""
+    if not read_only:
+        return TOOLS
+    return [t for t in TOOLS if t["name"] in READ_TOOLS]
+
+
+def _call_tool(memory, name: str, args: dict, read_only: bool = False):
+    if read_only and name in WRITE_TOOLS:
+        raise ProtocolError(
+            "E_READ_ONLY",
+            f"{name} is not available: this server was started read-only")
     if name == "memory_search":
         return memory.search(args["query"], layer=args.get("layer", "L3"),
                              k=args.get("k", 10), strict=args.get("strict", False),
@@ -123,22 +152,23 @@ def _call_tool(memory, name: str, args: dict):
     raise JsonRpcError(-32601, f"unknown tool: {name}")
 
 
-def handle(memory, message: dict) -> dict:
+def handle(memory, message: dict, read_only: bool = False) -> dict:
     """Handle one JSON-RPC message. Returns a response dict or None for notifications."""
     method = message.get("method")
     msg_id = message.get("id")
     if msg_id is None and method and method.startswith("notifications/"):
         return None
     if method == "initialize":
-        return {"jsonrpc": "2.0", "id": msg_id, "result": {
-            "protocolVersion": PROTOCOL_VERSION,
-            "capabilities": {"tools": {"listChanged": False}},
-            "serverInfo": SERVER_INFO,
-        }}
+        result = {"protocolVersion": PROTOCOL_VERSION,
+                  "capabilities": {"tools": {"listChanged": False}},
+                  "serverInfo": SERVER_INFO}
+        if read_only:
+            result["instructions"] = READ_ONLY_INSTRUCTIONS
+        return {"jsonrpc": "2.0", "id": msg_id, "result": result}
     if method == "ping":
         return {"jsonrpc": "2.0", "id": msg_id, "result": {}}
     if method == "tools/list":
-        return {"jsonrpc": "2.0", "id": msg_id, "result": {"tools": TOOLS}}
+        return {"jsonrpc": "2.0", "id": msg_id, "result": {"tools": tools(read_only)}}
     if method == "tools/call":
         params = message.get("params") or {}
         name = params.get("name")
@@ -146,7 +176,7 @@ def handle(memory, message: dict) -> dict:
         if not name:
             raise JsonRpcError(-32602, "params.name is required")
         try:
-            result = _call_tool(memory, name, args)
+            result = _call_tool(memory, name, args, read_only=read_only)
         except Exception as exc:  # protocol violations are reported as tool errors
             return {"jsonrpc": "2.0", "id": msg_id, "result": {
                 "content": [{"type": "text", "text": f"{type(exc).__name__}: {exc}"}],
@@ -157,7 +187,7 @@ def handle(memory, message: dict) -> dict:
     raise JsonRpcError(-32601, f"unknown method: {method}")
 
 
-def serve(memory, stdin=None, stdout=None) -> int:
+def serve(memory, stdin=None, stdout=None, read_only: bool = False) -> int:
     stdin = stdin or sys.stdin
     stdout = stdout or sys.stdout
     for raw in stdin:
@@ -173,7 +203,7 @@ def serve(memory, stdin=None, stdout=None) -> int:
             stdout.flush()
             continue
         try:
-            response = handle(memory, message)
+            response = handle(memory, message, read_only=read_only)
         except JsonRpcError as exc:
             response = {"jsonrpc": "2.0", "id": message.get("id"),
                         "error": {"code": exc.code, "message": exc.message}}
