@@ -19,6 +19,33 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.7.2 — 2026-10-30
+
+Status: **released**. No library change. Adds a runnable MCP client, ships Python
+examples in the sdist, and completes the install matrix (macOS, and 3.10 on two
+platforms).
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 190 tests ×4 + `package` ×5 (ubuntu/macos/windows 3.12, ubuntu/windows 3.10) |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` |
+| 3 | Examples run | ✅ quickstart, lifecycle **and the new `examples/mcp_client.py`**, in CI |
+| 4 | Every "not implemented" claim re-run against code | ✅ unchanged set; no library code touched |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.7.2" — identical to 0.7.1 |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.7.2 everywhere |
+| 7 | Artifacts built, inspected, installed | ✅ `check_dist.py` clean (now requires the example); wheel installed on five cells; sdist's own 190 tests pass inside the archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.7.2` |
+
+### What the client example proves that the tests did not
+
+`tests/test_mcp.py` drives the handler directly with synthetic frames. The example
+spawns the real server as a subprocess and speaks to it over pipes, so it also
+covers process startup, stdio framing, and shutdown. It is deliberately able to
+fail: step 3 asserts the *refusal* of an evidence-free write, so a regression that
+lets MCP bypass the gate fails the build.
+
+---
+
 ## v0.7.1 — 2026-10-30
 
 Status: **released**. A packaging release: the sdist now contains everything its

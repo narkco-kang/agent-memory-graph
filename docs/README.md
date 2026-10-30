@@ -36,6 +36,9 @@ important — **which ones are contracts and which are proposals**.
 3. **[`SCHEDULING.md`](SCHEDULING.md)** — expiry is an explicit command by design;
    this page has copy-paste cron and systemd timer entries, plus when a daemon
    would actually be justified.
+4. **`../examples/mcp_client.py`** — a working MCP client: handshake, tool
+   inventory, a gated write refused, read-only enforced. Run it to see the
+   protocol rather than read about it.
 
 ## If you are changing the storage layer
 

@@ -3,6 +3,42 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.7.2] — 2026-10-30
+
+**No library change**; `src/amg/` differs only in the version string. This release
+adds the first end-to-end proof that another process can actually use the MCP
+server, and closes the last install-matrix gap.
+
+### Added
+
+- **`examples/mcp_client.py`** — a working MCP client in the standard library only.
+  It starts `amg mcp` twice and asserts, end to end: the handshake returns the
+  server's identity; `tools/list` advertises exactly the eight documented tools; an
+  evidence-free `done` write is **refused over JSON-RPC** (`E_EVIDENCE_MISSING`,
+  `isError: true`) — the write gate is not a CLI feature that MCP can walk around;
+  a valid write succeeds and `memory_search` finds it; a `--read-only` server
+  advertises five tools and refuses the same write with `E_READ_ONLY`; and
+  `amg check --strict` passes on the graph the server wrote. CI runs it on every
+  push, on all four test platforms. The protocol tests check frames; this checks
+  whether the thing is usable.
+- **`examples/*.py` are shipped in the sdist** (previously only `*.sh`), and
+  `tools/check_dist.py` now requires `examples/mcp_client.py` to be present.
+
+### Changed
+
+- **The `package` job now covers macOS, and the minimum Python on two platforms**:
+  ubuntu / macos / windows on 3.12, plus ubuntu and windows on 3.10. Nine CI jobs.
+  macOS previously had only an editable install, so the wheel had never been
+  installed there either.
+
+### Not shipped in 0.7.2 (do not assume)
+
+Unchanged from 0.7.1 — the library gained nothing: no authentication /
+authorization / multi-tenancy (out of scope by decision), no vector retrieval in the
+default path (measured, rejected), no tamper *proof*, no TTL scheduler, no
+encryption at rest, no lock fairness, and history compression remains a design
+(`docs/DESIGN-HISTORY.md`), not a capability.
+
 ## [0.7.1] — 2026-10-30
 
 A packaging release: **no library behaviour changes**. It exists because the sdist

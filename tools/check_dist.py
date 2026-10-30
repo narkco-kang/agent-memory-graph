@@ -96,6 +96,7 @@ def check_sdist(path):
             "tests/test_doc_symbols.py",
             "examples/quickstart.sh",
             "examples/lifecycle.sh",
+            "examples/mcp_client.py",
             "benchmarks/bench.py",
             "experiments/retrieval_eval/run_eval.py",
             "experiments/valid_from_bias/run_experiment.py",

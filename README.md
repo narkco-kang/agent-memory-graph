@@ -292,6 +292,12 @@ a blast-radius limit for one session, not authentication: it does not stop a
 second process, and it does not stop disclosure. See
 [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md).
 
+A runnable client (standard library only) does exactly this: `python
+examples/mcp_client.py` starts the server twice, performs the handshake, compares
+the advertised tool inventory with the documented eight, proves an evidence-free
+`done` write is refused over JSON-RPC (`E_EVIDENCE_MISSING`), and shows
+`--read-only` refusing the same write with `E_READ_ONLY`. CI runs it on every push.
+
 ## Read-side audit (opt-in)
 
 Writes are always logged in `changes[]`; reads are not, unless you ask for it.
