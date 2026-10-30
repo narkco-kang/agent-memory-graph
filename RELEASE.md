@@ -1,6 +1,42 @@
-# Release checklist — v0.1.0
+# Release checklists
 
-Status: **blocked on review** (repository is private until every box is checked).
+## v0.3.0 — 2026-10-30
+
+Status: **released**. Scope: MCP server, read-only mode, threat model, Windows in
+CI, and a pre-registered retrieval evaluation.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on four jobs (ubuntu 3.12 / 3.10, macos, windows) | ✅ 156 tests, all four jobs |
+| 2 | Documentation↔code symbol gate | ✅ `README.md`, `docs/API.md`, `docs/THREAT-MODEL.md` |
+| 3 | End-to-end examples run | ✅ `examples/quickstart.sh`, `examples/lifecycle.sh` |
+| 4 | Unimplemented capabilities explicitly marked | ✅ CHANGELOG "Not shipped in 0.3.0"; THREAT-MODEL §8 |
+| 5 | Read-only guarantee verified, not just documented | ✅ digest before/after over every write tool, plus an adopted real graph |
+| 6 | Retrieval claims are measured or absent | ✅ baseline + two rejected candidates + blocked semantic arm |
+| 7 | Version, changelog, tag and release notes agree | ✅ 0.3.0 in `pyproject.toml`, `src/amg/__init__.py`, CHANGELOG, tag |
+
+### Not shipped (repeated here because it matters)
+
+- Vector retrieval: two dependency-free candidates measured, both rejected; the
+  semantic arm is blocked on embedding resources (`429`, code `1113`).
+- Authentication / multi-tenancy: read-only bounds one session, it does not
+  authenticate. Issue #4 stays open.
+- Tamper-evident history, TTL scheduler, encryption at rest: absent by design or
+  by scope, each stated in `docs/THREAT-MODEL.md` §7–§8.
+
+### Known debt carried forward
+
+- The four stale entries listed under v0.1.0 below are still stale; `audit` still
+  exits 1 on the migrated graph by design, and no `--allow-stale` escape hatch
+  exists.
+- The retrieval eval corpus has 27 nodes; nothing there says how `recall@5`
+  behaves at 10k nodes.
+
+---
+
+## v0.1.0 — 2026-10-29 (historical)
+
+Status: **released** (kept for the record; superseded by 0.2.0 and 0.3.0).
 
 ## Definition of done
 

@@ -10,5 +10,5 @@ v0.1 scope (verified on disk, not aspirational):
 from .errors import LockTimeout, ProtocolError
 from .memory import Memory
 
-__version__ = "0.2.0"
+__version__ = "0.3.0"
 __all__ = ["Memory", "ProtocolError", "LockTimeout", "__version__"]

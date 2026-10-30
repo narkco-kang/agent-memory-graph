@@ -3,7 +3,7 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
-## [Unreleased] — 0.3.0
+## [0.3.0] — 2026-10-30
 
 ### Added
 
@@ -49,6 +49,32 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
 - `E_READ_ONLY` is classified as exit `2` (wrong call), not `1` (bad content):
   the same class as `E_ALREADY_AMG`. The exit-code table has no default, so an
   unclassified code still fails loudly.
+- README corrections: it still said read-side audit and read-only were not
+  implemented, and used a `grep risk` "no matches" proof that stopped being true
+  when read-audit added `is_high_risk`. Both now describe the shipped state, and
+  the remaining design-only claims carry commands that were actually run.
+- Changelog correction: two bullets (Windows CI, read-side audit) had been
+  inserted into the already-released **0.2.0** section by mistake. Both features
+  landed after the `v0.2.0` tag, so they belong to 0.3.0 only; the 0.2.0 section
+  now matches what that tag actually contained.
+
+### Not shipped in 0.3.0 (do not assume)
+
+- **Vector / embedding retrieval.** Two zero-dependency candidates were measured
+  and both were **rejected** (paraphrase `recall@5` 0.450 / 0.550 against the
+  lexical baseline 0.750). A semantic candidate was not measurable here: the
+  available embedding API answers `429 {"code":"1113"}` and no local model is
+  installed. Retrieval is still lexical only.
+- **Authentication and multi-tenancy.** Read-only mode limits one session's blast
+  radius; it does not authenticate anyone, and there is no per-caller
+  authorization or tenant separation.
+- **Tamper-evident history.** `changes[]` is append-only by API, not
+  cryptographically. A process with file access can rewrite it undetected.
+- **TTL scheduler.** `amg expire` is an explicit command; there is no daemon and
+  no background thread.
+- **Encryption at rest.** `graph.json` is plain text by design.
+
+See `docs/THREAT-MODEL.md` section 8 for the reasoning behind the last three.
 
 ## [0.2.0] — 2026-10-30
 
@@ -57,15 +83,6 @@ edge traversal. Every claim below is measured or covered by the test suite;
 capabilities that are absent stay under **Not yet**.
 
 ### Added
-
-- **Windows and macOS support is now tested, not assumed**: CI runs the suite on
-  `ubuntu-latest`, `macos-latest` and `windows-latest`; the write lock has a
-  `msvcrt` implementation and a cross-process exclusivity test.
-
-- **Read-side audit (opt-in)**: `--audit-read` on `search` / `related` records
-  high-risk reads (L4 rules, strict queries, results touching superseded nodes)
-  to a bounded, rotated `reads.jsonl`. Deliberately not written into `changes[]`,
-  which is the write ledger and can never be rotated.
 
 - **Explicit fact time**: `amg add --valid-from ISO8601 [--valid-until ISO8601]`
   and `Memory.add_node(valid_from=…, valid_until=…)`. Values are stored verbatim;
@@ -129,7 +146,7 @@ capabilities that are absent stay under **Not yet**.
 ### Not yet (do not assume)
 
 - Vector / embedding retrieval (lexical only).
-- MCP server, authentication, multi-tenancy.
+- MCP server, authentication, multi-tenancy, read-side audit logging.
 - Background expiry scheduling. `valid_until` is only acted on by `amg expire`.
 - Concurrency stress beyond the advisory lock; graphs above 10,000 nodes.
 - Python 3.10/3.12 are exercised in CI only; local runs used 3.15.

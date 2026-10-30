@@ -138,7 +138,7 @@ twice changes nothing. Facts with unknown validity (everything `amg adopt`
 migrates) are skipped and counted, so adoption can never trigger mass expiry.
 There is no background scheduler: expiry happens when you run the command.
 
-## Retrieval (v0.1: lexical only)
+## Retrieval (lexical only)
 
 `amg search ./mem "…" --layer L1|L2|L3|L4 --k 10 [--strict]`
 
@@ -155,7 +155,8 @@ only 22–36% of lexical hits had anchors, so hard-filtering by default would hi
 most of the memory. (Superseded filtering is a different rule and is not
 optional; `--strict` does not re-enable expired facts.)
 
-**Not implemented in v0.1** (planned, and documented as such): vector / embedding
+**Not implemented** (planned, measured against a pre-registered bar, and so far
+rejected — see `experiments/retrieval_eval/`): vector / embedding
 search, MCP server, authentication, multi-tenant isolation, a TTL scheduler
 (`amg expire` is an explicit opt-in command; nothing expires in the
 background), Windows file locking, and any 10k-node benchmark above 1,063 nodes.
@@ -225,18 +226,26 @@ the authority face, expiry as a first-class citizen, and write-back discipline a
 a hard gate. Each of the three exists as code with tests. None of the three is
 new on its own — Letta MemFS, Graphiti and CrewAI cover parts of it.
 
-Two further ideas are **design only in v0.1, and neither is implemented**: hard
+Two further ideas are **design only, and neither is implemented**: hard
 authorization kept separate from graded trust, and evidence requirements scaling
 with action risk. Do not read them as features:
 
 ```bash
-grep -rnE "authoriz|permission|read_only" src/amg/   # no matches
-grep -rn "risk" src/amg/                             # no matches
+grep -rniE "authoriz|permission" --include=*.py src/amg/   # no matches
+grep -rn "risk" --include=*.py src/amg/
+# only readaudit.is_high_risk and its two call sites: that classifies *reads*,
+# it does not scale write requirements by the risk of the action
 ```
 
-Read-side audit ("who read what") is likewise not implemented in v0.1, and is
-not claimed as novel: independent verification found no prior implementation in
-the five projects checked, but "no precedent" is not a shipped capability.
+Read-only mode *is* implemented (`--read-only`), but it is a blast-radius limit
+for one session, not the authorization idea above: it does not authenticate a
+caller, and anyone who can start a process can still write the file. The
+distinction is the point — see [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) §5.
+
+Read-side audit ("who read what") is implemented as an opt-in flag
+(`--audit-read` records high-risk reads to a rotated `reads.jsonl`). It is not
+claimed as novel: independent verification found no prior implementation in the
+five projects checked, but "no precedent" is not a shipped capability.
 
 ## Edges
 
