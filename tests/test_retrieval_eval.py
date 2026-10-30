@@ -33,13 +33,20 @@ def usable_candidates(doc):
         out[name] = cand
     return out
 
+# v0.14.0 moved these on purpose (word-boundary + inflection matching, identifier
+# lookups; DECISIONS #25). Previous values, kept for audit rather than overwritten:
+#   overall  r@1 0.654  r@5 0.865  r@10 0.904  mrr 0.744
+#   keyword  r@1 0.812  r@5 0.938  r@10 1.000
+#   paraphrase r@1 0.400 r@5 0.750 r@10 0.750
+# The per-query analysis of what moved and why is in
+# experiments/retrieval_precision/PREREGISTRATION.md.
 BASELINE = {
-    "overall": {"recall@1": 0.654, "recall@5": 0.865, "recall@10": 0.904, "mrr@10": 0.744},
-    "keyword": {"recall@1": 0.812, "recall@5": 0.938, "recall@10": 1.0},
-    "paraphrase": {"recall@1": 0.4, "recall@5": 0.75, "recall@10": 0.75},
-    "paraphrase-H1": {"recall@5": 0.7},
-    "paraphrase-H2": {"recall@5": 0.8},
-    "keyword-H1": {"recall@5": 0.875},
+    "overall": {"recall@1": 0.654, "recall@5": 0.808, "recall@10": 0.865, "mrr@10": 0.763},
+    "keyword": {"recall@1": 0.875, "recall@5": 0.969, "recall@10": 0.969},
+    "paraphrase": {"recall@1": 0.3, "recall@5": 0.55, "recall@10": 0.7},
+    "paraphrase-H1": {"recall@5": 0.5},
+    "paraphrase-H2": {"recall@5": 0.6},
+    "keyword-H1": {"recall@5": 0.938},
     "keyword-H2": {"recall@5": 1.0},
 }
 
@@ -150,16 +157,16 @@ class CandidateTests(unittest.TestCase):
 
     def test_verdict_rejects_a_regression_and_accepts_a_clean_gain(self):
         baseline = {"paraphrase-H1": {"recall@5": 0.7}, "paraphrase-H2": {"recall@5": 0.8},
-                    "keyword-H1": {"recall@5": 0.875}, "keyword-H2": {"recall@5": 1.0}}
+                    "keyword-H1": {"recall@5": 0.938}, "keyword-H2": {"recall@5": 1.0}}
         worse = {"paraphrase-H1": {"recall@5": 0.3}, "paraphrase-H2": {"recall@5": 0.6},
-                 "keyword-H1": {"recall@5": 0.875}, "keyword-H2": {"recall@5": 0.9}}
+                 "keyword-H1": {"recall@5": 0.938}, "keyword-H2": {"recall@5": 0.9}}
         decision = run_eval.verdict(baseline, worse, cost="none")
         self.assertFalse(decision["adopted"])
         self.assertIn("C1 paraphrase-H1", decision["failed"])
         self.assertIn("C2 keyword-H2", decision["failed"])
 
         better = {"paraphrase-H1": {"recall@5": 0.9}, "paraphrase-H2": {"recall@5": 1.0},
-                  "keyword-H1": {"recall@5": 0.875}, "keyword-H2": {"recall@5": 1.0}}
+                  "keyword-H1": {"recall@5": 0.938}, "keyword-H2": {"recall@5": 1.0}}
         self.assertTrue(run_eval.verdict(baseline, better, cost="none")["adopted"])
         # A model download may not become the default path.
         self.assertFalse(run_eval.verdict(baseline, better, cost="optional-model")["adopted"])

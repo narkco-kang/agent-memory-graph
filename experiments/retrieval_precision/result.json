@@ -1,0 +1,39 @@
+{
+  "identifiers": {
+    "n": 20,
+    "rate": 1.0,
+    "top1": 20
+  },
+  "missing_identifiers": {
+    "issue.zzz": 0,
+    "missing.node": 0,
+    "task.a": 0
+  },
+  "ok": true,
+  "single_char": {
+    "a": {
+      "L2": 0,
+      "L3": 0
+    },
+    "e": {
+      "L2": 0,
+      "L3": 0
+    },
+    "i": {
+      "L2": 0,
+      "L3": 0
+    },
+    "q": {
+      "L2": 0,
+      "L3": 0
+    },
+    "x": {
+      "L2": 0,
+      "L3": 0
+    }
+  },
+  "source": {
+    "nodes": 27,
+    "real_graph": false
+  }
+}

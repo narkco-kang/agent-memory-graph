@@ -120,6 +120,11 @@ evidence are returned by default with `anchor_state: "none"` instead of being dr
 because on a real graph only 22–36% of lexical hits had anchors and hard-filtering by
 default would hide most of the memory (`--strict` is the only anchor filter).
 
+Matching is word-aware: ASCII matches whole words and their regular inflections (a
+single letter matches nothing), and a query containing `.` `:` `/` `_` is treated as one
+identifier lookup. The precision/recall trade is measured in
+`experiments/retrieval_precision/` and recorded as DECISIONS #25.
+
 **Not implemented** — measured against a pre-registered bar and rejected for the
 default path, or simply out of scope; do not assume them: vector / embedding search
 (`experiments/retrieval_eval/`), authentication, multi-tenant isolation,

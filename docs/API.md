@@ -347,7 +347,24 @@ Supplying `valid_until` without `valid_from` is accepted but stays
 bounds if you want the window to count. TTL auto-expiry is **not implemented**;
 the refusal rule is enforced so a future implementation cannot inherit the bug.
 
-## Retrieval rules (v0.1)
+## Retrieval rules (v0.1; matcher refined in v0.14.0)
+
+Matching is lexical and, as of v0.14.0, word-aware:
+
+- **ASCII matches a whole word or its regular inflection** (`rank` finds `ranking`,
+  `searched` finds `search`); it is no longer a raw substring, because `a` used to match
+  `archive`, `task.batch6-a…` and nearly everything else. A one-character ASCII token is
+  dropped: it cannot distinguish.
+- **A query containing `.` `:` `/` `_` is an identifier lookup**: `task.a` searches for
+  that id, not for every `task`. Separators (`-`, `.`, `_`, `/`) are word edges, so a
+  prefix still matches (`task.read` → `task.read-audit`) while a mid-word fragment does
+  not (`nked` matches nothing).
+- **CJK stays substring matching** (a character is a word there), and single CJK
+  characters remain searchable.
+- The ASCII inflection table is English; other languages get word-boundary matching
+  only. `experiments/retrieval_precision/` measures this behaviour and
+  `docs/DECISIONS.md` #25 records the recall that changing it costs.
+
 
 - L1/L3/L4 **hard-filter `superseded` nodes** (`failures.md:118`, non-negotiable):
   an expired fact is never an answer. L2 is the exception by design — it reads

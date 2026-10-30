@@ -19,6 +19,32 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.14.0 — 2026-10-31
+
+Status: **released**. Behaviour change: word-aware lexical matching, with the recall
+cost measured and published.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 252 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate + size budget | ✅ 15 documents, both gates green |
+| 3 | The criteria existed before the code | ✅ `experiments/retrieval_precision/PREREGISTRATION.md`, dated before implementation |
+| 4 | Every criterion's result is recorded, including failures | ✅ C1–C3 hold; C4 and C5 **failed** and are explained per query |
+| 5 | The recall cost is published, not absorbed | ✅ CHANGELOG, eval README (both number sets), DECISIONS #25 |
+| 6 | Regression pinned both ways | ✅ `tests/test_search_precision.py` (8 tests) + `test_retrieval_eval.py` pinned to the new numbers, old ones kept in the comment |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; sdist's own 252 tests pass inside the unpacked archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.14.0` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | Measurement is re-runnable | ✅ `run_eval.py` on the frozen corpus or `--graph <legacy.json>` |
+
+The shape of this release is the point: the honest number went **down** (overall
+recall@5 0.865 → 0.808) while the useful ones went up (kw recall@5 0.969, MRR 0.763,
+single-letter and fake-identifier answers 0). A pre-registered criterion was violated
+and the violation is written down with the evidence that justifies overriding it,
+rather than the criterion being quietly relaxed.
+
+---
+
 ## v0.13.0 — 2026-10-31
 
 Status: **released**. Closes the gap 0.11.0 documented: cold history stays searchable.

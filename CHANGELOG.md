@@ -3,6 +3,52 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.14.0] — 2026-10-31
+
+Changed behaviour: **lexical matching is word-aware**, so queries that cannot
+distinguish anything stop returning answers — and the recall that costs is published,
+not absorbed.
+
+### Changed
+
+- **ASCII matches a whole word or its regular inflection**, never a raw substring:
+  `rank` finds `ranking`, `searched` finds `search`. A one-character ASCII token is
+  dropped. Before this, `a` matched `archive` and nearly everything else: on the real
+  1,289-node graph, `a`/`e`/`i`/`x` each returned the full `k=10`.
+- **A query containing `.` `:` `/` `_` is an identifier lookup.** `task.a` asks for
+  that id instead of splitting into every `task` plus the letter `a`, which used to
+  return ten unrelated `task.*` nodes for an id that does not exist. Word separators
+  (`-`, `.`, `_`, `/`) still allow prefix lookups (`task.read` → `task.read-audit`).
+- **CJK is unchanged** (substring; a character is a word), and single CJK characters
+  remain searchable.
+
+### Measured (`experiments/retrieval_precision/`, pre-registered)
+
+| measurement | before | after |
+|---|---|---|
+| one-letter queries, real graph, `k=10` | 10 hits each | **0** |
+| nonexistent identifier (`task.a`, `issue.zzz`, `missing.node`) | 10 hits each | **0** |
+| identifier lookups naming a live node, top-1 | — | **20/20** |
+| frozen-eval keyword recall@5 | 0.938 | **0.969** |
+| frozen-eval MRR@10 | 0.744 | **0.763** |
+| frozen-eval overall recall@5 | 0.865 | **0.808** |
+| frozen-eval overall recall@1 | 0.654 | 0.654 |
+
+The overall drop is analysed per query, not explained away: two of 26 eval queries were
+reached only through substrings **inside other words** (`i` in `high-risk`, `one` in
+`gone`), one was a genuine inflection case and is recovered, one improved. Both the
+pre-registration criteria that failed and the override are recorded (DECISIONS #25,
+`experiments/retrieval_precision/PREREGISTRATION.md` §Outcome).
+
+### Not shipped in 0.14.0 (do not assume)
+
+- **No stemmer and no synonyms.** A 14-entry English suffix table, no dependency;
+  other languages get word-boundary matching only.
+- **No stopword handling**: a query made only of common words (`the if do`) still
+  matches loosely, because those words are words.
+- **No semantic matching.** Paraphrase recall is unchanged at 0.55 in this eval; the
+  embedding candidate remains rejected for the default path.
+
 ## [0.13.0] — 2026-10-31
 
 New capability: **the history that was moved out stays searchable**, on request and

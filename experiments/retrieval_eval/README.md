@@ -28,6 +28,23 @@ Measured on commit `068cfbd`, corpus `a183dc443ee4`, queries `3dced7bb2fcf`:
 | overall | 26 | 0.654 | **0.865** | 0.904 | 0.744 |
 | keyword (overlap ≥ 0.34) | 16 | 0.812 | 0.938 | 1.000 | 0.898 |
 | paraphrase (overlap < 0.34) | 10 | 0.400 | **0.750** | 0.750 | 0.498 |
+
+### After the v0.14.0 matcher change
+
+`docs/DECISIONS.md` #25 changed ASCII matching from substring to word-boundary +
+inflection (and made identifier queries lookups). Re-run on the same frozen corpus:
+
+| group | n | recall@1 | recall@5 | recall@10 | MRR@10 |
+|---|---|---|---|---|---|
+| overall | 26 | 0.654 | **0.808** | 0.865 | **0.763** |
+| keyword | 16 | 0.875 | **0.969** | 0.969 | 0.969 |
+| paraphrase | 10 | 0.300 | 0.550 | 0.700 | 0.433 |
+
+Keyword improved and MRR improved; overall recall@5 fell because two queries had been
+reached only through substrings **inside other words** (`i` in `high-risk`, `one` in
+`gone`) — the per-query analysis is in `../retrieval_precision/PREREGISTRATION.md`. Both
+number sets are kept here on purpose: a baseline that gets overwritten is a baseline
+nobody can audit.
 | paraphrase-H1 | 5 | 0.400 | 0.700 | 0.700 | 0.480 |
 | paraphrase-H2 | 5 | 0.400 | 0.800 | 0.800 | 0.517 |
 | keyword-H1 | 8 | 0.812 | 0.875 | 1.000 | 0.889 |
