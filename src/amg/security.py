@@ -42,7 +42,18 @@ def findings(path: str) -> list:
         out.append({"code": "SEC_GRAPH_SYMLINK", "severity": "warn",
                     "detail": f"graph.json is a symlink to {os.path.realpath(graph)}"})
 
-    for label, target in (("graph.json", graph), ("graph directory", directory)):
+    if os.name == "nt":
+        # Windows does not expose POSIX permission bits; every writable file looks
+        # world-writable through st_mode, so reporting them would be noise. ACLs
+        # are the real control there and are not inspected.
+        out.append({"code": "SEC_PERMS_UNCHECKED", "severity": "info",
+                    "detail": "POSIX permission bits are not meaningful on Windows; "
+                              "ACLs are not inspected - see docs/THREAT-MODEL.md section 7b"})
+        mode_checks = []
+    else:
+        mode_checks = [("graph.json", graph), ("graph directory", directory)]
+
+    for label, target in mode_checks:
         mode = _mode(target)
         if mode is None:
             continue

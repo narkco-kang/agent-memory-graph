@@ -33,9 +33,17 @@ class HygieneTests(unittest.TestCase):
         os.chmod(os.path.join(self.dir, "graph.json"), 0o600)
         self.m = Memory.open(self.dir)
 
+    @POSIX_ONLY
     def test_private_graph_has_no_findings(self):
         self.assertEqual(self.m.security_findings(), [])
         self.assertEqual(security.worst([]), "ok")
+
+    @unittest.skipIf(os.name != "nt", "Windows-specific: mode bits are not meaningful")
+    def test_windows_reports_that_mode_bits_are_unchecked(self):
+        found = self.m.security_findings()
+        self.assertEqual([(f["code"], f["severity"]) for f in found],
+                         [("SEC_PERMS_UNCHECKED", "info")])
+        self.assertEqual(security.worst(found), "info")
 
     @POSIX_ONLY
     def test_world_writable_graph_is_reported(self):
