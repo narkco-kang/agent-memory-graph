@@ -73,7 +73,8 @@ A live 1,249-node / 15.3 MB graph (written daily by a multi-agent team for a wee
 is measured end to end in [`REAL-WORLD.md`](REAL-WORLD.md): adoption 140 ms, `check`
 0 errors in 4.4 ms, `audit --pin` down to 3 genuine conflicts, reads single-digit
 milliseconds, and **one write 147 ms** — the number behind the cold-archive
-trigger.
+trigger. [`WRITE-COST.md`](WRITE-COST.md) breaks that number down (parse 75 ms /
+render 50 ms / `fsync` 23 ms) and prices the options against it.
 
 ## Retrieval quality (not latency)
 

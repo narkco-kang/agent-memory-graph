@@ -7,6 +7,16 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
 
 ### Added
 
+- **Write-cost analysis** (`docs/WRITE-COST.md`): on the live 15.6 MB graph,
+  `changes[]` is **79.1%** of the bytes and a write is 148 ms = parse 75 +
+  render 50 + `fsync` 23. Four options are priced with measurements: cold-archive
+  reclaims nothing (oldest node 6 days, 0 candidates), compact JSON saves 2.4% and
+  costs git diffability, incremental writes abandon the atomicity guarantee, and a
+  history sidecar would cut writes ~80% at the cost of the single-file property.
+  Nothing was built: the existing trigger (p95 > 250 ms / 20 MB / 10k nodes) is
+  two-thirds away and the analysis is recorded so the decision does not need
+  rediscovering.
+
 - **Real-graph measurements** (`docs/REAL-WORLD.md`): a live 1,249-node / 15.3 MB
   graph adopted in 140 ms with the source `sha256` unchanged, `check` clean in
   4.4 ms, `audit` 1,029 conflicts before the exemption pin and **3 after** (all

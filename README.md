@@ -320,7 +320,8 @@ the rollback story.
 Not only synthetic benchmarks: a live 1,249-node / 15.3 MB graph is adopted and
 measured end to end in [docs/REAL-WORLD.md](docs/REAL-WORLD.md) — 140 ms to adopt,
 0 structural errors, `audit --pin` to 3 genuine conflicts, reads in single-digit
-milliseconds, and one write at 147 ms (the reason the cold-archive trigger exists).
+milliseconds, and one write at 147 ms (the reason the cold-archive trigger exists; the cost is
+broken down in [docs/WRITE-COST.md](docs/WRITE-COST.md)).
 
 ## Roadmap, contributing, security
 
