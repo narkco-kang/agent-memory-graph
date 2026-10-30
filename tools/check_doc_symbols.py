@@ -38,10 +38,10 @@ def default_targets():
     targets = ["README.md"]
     docs_dir = os.path.join(ROOT, "docs")
     if os.path.isdir(docs_dir):
+        # Forward slashes on purpose: the gate's output is compared as text in a
+        # test, and os.sep would make the same run print differently on Windows.
         targets += sorted(
-            os.path.join("docs", name)
-            for name in os.listdir(docs_dir)
-            if name.endswith(".md")
+            "docs/" + name for name in os.listdir(docs_dir) if name.endswith(".md")
         )
     return targets
 

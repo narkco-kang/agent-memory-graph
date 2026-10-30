@@ -95,7 +95,8 @@ class SupersedeCliTests(unittest.TestCase):
         self._seed()
         res = run("supersede", self.dir, "decision.a", "decision.b", "--note", "b replaces a")
         self.assertEqual(res.returncode, 0, res.stderr)
-        doc = json.load(open(os.path.join(self.dir, "graph.json"), encoding="utf-8"))
+        with open(os.path.join(self.dir, "graph.json"), encoding="utf-8") as fh:
+            doc = json.load(fh)
         old = [n for n in doc["nodes"] if n["id"] == "decision.a"][0]
         self.assertEqual(old["status"], "superseded")
         self.assertTrue(old["valid_until"] and old["superseded_at"])

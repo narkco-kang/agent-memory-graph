@@ -63,7 +63,7 @@ class DocCoverageTests(unittest.TestCase):
         res = subprocess.run([sys.executable, SCRIPT], capture_output=True,
                              text=True, cwd=ROOT)
         self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
-        self.assertIn("docs/README.md", res.stdout)
+        self.assertIn("docs/README.md", res.stdout.replace("\\", "/"))
 
     def test_docs_index_links_every_document(self):
         with open(os.path.join(ROOT, "docs", "README.md"), encoding="utf-8") as fh:
