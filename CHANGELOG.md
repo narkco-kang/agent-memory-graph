@@ -3,6 +3,36 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.19.0] — 2026-10-31
+
+Defect round for the two retrieval issues the attack brief registered (`R1`, `R2`):
+**scores become bounded and labelled, and the change is measured to move no rank.**
+
+### Changed
+
+- `src/amg/retrieval.py`: IDF divided by `ln(1 + N)`, so each matched (field, term)
+  contributes at most its field weight and a score is in `(0, 7.0 × terms]` instead of
+  growing with graph size. Ordering uses the value before the common divisor, so the
+  normalization cannot reorder anything.
+- Every hit gains **`score_kind`**: `idf` (L1/L3/L4), `recency` (L2 — the 1.0 constant,
+  ordered by `at`; not a match score), `expansion` (`--expand` neighbours). Additive;
+  docs and the MCP tool description now forbid comparing scores across kinds.
+
+### Verified
+
+- `experiments/score_scale/`: **every ranked id list and every metric identical** to
+  v0.18.0 on all four corpora (control, N1, N2, N3).
+- Bounded: worst frozen score 8.716 (bound 7.0 × terms). Residual 27→10k drift on one
+  gold is 1.375× against v0.18.0's 3.799× — *bounded, not invariant*, and published as
+  such; `issue.mem-arch-idf-live-df-drift` stays open with that wording.
+- 268 tests (+7), nine CI jobs, `tools/verify.py` nine steps.
+
+### Not shipped in 0.19.0 (do not assume)
+
+- No ranking change; recall is identical by construction and by measurement.
+- No search cache; no evidence-content verification (`R3` is the next round).
+- Scores are not probabilities and are not comparable between different queries.
+
 ## [0.18.0] — 2026-10-31
 
 The IDF round that 0.17.0 named: **rarity-aware scoring ships, and it is measured to fix

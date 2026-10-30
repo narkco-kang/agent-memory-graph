@@ -1,0 +1,67 @@
+{
+  "checks": {
+    "C1_C2_ranking_and_metrics_identical": true,
+    "C3_ladder_bounded": true,
+    "C3_ladder_gold_scores_n27_n1000_n10000": {
+      "27": 7.431,
+      "1000": 9.625,
+      "10000": 10.215
+    },
+    "C3_ladder_ratio": 1.375,
+    "C3_ladder_v018_ratio": 3.799,
+    "C3_scores_bounded": true,
+    "C3_worst_score_on_frozen": 8.716,
+    "C4_score_kind": true,
+    "all_pass": true
+  },
+  "corpora": {
+    "control": {
+      "differing_queries": [],
+      "metrics": {
+        "mrr@10": 0.821,
+        "n": 26,
+        "recall@1": 0.731,
+        "recall@10": 0.865,
+        "recall@5": 0.865
+      },
+      "metrics_identical": true,
+      "ranking_identical": true
+    },
+    "n1": {
+      "differing_queries": [],
+      "metrics": {
+        "mrr@10": 0.815,
+        "n": 26,
+        "recall@1": 0.731,
+        "recall@10": 0.865,
+        "recall@5": 0.865
+      },
+      "metrics_identical": true,
+      "ranking_identical": true
+    },
+    "n2": {
+      "differing_queries": [],
+      "metrics": {
+        "mrr@10": 0.536,
+        "n": 26,
+        "recall@1": 0.481,
+        "recall@10": 0.577,
+        "recall@5": 0.538
+      },
+      "metrics_identical": true,
+      "ranking_identical": true
+    },
+    "n3": {
+      "differing_queries": [],
+      "metrics": {
+        "mrr@10": 0.821,
+        "n": 26,
+        "recall@1": 0.731,
+        "recall@10": 0.865,
+        "recall@5": 0.865
+      },
+      "metrics_identical": true,
+      "ranking_identical": true
+    }
+  }
+}

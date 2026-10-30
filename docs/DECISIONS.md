@@ -289,17 +289,14 @@ Each entry states the decision, the evidence behind it, and what it costs.
 
 27. **Scale does not dilute lexical recall; vocabulary overlap does — and the scorer,
     not the matcher, is why.** Pre-registered at 10,000 nodes
-    (`experiments/retrieval_10k/PREREGISTRATION.md`), same frozen 26 queries and gold
-    set, two noise models. Unrelated distractors left every metric identical
-    (0.654/0.808/0.865/0.763) — 370× more nodes cost nothing measurable, which retires
-    the naive "big memory dilutes search" worry. Distractors built from the queries' own
-    vocabulary cost **recall@5 0.808 → 0.538** and recall@1 0.654 → 0.481; of the 11
-    misses, **7 sit beyond rank 100**, i.e. dozens of distractors outscored the gold
-    node. The scorer weights fields (`id` 3.0, `label` 2.0, `note` 1.0) with **no IDF**,
-    so repetition of common query words is as good as an answer. Two predictions were
-    wrong and are recorded as wrong; the round touched no code on purpose (criterion
-    C4). IDF weighting is now the named next candidate — it needs its own
-    pre-registration and must not regress the frozen 27-node baseline.
+    (`experiments/retrieval_10k/`), same frozen 26 queries and gold set, two noise
+    models. Unrelated distractors left every metric identical (0.654/0.808/0.865/0.763),
+    retiring the naive "big memory dilutes search" worry. Distractors built from the
+    queries' own vocabulary cost **recall@5 0.808 → 0.538** (r@1 0.654 → 0.481); of the
+    11 misses, **7 sit beyond rank 100**. The scorer weighted fields (`id` 3.0,
+    `label` 2.0, `note` 1.0) with **no IDF**, so repetition of common words was as good
+    as an answer. Two predictions wrong, recorded; no code touched on purpose (C4).
+    IDF became the named next candidate with its own pre-registration.
     *Signed 2026-10-31; `experiments/retrieval_10k/`, `result.json`.*
 
 28. **IDF term weights ship — and they do not fix query-vocabulary noise.** Pre-registered
@@ -322,21 +319,29 @@ Each entry states the decision, the evidence behind it, and what it costs.
     *Signed 2026-10-31; `experiments/retrieval_idf/`, `result.json`; v0.18.0.*
 
 29. **Field-specific document frequency is rejected: the noise gain is paid for by
-    note-only queries.** Pre-registered (`experiments/retrieval_field_df/PREREGISTRATION.md`)
-    as the one-variable follow-up to #28, taking the third direction in the retrieval
-    attack brief: count `df` per (field, term) so a word that fills `note` cannot make
-    the same word look common in `id`. Measured against the frozen v0.18.0 scorer in one
-    process on four corpora: **N2 query-vocabulary noise improved 0.538 → 0.596**
-    (r@10 0.577 → 0.635, MRR 0.536 → 0.575), N3 held at 0.865, p95 0.991× — but the
-    **frozen 26-query recall@5 fell 0.865 → 0.827** because exactly one query moved:
-    q18 `3 → 6`, a query whose gold's only literal match is in `note`, which now pays
-    note's own lower IDF. C1 and C2 failed; the pre-registered rule said a frozen drop
-    >0.01 kills the direction, so **no release was cut and `src/amg/retrieval.py` was
-    reverted** to v0.18.0. C6 ("hit sets unchanged") also failed **as written** and is
-    recorded as my pre-registration error, not reinterpreted: at 10k the harness compares
-    top-100 membership, so reordering moves the cut; control/N1/N3 had zero changes and
-    no match is dropped (IDF > 0 by construction). Two predictions were wrong (the frozen
-    direction; the size of the note-only cost was named correctly). The open policy
-    question, which must be pre-registered before any future round may act on it: is
-    `frozen −0.038` an acceptable price for `N2 +0.058`?
-    *Signed 2026-10-31; `experiments/retrieval_field_df/`, `result.json`.*
+    note-only queries.** Pre-registered in `experiments/retrieval_field_df/`; one
+    variable (df counted per (field, term)). Measured against the frozen v0.18.0 scorer
+    in one process: N2 query-vocabulary noise **0.538 → 0.596**, N3 held 0.865, p95
+    0.991× — but the frozen 26-query recall@5 **0.865 → 0.827**, because exactly one
+    query moved (q18 `3 → 6`, a note-only match paying note's lower IDF). C1/C2 failed;
+    the pre-registered rule (frozen drop >0.01 kills the direction) was honoured: **no
+    release, `src/amg/retrieval.py` reverted** to v0.18.0, no tuning. C6 ("hit sets
+    unchanged") failed **as written** and is recorded as my pre-registration error (at
+    10k it compared top-100 membership, which any reordering moves; no match is
+    dropped). Two predictions recorded wrong. Open policy question, pre-registered
+    before any future round may act on it: is `frozen −0.038` a fair price for
+    `N2 +0.058`? *Signed 2026-10-31; experiment README + `result.json`.*
+
+30. **Scores are bounded and labelled; the normalization changes no rank.** Defect round
+    for R1 (`idf-live-df-drift`) and R2 (`l2-fixed-score`), pre-registered in
+    `experiments/score_scale/` with Amendment A for two of my own arithmetic errors.
+    R1: IDF divided by `ln(1 + N)` bounds a score at `Σ WEIGHTS = 7.0` per matched term
+    instead of growing with graph size; verified that **every ranked id list and every
+    metric on all four corpora is identical** to v0.18.0 (common divisor), residual
+    27→10k drift published as 1.375× against 3.799×, so the issue stays open as
+    "bounded, not invariant". R2: hits carry **`score_kind`** — `idf` (L1/L3/L4),
+    `recency` (L2; the 1.0 is not a match score), `expansion` (0.0) — and docs forbid
+    comparing across kinds; no field changed type. Amendment A: my bound used `3.0`
+    where five fields can match (7.0), and I predicted ≤5% drift where measurement is
+    +37%; both recorded as wrong, not rescued in code. No cache: 100 ms p50 at 10k is a
+    documented limit. *Signed 2026-10-31; `experiments/score_scale/`; v0.19.0.*

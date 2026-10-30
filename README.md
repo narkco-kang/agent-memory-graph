@@ -115,7 +115,9 @@ scheduler. Scheduling examples: [docs/SCHEDULING.md](docs/SCHEDULING.md).
 
 `superseded` nodes are **never returned**; facts whose `valid_from` is in the future
 are dropped the same way. History is not lost — it stays in L2 (`changes[]`), the only
-layer that shows it. Ranking is two-key: **(anchor present, score)**; results without
+layer that shows it. Ranking is two-key: **(anchor present, score)**, where the score
+is bounded and carries a `score_kind` (idf / recency / expansion) so layers are never
+merged by number; results without
 evidence are returned by default with `anchor_state: "none"` instead of being dropped,
 because on a real graph only 22–36% of lexical hits had anchors and hard-filtering by
 default would hide most of the memory (`--strict` is the only anchor filter).

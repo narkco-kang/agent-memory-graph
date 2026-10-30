@@ -41,9 +41,11 @@ READ_ONLY_INSTRUCTIONS = (
 TOOLS = [
     {
         "name": "memory_search",
-        "description": "Search the memory graph. Returns hits with anchor_state, evidence count and status. "
-                       "Lexical, word-aware; unanchored hits are returned by default (anchor_state='none'). "
-                       "include_archive extends L2 to the cold archive and marks every archived hit.",
+        "description": "Search the memory graph. Returns hits with anchor_state, evidence count, status "
+                       "and score_kind (idf for L1/L3/L4, recency for L2, expansion for neighbours); "
+                       "never compare scores across score_kind. Lexical, word-aware; unanchored hits are "
+                       "returned by default (anchor_state='none'). include_archive extends L2 to the cold "
+                       "archive and marks every archived hit.",
         "inputSchema": {"type": "object", "properties": {
             "query": {"type": "string"},
             "layer": {"type": "string", "enum": ["L1", "L2", "L3", "L4"]},

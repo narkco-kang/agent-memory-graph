@@ -19,6 +19,30 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.19.0 — 2026-10-31
+
+Status: **released**. Defect round with a behaviour-preserving bar: bounded scores and
+`score_kind`, verified to change no ranking.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 268 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate + size budget | ✅ 15 documents, both gates green |
+| 3 | Criteria existed before the code changed | ✅ `experiments/score_scale/PREREGISTRATION.md` |
+| 4 | The claim is verified, not asserted | ✅ every ranked id list + metric identical to v0.18.0 on four corpora |
+| 5 | Residual weakness published | ✅ 1.375× drift vs 3.799× before; issue stays open as "bounded, not invariant" |
+| 6 | My own criterion errors recorded | ✅ Amendment A: bound 3.0→7.0, ±5%→+37% |
+| 7 | The change is in the product text | ✅ `docs/API.md`, README, MCP tool description, DECISIONS #30 |
+| 8 | Clean install from the tag | ✅ `git+...@v0.19.0` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | Reproducible from the repo | ✅ `experiments/score_scale/run_eval.py`, both scorers in one process |
+
+The round's shape: a defect fix is only a defect fix if it moves nothing else — so the
+acceptance test is equality, and the two things that did move (drift and the criterion
+arithmetic) are written down instead of glossed.
+
+---
+
 ## v0.18.0 — 2026-10-31
 
 Status: **released**. Behaviour-change round: IDF term weights, pre-registered, with a

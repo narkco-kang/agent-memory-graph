@@ -376,6 +376,15 @@ Matching is lexical and, as of v0.14.0, word-aware:
   noise at 10k 0.712 → 0.865. Uniform query-vocabulary noise stays **0.538** (r@10
   0.538 → 0.577) because every token in it is equally common, so IDF has no signal
   (`experiments/retrieval_idf/`).
+- **Scores are bounded and labelled (v0.19.0, DECISIONS #30)**: the IDF is divided by
+  its own maximum `ln(1 + N)`, so a hit score is in `(0, 7.0 × matched terms]` and does
+  not grow without limit as the graph grows; the same match at 10 000 nodes scores
+  ≈1.4× its 27-node value instead of ≈3.8× (residual drift published, issue
+  `idf-live-df-drift`). Every hit carries **`score_kind`** — `idf` for L1/L3/L4,
+  `recency` for L2 (the order is `at` descending; the number is a constant), `expansion`
+  for `--expand` neighbours (0.0). **Never compare or merge scores of different
+  `score_kind`**; `experiments/score_scale/` verifies the normalization changed no
+  rank.
 
 
 - L1/L3/L4 **hard-filter `superseded` nodes** (`failures.md:118`, non-negotiable):

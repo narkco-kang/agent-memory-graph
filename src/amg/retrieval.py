@@ -10,11 +10,14 @@ Two hard rules (signed, failures.md:118):
 - Ranking is deliberately two-key: (anchor_present, score). Degraded results are
   returned with anchor_state="none" instead of being silently dropped; `strict`
   is the only path that filters them out.
-- The score is rarity-aware (v0.18.0): each matched term contributes
-  `WEIGHTS[field] * idf(term)`, where the IDF is computed from the document being
-  searched. A word that is everywhere (`the`, `graph`) cannot outvote the term that
-  actually answers, which is what the 10k measurement in
-  `experiments/retrieval_10k/` showed the old constant weights doing.
+- The score is rarity-aware (v0.18.0) and bounded (v0.19.0): each matched term
+  contributes `WEIGHTS[field] * idf(term)`, with the IDF computed from the document
+  being searched and divided by its own maximum `ln(1 + N)`. A word that is everywhere
+  (`the`, `graph`) cannot outvote the term that actually answers, and a score no longer
+  grows with graph size for the same match (`issue.mem-arch-idf-live-df-drift`).
+- Hits carry `score_kind` (v0.19.0): `idf` for L1/L3/L4, `recency` for L2 (a constant;
+  the order is `at` descending), `expansion` for `--expand` neighbours. Scores of
+  different kinds must never be compared or merged.
 """
 import math
 import re
@@ -178,37 +181,46 @@ def search(doc: dict, query: str, layer: str = "L3", k: int = 10, strict: bool =
 
     matched, df = _match_fields(nodes, matchers)
     total = len(nodes)
-    # BM25-style IDF: a term in every node still contributes (ln(1 + N/(1+N)) > 0),
-    # so "matched but common" never silently becomes "not matched" and a corpus
-    # where every node shares a word still ranks something.
+    # BM25-style IDF, normalized by its own maximum so a score is bounded in
+    # (0, Σ matched field weights] and does not inflate as the graph grows
+    # (v0.19.0, issue.mem-arch-idf-live-df-drift). For one query every term shares
+    # the divisor ln(1 + N), so the ranking is unchanged by the normalization.
+    # Positivity is preserved: ln(1 + N/(1+N)) > 0, so "matched but common" never
+    # silently becomes "not matched" and a corpus where every node shares a word
+    # still ranks something.
+    scale = math.log(1.0 + total) if total else 1.0
     idf = [math.log(1.0 + total / (1.0 + count)) for count in df]
 
-    hits = []
+    scored = []
     for n, pairs in matched:
-        score, fields = 0.0, []
+        raw, fields = 0.0, []
         for field, index in pairs:
-            score += WEIGHTS[field] * idf[index]
+            raw += WEIGHTS[field] * idf[index]
             if field not in fields:
                 fields.append(field)
-        if score <= 0:
+        if raw <= 0:
             continue
         ev = n.get("evidence") or []
-        hits.append({
+        scored.append((raw, {
             "id": n.get("id"),
             "label": n.get("label"),
             "type": n.get("type"),
             "status": n.get("status"),
-            "score": round(score, 3),
+            # The displayed score is the bounded one (raw / ln(1+N)); ordering keeps
+            # the pre-normalization value, so the common divisor cannot change a rank.
+            "score": round(raw / scale, 3),
+            "score_kind": "idf",
             "matched_fields": fields,
             "anchor_state": "present" if ev else "none",
             "evidence_count": len(ev),
             "evidence_grade": n.get("evidence_grade"),
             "conclusion": bool(n.get("conclusion") or n.get("type") in CONCLUSION_TYPES),
-        })
+        }))
     if strict:
-        hits = [h for h in hits if h["anchor_state"] == "present"]
-    hits.sort(key=lambda h: (h["anchor_state"] == "present", h["score"], h["id"] or ""), reverse=True)
-    hits = hits[:k]
+        scored = [(raw, hit) for raw, hit in scored if hit["anchor_state"] == "present"]
+    scored.sort(key=lambda item: (item[1]["anchor_state"] == "present",
+                                  round(item[0], 3), item[1]["id"] or ""), reverse=True)
+    hits = [hit for _, hit in scored[:k]]
     if expand and layer != "L2":
         hits = _expand(doc, hits, strict=strict)
     return hits
@@ -240,6 +252,7 @@ def _expand(doc: dict, hits, strict: bool):
                 "type": n.get("type"),
                 "status": n.get("status"),
                 "score": 0.0,
+                "score_kind": "expansion",
                 "matched_fields": [],
                 "anchor_state": "present" if n.get("evidence") else "none",
                 "evidence_count": len(n.get("evidence") or []),
@@ -276,6 +289,7 @@ def _search_changes(doc: dict, matchers, k: int, archived=None):
                 "type": "change",
                 "status": node.get("status"),
                 "score": 1.0,
+                "score_kind": "recency",
                 "matched_fields": ["changes"],
                 "anchor_state": "present" if node.get("evidence") else "none",
                 "evidence_count": len(node.get("evidence") or []),
