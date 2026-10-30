@@ -3,6 +3,34 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.7.3] — 2026-10-30
+
+**No library change**; `src/amg/` differs only in the version string. It adds the
+scenario a team actually has — several long-lived MCP processes plus a CLI command
+writing one file — and records what the test can and cannot prove.
+
+### Added
+
+- **`tests/test_mcp_concurrency.py`**: two stdio MCP servers (5 writes each) and one
+  thread running 5 `amg add` subprocesses, with a fourth thread running `amg check`
+  while the writes land. Asserts on every commit and on all four test platforms:
+  15 nodes for 15 writes with no duplicates, **exactly one `changes[]` record per
+  write**, `check --strict` clean, and no writer *or reader* reporting an error (a
+  refusal fails the test instead of being swallowed).
+- **`docs/CONCURRENCY.md`** gains "Three writers over two protocols", including one
+  limit measured rather than assumed: reverting `Memory.open` to the pre-v0.6.0
+  unlocked read leaves the test **green on macOS**, because POSIX lets you replace an
+  open file. The test is a regression guard for Windows specifically, and the doc
+  says so instead of implying it is platform-neutral.
+
+### Not shipped in 0.7.3 (do not assume)
+
+Unchanged from 0.7.2 — the library gained nothing: no authentication /
+authorization / multi-tenancy (out of scope by decision), no vector retrieval in the
+default path (measured, rejected), no tamper *proof*, no TTL scheduler, no
+encryption at rest, no lock fairness, and history compression remains a design
+(`docs/DESIGN-HISTORY.md`), not a capability.
+
 ## [0.7.2] — 2026-10-30
 
 **No library change**; `src/amg/` differs only in the version string. This release

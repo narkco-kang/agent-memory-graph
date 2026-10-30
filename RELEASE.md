@@ -13,11 +13,36 @@ Eight jobs per push. Each one exists because something passed without it:
 
 | Job | Checks | What it would have missed |
 |---|---|---|
-| `test` ×4 (ubuntu 3.12/3.10, macos, windows) | 190 unit tests, editable install, doc/code gate, examples | — |
+| `test` ×4 (ubuntu 3.12/3.10, macos, windows) | 191 unit tests, editable install, doc/code gate, examples | — |
 | `package` ×4 (ubuntu/windows × 3.12/3.10) | builds sdist+wheel, `tools/check_dist.py`, installs the **wheel** and asserts the import comes from `site-packages`, runs the `amg` console script; on ubuntu 3.12 also unpacks the sdist and runs the suite inside it | v0.7.0's sdist shipped 21 tests that could not run; the wheel install had never been tried on 3.10 or Windows |
 
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
+
+## v0.7.3 — 2026-10-30
+
+Status: **released**. No library change. Adds a cross-protocol concurrency test
+(two MCP servers + CLI + concurrent reader) and documents what it does not prove.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 191 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` |
+| 3 | Examples run | ✅ quickstart, lifecycle, `examples/mcp_client.py` |
+| 4 | Every "not implemented" claim re-run against code | ✅ unchanged set; no library code touched |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.7.3" — identical to 0.7.2 |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.7.3 everywhere |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; wheel installed on five cells; sdist's own 191 tests pass inside the archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.7.3` |
+
+### What this test is worth, stated narrowly
+
+It is a regression guard for the v0.6.0 Windows failure (a read racing a replace),
+not a general proof of safety under concurrency. The mutation check in
+`docs/CONCURRENCY.md` shows the unlocked read is undetectable on POSIX, so the
+Windows runner is what gives the test its teeth.
+
+---
 
 ## v0.7.2 — 2026-10-30
 

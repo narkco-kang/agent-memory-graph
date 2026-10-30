@@ -198,3 +198,28 @@ still holds, and both properties are tested in `tests/test_lock.py`
 commit, including Windows: same four assertions (all nodes, no duplicates, one
 change record each, `check` clean). It does not measure latency — CI machines are
 too noisy for that to mean anything.
+
+## Three writers over two protocols: two MCP sessions and a CLI
+
+Everything above drives writers through the library or the CLI. A team does
+something else: each agent holds its own long-lived `amg mcp` process, and a human
+or script occasionally runs a CLI command — three processes, two protocols, one
+file.
+
+`tests/test_mcp_concurrency.py` builds exactly that: two stdio MCP servers (each
+writing 5 nodes) and one thread running 5 `amg add` subprocesses, plus a fourth
+thread running `amg check` while the writes land. Assertions, on every commit and on
+all four test platforms:
+
+- every node exists, none written twice (15 nodes for 15 writes);
+- exactly one `changes[]` record per write, and no write with two records;
+- `check --strict` passes on the merged result;
+- no writer *or reader* reported an error — a refusal is collected and fails the
+  test rather than being swallowed.
+
+The concurrent reader is there for the v0.6.0 Windows bug above: a read that opens
+the file while another process replaces it is the shape of that failure. One honest
+limit, measured locally: reverting `Memory.open` to the unlocked read leaves this
+test **green on macOS**, because POSIX allows replacing an open file. The test is a
+regression guard for Windows specifically, which is why it runs on the Windows
+runner and why the fix is stated as Windows-motivated rather than platform-neutral.
