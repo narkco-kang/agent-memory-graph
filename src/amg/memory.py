@@ -389,8 +389,8 @@ class Memory:
     def check(self, strict: bool = False):
         return protocol.check(self._doc, strict=strict)
 
-    def audit(self, pin=None):
-        return audit_mod.audit(self._doc, pin=pin)
+    def audit(self, pin=None, stale_days: int = None):
+        return audit_mod.audit(self._doc, pin=pin, stale_days=stale_days)
 
     def digest(self, max_bytes: int = 65536) -> str:
         return digest_mod.build(self._doc, max_bytes=max_bytes)

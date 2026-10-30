@@ -32,6 +32,35 @@ class CliTests(unittest.TestCase):
         # 0 = clean check
         self.assertEqual(run("check", self.dir).returncode, 0)
 
+    def test_audit_stale_days_flag_and_env(self):
+        self.assertEqual(run("init", self.dir, "--group", "t").returncode, 0)
+        self.assertEqual(run("add", self.dir, "--id", "task.old", "--type", "task",
+                             "--label", "old", "--source", "s",
+                             "--status", "in_progress").returncode, 0)
+        # Age it in place: the CLI has no flag for that, and sleeping 10 days is not
+        # an option in a test suite.
+        env = dict(os.environ)
+        env["PYTHONPATH"] = os.path.join(ROOT, "src")
+        subprocess.run([sys.executable, "-c", f"""
+import datetime, json, sys
+path = {os.path.join(self.dir, "graph.json")!r}
+with open(path, encoding="utf-8") as fh:
+    doc = json.load(fh)
+old = (datetime.datetime.now(datetime.timezone.utc) - datetime.timedelta(days=10)).isoformat()
+for node in doc["nodes"]:
+    if node["id"] == "task.old":
+        node["updatedAt"] = old
+with open(path, "w", encoding="utf-8") as fh:
+    json.dump(doc, fh)
+"""], check=True, env=env)
+        self.assertEqual(run("audit", self.dir).returncode, 1)
+        self.assertEqual(run("audit", self.dir, "--stale-days", "30").returncode, 0)
+        relaxed = dict(os.environ, PYTHONPATH=os.path.join(ROOT, "src"),
+                       AMG_STALE_DAYS="30")
+        res = subprocess.run([sys.executable, "-m", "amg.cli", "audit", self.dir],
+                             capture_output=True, text=True, env=relaxed)
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+
     def test_conclusion_gate_via_cli(self):
         run("init", self.dir, "--group", "t")
         bad = run("add", self.dir, "--id", "decision.d", "--type", "decision",

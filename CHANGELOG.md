@@ -3,6 +3,30 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.8.0] — 2026-10-31
+
+**A new capability, not a fix**: the staleness threshold is now policy, because the
+right value is a property of the team's cadence rather than of the tool.
+
+### Added
+
+- **`AMG_STALE_DAYS`** (integer days, `0 < x <= 365`, invalid values fall back to 3)
+  and **`amg audit --stale-days N`** for one run. Measured on the first live graph,
+  the same three work items produce **3 conflicts at 3 days, 1 at 7, 0 at 14** — a
+  weekly-sync team sees false alarms at the default, a monthly team none. Default
+  stays 3 (the original rule), so existing users see no change. Fallback rather than
+  disable: a typo must not silently turn the check off, same rule as
+  `AMG_LOCK_TIMEOUT` (DECISIONS #21).
+- **`Memory.audit(stale_days=...)`** for callers that do not want a process-wide
+  environment variable.
+
+### Not shipped in 0.8.0 (do not assume)
+
+Unchanged: no authentication / authorization / multi-tenancy (out of scope by
+decision), no vector retrieval in the default path (measured, rejected), no tamper
+*proof*, no TTL scheduler, no encryption at rest, no lock fairness, and history
+compression remains a design (`docs/DESIGN-HISTORY.md`), not a capability.
+
 ## [0.7.7] — 2026-10-30
 
 **A behaviour change, and the first library change since 0.6.0**: `audit` no longer

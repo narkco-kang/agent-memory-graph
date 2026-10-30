@@ -21,7 +21,7 @@ amg search <dir> "query" [--layer L1|L2|L3|L4] [--k 10] [--strict] [--expand] [-
 amg related <dir> ID [--depth N] [--kind KIND] [--json]   # walk edges (new in v0.2)
 amg digest <dir> [--max-bytes 65536] [--out PATH]
 amg check  <dir> [--strict] [--json]
-amg audit  <dir> [--pin baseline.json] [--json]
+amg audit  <dir> [--pin baseline.json] [--stale-days N] [--json]
 amg export <dir> [--format json|jsonl]
 amg mcp   <dir> [--read-only]                        # MCP server over stdio (no network)
 amg doctor <dir>                                     # cleans stale tmp files
@@ -47,6 +47,12 @@ evidence reject the entire batch.
 `AMG_LOCK_TIMEOUT` (seconds, `0 < x <= 3600`, invalid values fall back to 5)
 overrides the write-lock wait. Raise it for burst workloads: on a large graph each
 write costs the full rewrite, so 5 s covers roughly 34 queued writes.
+
+`AMG_STALE_DAYS` (days, `0 < x <= 365`, invalid values fall back to 3) is the age at
+which `audit` calls an `in_progress`/`blocked` work item stale. `amg audit
+--stale-days N` overrides it for one run. The threshold is a property of the team's
+cadence, not of the tool (DECISIONS #21); node types that register something
+long-lived (`group`, `env`, `member`) are never reported as stale.
 
 Exit codes: `0` success/clean, `1` protocol violation or conflicts, `2` usage,
 `3` lock timeout or IO failure.

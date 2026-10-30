@@ -1,10 +1,34 @@
 """Audit: legacy coverage, staleness, expiry, integrity. Exit 1 on conflicts."""
 import datetime
 import hashlib
+import os
 
 from .const import is_conclusion, not_yet_valid, parse_ts
 
-STALE_DAYS = 3
+# How long a work item may sit in `in_progress`/`blocked` before audit calls it
+# stale. Default 3 days, overridable per call (`audit(..., stale_days=N)`) or by the
+# `AMG_STALE_DAYS` environment variable — because the right threshold is a property
+# of the team's cadence, not of the tool (DECISIONS #21).
+DEFAULT_STALE_DAYS = 3
+MAX_STALE_DAYS = 365
+
+
+def stale_days_from_env(default: int = DEFAULT_STALE_DAYS) -> int:
+    """Read AMG_STALE_DAYS. Nonsense or out-of-range values fall back to the default.
+
+    Silent fallback is deliberate, like AMG_LOCK_TIMEOUT: a typo must not silently
+    disable (0) or effectively disable (huge) the check.
+    """
+    raw = os.environ.get("AMG_STALE_DAYS")
+    if raw is None:
+        return default
+    try:
+        value = int(raw)
+    except (TypeError, ValueError):
+        return default
+    if not 0 < value <= MAX_STALE_DAYS:
+        return default
+    return value
 
 # Types that register something long-lived rather than a work item. A group marked
 # `in_progress` is active, not abandoned, and its `updatedAt` does not move when its
@@ -50,8 +74,11 @@ def legacy_stats(doc: dict) -> dict:
     }
 
 
-def audit(doc: dict, pin: dict = None, now: datetime.datetime = None) -> dict:
+def audit(doc: dict, pin: dict = None, now: datetime.datetime = None,
+          stale_days: int = None) -> dict:
     now = now or datetime.datetime.now(datetime.timezone.utc)
+    if stale_days is None:
+        stale_days = stale_days_from_env()
     nodes = doc.get("nodes") or []
     edges = doc.get("edges") or []
     changes = doc.get("changes") or []
@@ -86,8 +113,8 @@ def audit(doc: dict, pin: dict = None, now: datetime.datetime = None) -> dict:
         if (n.get("status") in {"in_progress", "blocked"}
                 and n.get("type") not in LONG_LIVED_TYPES):
             ts = _parse(n.get("updatedAt"))
-            if ts and (now - ts).days >= STALE_DAYS:
-                conflicts.append(f"{nid}: {n.get('status')} untouched for {(now - ts).days}d (limit {STALE_DAYS}d)")
+            if ts and (now - ts).days >= stale_days:
+                conflicts.append(f"{nid}: {n.get('status')} untouched for {(now - ts).days}d (limit {stale_days}d)")
         if not_yet_valid(n, now):
             hints.append(f"{nid}: not yet valid (valid_from {n.get('valid_from')} is in the "
                          f"future) — treated as not yet in effect by retrieval and expiry")

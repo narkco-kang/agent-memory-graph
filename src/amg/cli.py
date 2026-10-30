@@ -169,7 +169,7 @@ def cmd_audit(a):
         with open(a.pin, "r", encoding="utf-8") as fh:
             pin = json.load(fh)
     m = Memory.open(a.dir)
-    rep = m.audit(pin=pin)
+    rep = m.audit(pin=pin, stale_days=a.stale_days)
     if a.json:
         print(json.dumps(rep, ensure_ascii=False, indent=2))
     else:
@@ -470,6 +470,8 @@ def build_parser():
     s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_check)
 
     s = sub.add_parser("audit"); s.add_argument("dir"); s.add_argument("--pin")
+    s.add_argument("--stale-days", type=int, default=None,
+                   help="override AMG_STALE_DAYS for this run (default 3)")
     s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_audit)
 
     s = sub.add_parser("mcp"); s.add_argument("dir")

@@ -1,6 +1,8 @@
 import copy
 import datetime
+import os
 import unittest
+import unittest.mock
 
 from amg.audit import expiry_eligible, legacy_stats
 from helpers import TempGraph, ev
@@ -79,6 +81,31 @@ class AuditTests(unittest.TestCase):
         rep = self.m.audit()
         flagged = [c for c in rep["conflicts"] if "untouched" in c]
         self.assertEqual(flagged, [], f"registry types reported stale: {flagged}")
+
+    def test_stale_threshold_defaults_to_three_days(self):
+        self.m.add_node("task.two", "task", "two days", source="s", status="in_progress")
+        self._backdate("task.two", 2)
+        self.assertFalse(any("untouched" in c for c in self.m.audit()["conflicts"]))
+        self._backdate("task.two", 4)
+        self.assertTrue(any("untouched" in c for c in self.m.audit()["conflicts"]))
+
+    def test_stale_days_argument_overrides_the_rule(self):
+        self.m.add_node("task.ten", "task", "ten days", source="s", status="in_progress")
+        self._backdate("task.ten", 10)
+        self.assertTrue(any("untouched" in c for c in self.m.audit()["conflicts"]))
+        relaxed = self.m.audit(stale_days=30)
+        self.assertFalse(any("untouched" in c for c in relaxed["conflicts"]))
+
+    def test_stale_days_env_is_used_and_nonsense_falls_back(self):
+        self.m.add_node("task.ten", "task", "ten days", source="s", status="in_progress")
+        self._backdate("task.ten", 10)
+        with unittest.mock.patch.dict(os.environ, {"AMG_STALE_DAYS": "30"}):
+            self.assertFalse(any("untouched" in c for c in self.m.audit()["conflicts"]))
+        for bad in ("soon", "-1", "0", "100000"):
+            with unittest.mock.patch.dict(os.environ, {"AMG_STALE_DAYS": bad}):
+                rep = self.m.audit()
+                self.assertTrue(any("untouched" in c for c in rep["conflicts"]),
+                                f"bad value {bad!r} should fall back to the default")
 
     def test_changes_key_shapes_reported(self):
         self.m.add_node("task.a", "task", "A", source="s")

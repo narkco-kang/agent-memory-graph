@@ -172,6 +172,21 @@ Measured after the fix, on the same graph at rev 2,610 (1,288 nodes):
 and no registry node. The unpinned count is 1,064, i.e. the legacy-evidence class
 grew with the graph.
 
+The threshold is configurable (`AMG_STALE_DAYS`, or `--stale-days` for one run),
+because "too long" depends on the team's cadence. On that graph it reads:
+
+| threshold | conflicts |
+|---|---|
+| 3 days (default) | 3 |
+| 7 days | 1 |
+| 14 days | 0 |
+| 30 days | 0 |
+
+A team that meets weekly would see three false alarms at the default; one that meets
+monthly would see none at 30. The tool cannot know which team it is, so it does not
+pretend to: default stays 3 (the original rule), the knob is one environment variable,
+and invalid values fall back to the default rather than silently disabling the check.
+
 The unpinned `audit` on the same graph reports about 1,060 conflicts, which is also
 worth reading precisely: they are almost all "`done` without structured evidence",
 the legacy-format artefact — not 1,060 broken facts.

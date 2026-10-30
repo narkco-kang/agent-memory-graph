@@ -19,6 +19,33 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.8.0 — 2026-10-31
+
+Status: **released**. New capability: the staleness threshold is configurable, with
+the default unchanged. No schema change, no migration.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 198 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` |
+| 3 | Examples run | ✅ quickstart, lifecycle, `examples/mcp_client.py` |
+| 4 | Every "not implemented" claim re-run against code | ✅ unchanged set |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.8.0" |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.8.0 everywhere |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; sdist's own 198 tests pass inside the archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.8.0` |
+| 9 | `python3 tools/verify.py` green | ✅ including the artifact step |
+| 10 | New knob has measured justification | ✅ 3 → 1 → 0 conflicts at 3/7/14 days on the live graph; fallback behaviour tested |
+
+### Default unchanged, on purpose
+
+A weekly-sync team sees false alarms at 3 days and a monthly team sees none at 14.
+The tool cannot know which team it is, so it keeps the original default and exposes
+one environment variable — the same shape as `AMG_LOCK_TIMEOUT`, and for the same
+reason.
+
+---
+
 ## v0.7.7 — 2026-10-30
 
 Status: **released**. First library change since 0.6.0: `audit` stops reporting
