@@ -155,8 +155,8 @@ only 22–36% of lexical hits had anchors, so hard-filtering by default would hi
 most of the memory. (Superseded filtering is a different rule and is not
 optional; `--strict` does not re-enable expired facts.)
 
-**Not implemented** (planned, measured against a pre-registered bar, and so far
-rejected — see `experiments/retrieval_eval/`): vector / embedding
+**Not implemented** (measured against a pre-registered bar and rejected for the
+default path — see `experiments/retrieval_eval/`): vector / embedding
 search, MCP server, authentication, multi-tenant isolation, a TTL scheduler
 (`amg expire` is an explicit opt-in command; nothing expires in the
 background), Windows file locking, and any 10k-node benchmark above 1,063 nodes.

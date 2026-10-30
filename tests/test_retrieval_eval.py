@@ -168,3 +168,38 @@ class CandidateTests(unittest.TestCase):
                                         cost=candidates.CANDIDATES[name].COST)
             self.assertFalse(decision["adopted"], f"{name} now passes; update the README")
             self.assertIn("C1 paraphrase-H1", decision["failed"])
+
+
+class LocalEmbeddingCandidateTests(unittest.TestCase):
+    """Skipped unless a local embedding model is reachable; CI has none."""
+
+    def setUp(self):
+        cand = candidates.CANDIDATES.get("local-embed")
+        if cand is None:
+            self.skipTest("local-embed candidate not registered")
+        with open(os.path.join(EVAL_DIR, "corpus.json"), encoding="utf-8") as fh:
+            self.doc = json.load(fh)
+        try:
+            cand.search(self.doc, "atomic replace", k=1)
+        except Exception as exc:  # daemon absent, model missing, network blocked
+            self.skipTest(f"local embedding model unavailable: {type(exc).__name__}")
+        self.cand = cand
+
+    def test_it_is_still_not_adopted_but_is_measurably_better(self):
+        with open(os.path.join(EVAL_DIR, "queries.json"), encoding="utf-8") as fh:
+            queries = json.load(fh)["queries"]
+        nodes_by_id = {n["id"]: n for n in self.doc["nodes"]}
+        base = run_eval.stratified_halves(
+            run_eval.evaluate(run_eval.retrieval.search, self.doc, queries, nodes_by_id))
+        rows = run_eval.stratified_halves(
+            run_eval.evaluate(self.cand.search, self.doc, queries, nodes_by_id))
+        base_groups = {k: run_eval.aggregate(v) for k, v in run_eval.group_rows(base).items()}
+        groups = {k: run_eval.aggregate(v) for k, v in run_eval.group_rows(rows).items()}
+
+        # The measurement: a real embedding model roughly closes the paraphrase gap.
+        self.assertGreaterEqual(groups["paraphrase"]["recall@5"],
+                                base_groups["paraphrase"]["recall@5"] + 0.15)
+        # The decision: it still may not be the default path (C3: 274 MB model).
+        decision = run_eval.verdict(base_groups, groups, cost=self.cand.COST)
+        self.assertFalse(decision["adopted"], "update the experiment README if this flips")
+        self.assertIn("C3 cost", decision["failed"])

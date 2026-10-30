@@ -45,59 +45,62 @@ What this says, plainly:
    is often not first. A vector retriever would have to fix ordering, not just
    recall.
 
-## Candidates measured (zero-dependency only)
+## Candidates measured
 
-`run_eval.py bm25 hashed-vec` — both are implemented in `candidates.py`, both
-pass the same hard filters (superseded / not-yet-valid) as the shipped scorer.
+`run_eval.py bm25 hashed-vec local-embed` — all implement the same hard filters
+(superseded / not-yet-valid) as the shipped scorer.
 
 | retriever | overall r@5 | keyword r@5 | paraphrase r@5 | paraphrase r@1 | verdict |
 |---|---|---|---|---|---|
-| lexical baseline (shipped) | **0.865** | 0.938 | **0.750** | 0.400 | — |
+| lexical baseline (shipped) | 0.865 | 0.938 | 0.750 | 0.400 | — |
 | `bm25` (tokens + IDF, per-field) | 0.731 (−0.134) | 0.906 (−0.032) | 0.450 (−0.300) | 0.350 | **not adopted** |
-| `hashed-vec` (word + char-trigram, 512 dims hashed, IDF cosine) | 0.808 (−0.057) | 0.969 (+0.031) | 0.550 (−0.200) | 0.400 | **not adopted** |
+| `hashed-vec` (word + char-trigram, 512 dims) | 0.808 (−0.057) | 0.969 (+0.031) | 0.550 (−0.200) | 0.400 | **not adopted** |
+| `local-embed` (`nomic-embed-text`, 768 dims, local) | **0.962 (+0.097)** | 0.969 (+0.031) | **0.950 (+0.200)** | 0.625 | **not adopted** (C1-H2, C3) |
 
 Failed checks, per the pre-registered criteria:
 
-- `bm25`: C1 paraphrase-H1 −0.400 (needs +0.20), C1 paraphrase-H2 −0.200,
-  **and** C2 keyword-H2 −0.062 (limit 0.05).
+- `bm25`: C1 paraphrase-H1 −0.400, C1 paraphrase-H2 −0.200, **and** C2 keyword-H2
+  −0.062 (limit 0.05).
 - `hashed-vec`: C1 paraphrase-H1 −0.400, C1 paraphrase-H2 +0.000.
+- `local-embed`: C1 paraphrase-H2 **+0.100** (needs +0.20) and **C3** — it needs a
+  local ollama daemon plus a 274 MB model file, so it may not be the default path
+  of a zero-dependency library. H1 alone cleared the bar (+0.300).
 
 ### What the numbers actually say
 
-1. **The shipped scorer wins, and that is not a compliment to it.** `bm25` is the
-   textbook upgrade and loses 13 points overall: the baseline matches *substrings*
-   with no minimum token length, so "searched" matches "search" and "encoder"
-   matches "encode" for free — a crude stemmer nobody designed. Removing that
-   accident costs recall, which is a real (if unglamorous) property worth keeping.
-2. **Keyword queries are not the problem.** `hashed-vec` even improves them
-   (+0.031) — character trigrams tolerate morphology. The whole gap is paraphrase.
-3. **No dependency-free representation closes the paraphrase gap.** Both
-   candidates miss the same three queries, and each of those shares *zero* content
-   tokens with its gold node: "do I need to pip install anything" → a node that
-   says "standard library". Trigrams cannot invent that link, only meaning can.
-4. **Part of the baseline's 0.750 paraphrase recall is accidental** (see the
-   worked `q06` example in `PREREGISTRATION.md`, amendment v3): a query
-   containing "I" matches almost every node, so the hit arrives by ordering luck.
-   Paraphrase `recall@1` (0.400) is the honest number, which is why amendment v3
-   adds a recall@1 requirement and a precision guard before anything else is
-   measured.
+1. **The shipped scorer beats every dependency-free upgrade, for an unflattering
+   reason:** it matches substrings with no minimum token length, so `"searched"`
+   matches `search` and `"encoder"` matches `encode` — a crude stemmer nobody
+   designed. `bm25` replaces that with exact tokens and loses 13 points overall.
+2. **Keyword queries are not the problem** (`hashed-vec` already improves them).
+   The whole gap is paraphrase, and it is semantic: every query the lexical
+   candidates miss shares **zero** content tokens with its gold node.
+3. **A real embedding model closes most of that gap**: +0.097 overall, +0.200
+   paraphrase, paraphrase `recall@1` 0.400 → 0.625, with no keyword regression.
+   It still does not clear the pre-registered bar — one stratified half gains
+   +0.300, the other only +0.100 — and it cannot be the default (C3). Being
+   measurable and being adoptable are different questions, and both answers are
+   "no" for the default path.
+4. **Part of the baseline's 0.750 paraphrase recall is accidental** (worked
+   example in `PREREGISTRATION.md`, amendment v3): a query containing "I" matches
+   nearly every node. Paraphrase `recall@1` (0.400) is the honest figure, which is
+   why amendment v3 adds a recall@1 requirement and a precision guard before the
+   next candidate is measured.
 
-## The semantic arm was not measurable here
+### The semantic arm, measured locally (and an earlier claim corrected)
 
-The obvious next candidate is a real embedding model, and filing a number for it
-would have been easy to fake. It was not measurable in this environment:
+An earlier run of this experiment said the semantic arm was "not measurable here"
+because the hosted embedding API answered `429 {"code":"1113"}` and no
+sentence-transformer was installed. **That was wrong**: `ollama` was already
+running on this machine with `nomic-embed-text` (768 dims, 137M params) pulled —
+I had checked one tool and concluded about the environment. The measurement above
+is that model, served over `http://127.0.0.1:11434/api/embed`, with vectors cached
+by exact text so a re-run is deterministic.
 
-- GLM `embedding-3` and `embedding-2` both return HTTP 429
-  `{"code":"1113","message":"余额不足或无可用资源包"}` with the local key — the
-  subscription does not cover embeddings;
-- no local sentence-transformer model is installed, and shipping one would add a
-  dependency plus a download (C3).
-
-So the question "would a semantic retriever clear the bar?" is **open**, with a
-concrete blocker rather than a guess. What we do know: the three paraphrase
-queries that both candidates miss share no content tokens with their gold nodes,
-so the gap is not lexical. That is evidence for the direction, not a measurement
-of it.
+Reproduce: `PYTHONPATH=src python3 experiments/retrieval_eval/run_eval.py local-embed`
+(requires `ollama` with `nomic-embed-text`; the vector cache is gitignored, so it
+rebuilds on first run). No Python package was added to the project for this, and
+nothing was added to the shipped library.
 
 ## The bar a candidate must clear
 
@@ -122,8 +125,10 @@ result gets written down here rather than the experiment being quietly dropped.
 - [x] Two zero-dependency candidates measured: **both not adopted** (numbers above).
 - [x] Amendment v3: precision guard + paraphrase `recall@1` requirement, because
   the 0.750 paraphrase `recall@5` is partly accidental inclusion.
-- [ ] Semantic candidate measured — **blocked**: no embedding resource
-  (`1113`), no local model. Nothing shipped in its place.
+- [x] Semantic candidate measured locally (`nomic-embed-text`): +0.200 paraphrase,
+  still below the bar in one half, and C3 keeps it out of the default path.
+- [x] Connection to issue #2: **not adopted for the default path**; the measured
+  numbers are the deliverable, not a feature.
 - [ ] Decision on issue #2: stays open with this blocker written down; the README
   keeps saying "lexical only".
 

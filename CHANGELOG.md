@@ -7,6 +7,14 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
 
 ### Changed
 
+- **Semantic retrieval measured, not guessed** (`experiments/retrieval_eval/`):
+  a local `nomic-embed-text` candidate (768 dims via ollama) lifts paraphrase
+  `recall@5` from 0.750 to 0.950 and `recall@1` from 0.400 to 0.625 with no
+  keyword regression — real, measured, and still **not adopted**: one stratified
+  half gains +0.100 against a +0.20 bar, and C3 keeps a 274 MB model out of the
+  default path of a zero-dependency library. An earlier claim in this repo that
+  the semantic arm was "not measurable here" was wrong (a local model was already
+  installed); that correction is recorded in the experiment README.
 - **Prior art verified in full text** (`docs/PRIOR-ART.md`): MAP-Graph
   (arXiv:2608.10509) already implements and ablates the two ideas this project
   had listed as its own direction, so both are conceded as prior art rather than

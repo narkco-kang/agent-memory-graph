@@ -8,7 +8,7 @@
     5,
     10
   ],
-  "git_rev": "5530e95",
+  "git_rev": "d25eb72",
   "summary": {
     "overall": {
       "n": 26,
@@ -2088,6 +2088,814 @@
         "C1 paraphrase-H2"
       ],
       "cost": "none"
+    },
+    "local-embed": {
+      "summary": {
+        "overall": {
+          "n": 26,
+          "mrr@10": 0.921,
+          "recall@1": 0.808,
+          "recall@5": 0.962,
+          "recall@10": 1.0
+        },
+        "keyword": {
+          "n": 16,
+          "mrr@10": 1.0,
+          "recall@1": 0.906,
+          "recall@5": 0.969,
+          "recall@10": 1.0
+        },
+        "paraphrase": {
+          "n": 10,
+          "mrr@10": 0.795,
+          "recall@1": 0.65,
+          "recall@5": 0.95,
+          "recall@10": 1.0
+        },
+        "paraphrase-H1": {
+          "n": 5,
+          "mrr@10": 0.84,
+          "recall@1": 0.7,
+          "recall@5": 1.0,
+          "recall@10": 1.0
+        },
+        "paraphrase-H2": {
+          "n": 5,
+          "mrr@10": 0.75,
+          "recall@1": 0.6,
+          "recall@5": 0.9,
+          "recall@10": 1.0
+        },
+        "keyword-H1": {
+          "n": 8,
+          "mrr@10": 1.0,
+          "recall@1": 0.875,
+          "recall@5": 0.938,
+          "recall@10": 1.0
+        },
+        "keyword-H2": {
+          "n": 8,
+          "mrr@10": 1.0,
+          "recall@1": 0.938,
+          "recall@5": 1.0,
+          "recall@10": 1.0
+        },
+        "authored-split-A": {
+          "n": 14,
+          "mrr@10": 1.0,
+          "recall@1": 0.964,
+          "recall@5": 1.0,
+          "recall@10": 1.0
+        },
+        "authored-split-B": {
+          "n": 12,
+          "mrr@10": 0.829,
+          "recall@1": 0.625,
+          "recall@5": 0.917,
+          "recall@10": 1.0
+        }
+      },
+      "rows": [
+        {
+          "id": "q01",
+          "split": "A",
+          "query": "atomic file replace",
+          "gold": [
+            "decision.atomic-replace"
+          ],
+          "overlap": 1.0,
+          "ranked": [
+            "decision.atomic-replace",
+            "artifact.store-module",
+            "task.windows-lock",
+            "task.digest-budget",
+            "rule.append-only-history",
+            "task.cold-archive",
+            "decision.zero-deps",
+            "rule.docs-equal-code",
+            "issue.double-write",
+            "env.python-version"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H1"
+        },
+        {
+          "id": "q02",
+          "split": "A",
+          "query": "does the program crash in the middle of a save corrupt the graph",
+          "gold": [
+            "decision.atomic-replace"
+          ],
+          "overlap": 0.25,
+          "ranked": [
+            "decision.atomic-replace",
+            "issue.unbounded-digest",
+            "issue.double-write",
+            "task.cold-archive",
+            "decision.two-key-ranking",
+            "artifact.retrieval-module",
+            "issue.lock-timeout",
+            "decision.zero-deps",
+            "task.vector-search",
+            "artifact.store-module"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "paraphrase",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "paraphrase-H1"
+        },
+        {
+          "id": "q03",
+          "split": "A",
+          "query": "msvcrt locking",
+          "gold": [
+            "task.windows-lock"
+          ],
+          "overlap": 1.0,
+          "ranked": [
+            "task.windows-lock",
+            "decision.lock-strategy",
+            "issue.double-write",
+            "issue.lock-timeout",
+            "artifact.store-module",
+            "decision.read-only",
+            "task.vector-search",
+            "task.read-audit",
+            "decision.plain-json",
+            "issue.cjk-tokenization"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H2"
+        },
+        {
+          "id": "q04",
+          "split": "B",
+          "query": "can I run this on a Windows laptop",
+          "gold": [
+            "task.windows-lock"
+          ],
+          "overlap": 0.2,
+          "ranked": [
+            "task.windows-lock",
+            "decision.read-only",
+            "decision.zero-deps",
+            "task.expiry-command",
+            "task.vector-search",
+            "model.embedding",
+            "decision.atomic-replace",
+            "env.python-version",
+            "task.cold-archive",
+            "task.read-audit"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "paraphrase",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "paraphrase-H2"
+        },
+        {
+          "id": "q05",
+          "split": "A",
+          "query": "reads.jsonl rotation size",
+          "gold": [
+            "task.read-audit"
+          ],
+          "overlap": 0.5,
+          "ranked": [
+            "task.read-audit",
+            "decision.plain-json",
+            "issue.unbounded-digest",
+            "task.digest-budget",
+            "artifact.mcp-server",
+            "decision.lock-strategy",
+            "issue.cjk-tokenization",
+            "decision.read-only",
+            "task.windows-lock",
+            "question.vector-value"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H1"
+        },
+        {
+          "id": "q06",
+          "split": "B",
+          "query": "who can see what I searched",
+          "gold": [
+            "task.read-audit"
+          ],
+          "overlap": 0.0,
+          "ranked": [
+            "task.vector-search",
+            "decision.plain-json",
+            "artifact.retrieval-module",
+            "task.cold-archive",
+            "task.read-audit",
+            "decision.two-key-ranking",
+            "rule.no-fabricated-hash",
+            "task.digest-budget",
+            "decision.lock-strategy",
+            "rule.append-only-history"
+          ],
+          "reciprocal_rank": 0.2,
+          "bucket": "paraphrase",
+          "recall@1": 0.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "paraphrase-H1"
+        },
+        {
+          "id": "q07",
+          "split": "A",
+          "query": "expire --apply",
+          "gold": [
+            "task.expiry-command"
+          ],
+          "overlap": 1.0,
+          "ranked": [
+            "task.expiry-command",
+            "decision.no-daemon",
+            "task.cold-archive",
+            "issue.lock-timeout",
+            "task.vector-search",
+            "model.embedding",
+            "decision.zero-deps",
+            "rule.append-only-history",
+            "decision.plain-json",
+            "env.python-version"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H2"
+        },
+        {
+          "id": "q08",
+          "split": "B",
+          "query": "how do old facts get retired automatically",
+          "gold": [
+            "decision.no-daemon",
+            "task.expiry-command"
+          ],
+          "overlap": 0.0,
+          "ranked": [
+            "rule.append-only-history",
+            "task.cold-archive",
+            "decision.atomic-replace",
+            "task.expiry-command",
+            "rule.no-fabricated-hash",
+            "decision.no-daemon",
+            "decision.two-key-ranking",
+            "artifact.store-module",
+            "decision.lock-strategy",
+            "issue.unbounded-digest"
+          ],
+          "reciprocal_rank": 0.25,
+          "bucket": "paraphrase",
+          "recall@1": 0.0,
+          "recall@5": 0.5,
+          "recall@10": 1.0,
+          "half": "paraphrase-H2"
+        },
+        {
+          "id": "q09",
+          "split": "A",
+          "query": "zero dependencies install",
+          "gold": [
+            "decision.zero-deps"
+          ],
+          "overlap": 0.667,
+          "ranked": [
+            "decision.zero-deps",
+            "task.batch-write",
+            "decision.no-daemon",
+            "model.embedding",
+            "task.cold-archive",
+            "decision.plain-json",
+            "task.expiry-command",
+            "decision.read-only",
+            "artifact.mcp-server",
+            "rule.no-fabricated-hash"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H1"
+        },
+        {
+          "id": "q10",
+          "split": "B",
+          "query": "do I need to pip install anything",
+          "gold": [
+            "decision.zero-deps"
+          ],
+          "overlap": 0.0,
+          "ranked": [
+            "decision.zero-deps",
+            "artifact.store-module",
+            "artifact.mcp-server",
+            "decision.read-only",
+            "decision.atomic-replace",
+            "task.expiry-command",
+            "model.embedding",
+            "decision.no-daemon",
+            "task.batch-write",
+            "task.cold-archive"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "paraphrase",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "paraphrase-H1"
+        },
+        {
+          "id": "q11",
+          "split": "A",
+          "query": "two-key ranking evidence first",
+          "gold": [
+            "decision.two-key-ranking"
+          ],
+          "overlap": 0.8,
+          "ranked": [
+            "decision.two-key-ranking",
+            "artifact.retrieval-module",
+            "rule.no-fabricated-hash",
+            "question.vector-value",
+            "task.vector-search",
+            "issue.unbounded-digest",
+            "rule.docs-equal-code",
+            "issue.cjk-tokenization",
+            "decision.lock-strategy",
+            "task.read-audit"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H2"
+        },
+        {
+          "id": "q12",
+          "split": "B",
+          "query": "why do notes with proof rank higher",
+          "gold": [
+            "decision.two-key-ranking"
+          ],
+          "overlap": 0.0,
+          "ranked": [
+            "decision.two-key-ranking",
+            "issue.unbounded-digest",
+            "artifact.retrieval-module",
+            "question.vector-value",
+            "issue.cjk-tokenization",
+            "task.read-audit",
+            "rule.no-fabricated-hash",
+            "task.digest-budget",
+            "decision.lock-strategy",
+            "rule.append-only-history"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "paraphrase",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "paraphrase-H2"
+        },
+        {
+          "id": "q13",
+          "split": "A",
+          "query": "read-only MCP server",
+          "gold": [
+            "decision.read-only"
+          ],
+          "overlap": 1.0,
+          "ranked": [
+            "decision.read-only",
+            "artifact.mcp-server",
+            "task.read-audit",
+            "decision.plain-json",
+            "task.cold-archive",
+            "decision.lock-strategy",
+            "decision.zero-deps",
+            "issue.double-write",
+            "rule.append-only-history",
+            "decision.no-daemon"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H1"
+        },
+        {
+          "id": "q14",
+          "split": "B",
+          "query": "can the AI client be prevented from writing",
+          "gold": [
+            "decision.read-only"
+          ],
+          "overlap": 0.333,
+          "ranked": [
+            "decision.read-only",
+            "decision.lock-strategy",
+            "issue.double-write",
+            "issue.lock-timeout",
+            "rule.docs-equal-code",
+            "task.batch-write",
+            "rule.no-fabricated-hash",
+            "decision.plain-json",
+            "decision.no-daemon",
+            "decision.atomic-replace"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "paraphrase",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "paraphrase-H1"
+        },
+        {
+          "id": "q15",
+          "split": "A",
+          "query": "digest byte budget truncation",
+          "gold": [
+            "task.digest-budget"
+          ],
+          "overlap": 0.75,
+          "ranked": [
+            "task.digest-budget",
+            "issue.unbounded-digest",
+            "rule.no-fabricated-hash",
+            "artifact.retrieval-module",
+            "rule.append-only-history",
+            "task.read-audit",
+            "issue.cjk-tokenization",
+            "decision.atomic-replace",
+            "decision.plain-json",
+            "task.windows-lock"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H2"
+        },
+        {
+          "id": "q16",
+          "split": "B",
+          "query": "how big can the summary get",
+          "gold": [
+            "task.digest-budget",
+            "issue.unbounded-digest"
+          ],
+          "overlap": 0.5,
+          "ranked": [
+            "issue.unbounded-digest",
+            "task.digest-budget",
+            "task.read-audit",
+            "decision.two-key-ranking",
+            "task.batch-write",
+            "decision.plain-json",
+            "task.vector-search",
+            "issue.cjk-tokenization",
+            "rule.append-only-history",
+            "artifact.retrieval-module"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 0.5,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H1"
+        },
+        {
+          "id": "q17",
+          "split": "A",
+          "query": "fabricated sha256 evidence",
+          "gold": [
+            "rule.no-fabricated-hash"
+          ],
+          "overlap": 0.667,
+          "ranked": [
+            "rule.no-fabricated-hash",
+            "rule.docs-equal-code",
+            "decision.two-key-ranking",
+            "artifact.retrieval-module",
+            "issue.cjk-tokenization",
+            "task.digest-budget",
+            "artifact.mcp-server",
+            "question.vector-value",
+            "decision.plain-json",
+            "task.read-audit"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H2"
+        },
+        {
+          "id": "q18",
+          "split": "B",
+          "query": "what if the checksum was lost, should I make one up",
+          "gold": [
+            "rule.no-fabricated-hash"
+          ],
+          "overlap": 0.125,
+          "ranked": [
+            "rule.docs-equal-code",
+            "rule.no-fabricated-hash",
+            "issue.double-write",
+            "rule.append-only-history",
+            "issue.cjk-tokenization",
+            "task.cold-archive",
+            "decision.plain-json",
+            "decision.atomic-replace",
+            "env.python-version",
+            "issue.lock-timeout"
+          ],
+          "reciprocal_rank": 0.5,
+          "bucket": "paraphrase",
+          "recall@1": 0.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "paraphrase-H2"
+        },
+        {
+          "id": "q19",
+          "split": "A",
+          "query": "CJK tokenization single characters",
+          "gold": [
+            "issue.cjk-tokenization"
+          ],
+          "overlap": 1.0,
+          "ranked": [
+            "issue.cjk-tokenization",
+            "rule.docs-equal-code",
+            "decision.lock-strategy",
+            "issue.lock-timeout",
+            "question.vector-value",
+            "artifact.retrieval-module",
+            "artifact.mcp-server",
+            "artifact.store-module",
+            "decision.two-key-ranking",
+            "task.digest-budget"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H1"
+        },
+        {
+          "id": "q20",
+          "split": "B",
+          "query": "does it work for Chinese queries",
+          "gold": [
+            "issue.cjk-tokenization"
+          ],
+          "overlap": 0.4,
+          "ranked": [
+            "issue.cjk-tokenization",
+            "question.vector-value",
+            "task.vector-search",
+            "artifact.retrieval-module",
+            "rule.docs-equal-code",
+            "env.python-version",
+            "decision.two-key-ranking",
+            "task.read-audit",
+            "task.batch-write",
+            "decision.plain-json"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H2"
+        },
+        {
+          "id": "q21",
+          "split": "A",
+          "query": "lock timeout exit code three",
+          "gold": [
+            "issue.lock-timeout"
+          ],
+          "overlap": 0.8,
+          "ranked": [
+            "issue.lock-timeout",
+            "artifact.store-module",
+            "decision.lock-strategy",
+            "issue.double-write",
+            "rule.docs-equal-code",
+            "task.windows-lock",
+            "decision.read-only",
+            "task.cold-archive",
+            "decision.no-daemon",
+            "decision.zero-deps"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H1"
+        },
+        {
+          "id": "q22",
+          "split": "B",
+          "query": "two processes writing at the same time",
+          "gold": [
+            "issue.double-write",
+            "decision.lock-strategy"
+          ],
+          "overlap": 0.333,
+          "ranked": [
+            "issue.double-write",
+            "task.batch-write",
+            "decision.read-only",
+            "decision.lock-strategy",
+            "task.digest-budget",
+            "decision.atomic-replace",
+            "issue.unbounded-digest",
+            "task.read-audit",
+            "decision.two-key-ranking",
+            "rule.no-fabricated-hash"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "paraphrase",
+          "recall@1": 0.5,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "paraphrase-H1"
+        },
+        {
+          "id": "q23",
+          "split": "A",
+          "query": "append-only history",
+          "gold": [
+            "rule.append-only-history"
+          ],
+          "overlap": 1.0,
+          "ranked": [
+            "rule.append-only-history",
+            "issue.unbounded-digest",
+            "decision.no-daemon",
+            "task.cold-archive",
+            "rule.no-fabricated-hash",
+            "task.batch-write",
+            "task.digest-budget",
+            "artifact.mcp-server",
+            "artifact.retrieval-module",
+            "decision.two-key-ranking"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H2"
+        },
+        {
+          "id": "q24",
+          "split": "B",
+          "query": "would a sentence encoder help",
+          "gold": [
+            "model.embedding",
+            "question.vector-value"
+          ],
+          "overlap": 0.75,
+          "ranked": [
+            "model.embedding",
+            "env.python-version",
+            "task.vector-search",
+            "issue.cjk-tokenization",
+            "task.digest-budget",
+            "task.windows-lock",
+            "question.vector-value",
+            "rule.docs-equal-code",
+            "decision.lock-strategy",
+            "task.batch-write"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 0.5,
+          "recall@5": 0.5,
+          "recall@10": 1.0,
+          "half": "keyword-H1"
+        },
+        {
+          "id": "q25",
+          "split": "A",
+          "query": "vector search labelled query set",
+          "gold": [
+            "task.vector-search",
+            "question.vector-value"
+          ],
+          "overlap": 1.0,
+          "ranked": [
+            "task.vector-search",
+            "question.vector-value",
+            "artifact.retrieval-module",
+            "issue.cjk-tokenization",
+            "decision.two-key-ranking",
+            "env.python-version",
+            "task.windows-lock",
+            "task.read-audit",
+            "model.embedding",
+            "artifact.store-module"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "keyword",
+          "recall@1": 0.5,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "keyword-H2"
+        },
+        {
+          "id": "q26",
+          "split": "B",
+          "query": "keep the data in something readable by humans",
+          "gold": [
+            "decision.plain-json"
+          ],
+          "overlap": 0.167,
+          "ranked": [
+            "decision.plain-json",
+            "decision.atomic-replace",
+            "task.read-audit",
+            "decision.two-key-ranking",
+            "task.cold-archive",
+            "rule.no-fabricated-hash",
+            "decision.read-only",
+            "artifact.retrieval-module",
+            "task.vector-search",
+            "decision.lock-strategy"
+          ],
+          "reciprocal_rank": 1.0,
+          "bucket": "paraphrase",
+          "recall@1": 1.0,
+          "recall@5": 1.0,
+          "recall@10": 1.0,
+          "half": "paraphrase-H2"
+        }
+      ],
+      "checks": {
+        "C1 paraphrase-H1": {
+          "gain": 0.3,
+          "required": 0.2,
+          "pass": true
+        },
+        "C1 paraphrase-H2": {
+          "gain": 0.1,
+          "required": 0.2,
+          "pass": false
+        },
+        "C2 keyword-H1": {
+          "drop": -0.063,
+          "allowed": 0.05,
+          "pass": true
+        },
+        "C2 keyword-H2": {
+          "drop": 0.0,
+          "allowed": 0.05,
+          "pass": true
+        },
+        "C3 cost": {
+          "cost": "optional-model",
+          "pass": false
+        }
+      },
+      "adopted": false,
+      "failed": [
+        "C1 paraphrase-H2",
+        "C3 cost"
+      ],
+      "cost": "optional-model"
     }
   }
 }

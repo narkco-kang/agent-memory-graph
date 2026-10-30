@@ -16,8 +16,11 @@ Why these two and not "a vector database":
   the "do we need a model?" question gets a measured answer.
 """
 import hashlib
+import json
 import math
+import os
 import re
+import urllib.request
 
 from amg.const import CONCLUSION_TYPES, not_yet_valid
 
@@ -228,4 +231,103 @@ class HashedVector:
         return _rank(doc, scored, k, strict)
 
 
+class LocalEmbedding:
+    """Semantic candidate backed by a *local* embedding model via ollama.
+
+    Cost disclosure (C3): this needs a running ollama daemon and the
+    `nomic-embed-text` model (768 dims, 137M params, already present on this
+    machine). It is therefore an optional extra at best — never the default path
+    of a zero-dependency library — and the harness verdict must treat it that way.
+
+    Vectors are cached on disk keyed by the exact text, so a re-run is
+    deterministic and does not depend on the daemon's ordering.
+    """
+    name = "local-embed"
+    COST = "optional-model"
+    MODEL = "nomic-embed-text"
+    ENDPOINT = "http://127.0.0.1:11434/api/embed"
+    CACHE = os.path.join(os.path.dirname(os.path.abspath(__file__)),
+                         ".embed-cache-nomic.json")
+
+    def __init__(self):
+        self._doc_cache = {}
+        self._vec = self._load_cache()
+
+    # ---------- cache ----------
+    @classmethod
+    def _load_cache(cls):
+        try:
+            with open(cls.CACHE, encoding="utf-8") as fh:
+                data = json.load(fh)
+            if data.get("model") == cls.MODEL:
+                return data["vectors"]
+        except (OSError, json.JSONDecodeError, KeyError):
+            pass
+        return {}
+
+    def _save_cache(self):
+        with open(self.CACHE, "w", encoding="utf-8") as fh:
+            json.dump({"model": self.MODEL, "vectors": self._vec}, fh)
+            fh.write("\n")
+
+    # ---------- embedding ----------
+    def _embed(self, texts):
+        missing = [t for t in texts if t not in self._vec]
+        if missing:
+            payload = json.dumps({"model": self.MODEL, "input": missing}).encode("utf-8")
+            request = urllib.request.Request(self.ENDPOINT, data=payload,
+                                             headers={"Content-Type": "application/json"})
+            with urllib.request.urlopen(request, timeout=120) as response:
+                data = json.load(response)
+            for text, vector in zip(missing, data["embeddings"]):
+                self._vec[text] = vector
+            self._save_cache()
+        return [self._vec[t] for t in texts]
+
+    @staticmethod
+    def _node_text(node):
+        return " ".join(str(node.get(f) or "") for f in ("label", "note", "id", "type", "status")).strip()
+
+    @staticmethod
+    def _cosine(a, b):
+        dot = sum(x * y for x, y in zip(a, b))
+        na = math.sqrt(sum(x * x for x in a))
+        nb = math.sqrt(sum(y * y for y in b))
+        return dot / (na * nb) if na and nb else 0.0
+
+    def _index(self, doc, layer):
+        key = (id(doc), layer)
+        if key in self._doc_cache:
+            return self._doc_cache[key]
+        nodes = _visible(doc, layer)
+        texts = [self._node_text(n) for n in nodes]
+        vectors = self._embed(texts) if texts else []
+        self._doc_cache[key] = (nodes, vectors)
+        return nodes, vectors
+
+    def search(self, doc, query, layer="L3", k=10, strict=False):
+        nodes, vectors = self._index(doc, layer)
+        if not nodes or not tokens(query):
+            return []
+        query_vector = self._embed([query])[0]
+        scored = []
+        for node, vector in zip(nodes, vectors):
+            score = self._cosine(query_vector, vector)
+            matched = [f for f, w in FIELD_WEIGHTS.items()
+                       if any(t in str(node.get(f) or "").lower() for t in tokens(query))]
+            scored.append(_record(node, score, matched))
+        scored = [item for item in scored if item["score"] > 0]
+        return _rank(doc, scored, k, strict)
+
+
 CANDIDATES = {c.name: c for c in (BM25(), HashedVector())}
+
+def _register_local_embedding():
+    try:
+        import urllib.request  # noqa: F401
+    except ImportError:  # pragma: no cover
+        return
+    CANDIDATES[LocalEmbedding.name] = LocalEmbedding()
+
+
+_register_local_embedding()
