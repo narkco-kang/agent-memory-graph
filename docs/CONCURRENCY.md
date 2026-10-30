@@ -132,6 +132,46 @@ is no evidence yet that 240 ms once per 200 writes hurts anyone, and the fix is 
 change to the one component that must never be wrong. Whoever builds it should
 first add the counters this experiment says are missing.
 
+## On a real 15.6 MB graph: the timeout is the binding constraint
+
+The small-graph numbers above hide the case that actually bites: a write on the
+real 15.6 MB graph costs ~147 ms (whole-file rewrite + `fsync`, see
+`WRITE-COST.md`), so a burst of writers queues seconds of work. Same harness, with
+the graph adopted from a live one (`--graph DIR`), 5 writes per writer:
+
+| writers × writes | writes | outcome | worst lock wait | p50 | p95 | max |
+|---|---|---|---|---|---|---|
+| 2 × 5 | 10 | all present, `check` clean | **0.85 s** | 147.7 ms | 169.5 ms | 169.5 ms |
+| 4 × 5 | 20 | all present, `check` clean | **2.51 s** | 149.4 ms | 153.1 ms | 166.7 ms |
+| 8 × 5 | 40 | **`LockTimeout` after 5.0 s** — the run aborted | — | — | — | — |
+| 8 × 5, `AMG_LOCK_TIMEOUT=60` | 40 | all present, `check` clean | **5.95 s** | 149.1 ms | 2.88 s | 3.99 s |
+
+The arithmetic, which the table fits almost exactly:
+
+```
+per-write cost      ~150 ms  (147-152 ms measured, serial and contended alike)
+burst of 40 writes  ~6.0 s   (measured burst window: 6.7 s)
+worst wait          5.95 s   = the queue ahead of the last writer, drained
+default timeout      5.0 s   = about 34 queued writes
+```
+
+So **fairness is not the fix here**: even a perfectly FIFO lock has to drain ~6 s of
+writes before the last writer gets in. The binding constraint is `timeout <
+queued_writes × per_write_cost`. That has three consequences, all documented rather
+than patched over:
+
+1. **The default stays 5 s** — it is fine for interactive single-agent use, which is
+   what this library is for.
+2. **Bursts must raise it**: `AMG_LOCK_TIMEOUT` (seconds) is read by every lock
+   acquisition, clamped to `(0, 3600]`, nonsense values fall back to 5 s. The
+   timeout error now names the variable instead of leaving the user to guess.
+3. **The real fix is cheaper writes**, not a fairer lock: the history sidecar priced
+   in `WRITE-COST.md` would take a write from ~150 ms to ~30 ms, which moves the
+   same 5 s budget from 34 queued writes to ~170.
+
+Both are consistent with DECISIONS #15/#16: build the expensive thing when a real
+workflow needs it, and say so with these numbers instead of "locks are slow".
+
 ## A real bug the Windows burst test found
 
 The CI version of this burst (3 writers × 3 writes) failed on Windows with:

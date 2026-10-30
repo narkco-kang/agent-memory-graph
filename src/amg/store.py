@@ -26,6 +26,23 @@ else:
 LOCK_POLL_START_S = 0.001
 LOCK_POLL_MAX_S = 0.016
 
+# Default wait for the write lock. A write on the 15.6 MB real graph costs ~147 ms,
+# so 5 s covers roughly 34 writes queued ahead of yours (docs/CONCURRENCY.md);
+# beyond that a correct lock still times out. AMG_LOCK_TIMEOUT raises the ceiling
+# for burst workloads without changing the default for interactive use.
+DEFAULT_LOCK_TIMEOUT = 5.0
+
+
+def default_lock_timeout() -> float:
+    raw = os.environ.get("AMG_LOCK_TIMEOUT")
+    if not raw:
+        return DEFAULT_LOCK_TIMEOUT
+    try:
+        value = float(raw)
+    except ValueError:
+        return DEFAULT_LOCK_TIMEOUT
+    return value if 0 < value <= 3600 else DEFAULT_LOCK_TIMEOUT
+
 
 def dumps(doc: dict) -> str:
     return json.dumps(doc, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
@@ -122,7 +139,10 @@ class Store:
             except OSError:
                 if time.time() >= deadline:
                     self.lock_stats["timeouts"] += 1
-                    raise LockTimeout(f"write lock timeout after {timeout}s: {self.lockfile}")
+                    raise LockTimeout(
+                        f"write lock timeout after {timeout}s: {self.lockfile} "
+                        f"(another writer held it; on a large graph each write serialises, "
+                        f"so raise AMG_LOCK_TIMEOUT for bursts)")
                 polls += 1
                 ceiling = LOCK_POLL_MAX_S
                 backoff = min(ceiling, LOCK_POLL_START_S * (2 ** min(polls - 1, 8)))
@@ -136,7 +156,8 @@ class Store:
             msvcrt.locking(fh.fileno(), msvcrt.LK_UNLCK, 1)
 
     @contextlib.contextmanager
-    def locked(self, timeout: float = 5.0):
+    def locked(self, timeout: float = None):
+        timeout = default_lock_timeout() if timeout is None else timeout
         os.makedirs(self.dir, exist_ok=True)
         fh = open(self.lockfile, "a+b")
         if not _POSIX and os.fstat(fh.fileno()).st_size == 0:

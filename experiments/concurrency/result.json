@@ -1,41 +1,41 @@
 {
   "lock": {
-    "acquisitions": 200,
-    "polls_total": 66,
-    "worst_wait_ms": 199.302,
-    "worst_wait_polls": 15,
+    "acquisitions": 48,
+    "polls_total": 1974,
+    "worst_wait_ms": 5947.215,
+    "worst_wait_polls": 372,
     "timeouts": 0,
-    "waits_over_100ms": 3
+    "waits_over_100ms": 8
   },
   "writers": 8,
-  "writes_per_writer": 25,
-  "expected_writes": 200,
-  "nodes_present": 200,
+  "writes_per_writer": 5,
+  "expected_writes": 40,
+  "nodes_present": 40,
   "duplicate_ids": 0,
   "missing_writes": 0,
   "errors": [],
   "check_ok": true,
   "check_errors": 0,
-  "changes_for_stress_writes": 200,
+  "changes_for_stress_writes": 40,
   "targets_with_wrong_change_count": 0,
-  "rev": 226,
+  "rev": 2629,
   "contended": {
-    "wall_ms": 288.3,
-    "burst_window_ms": 234.4,
-    "writes_per_s": 853.2,
-    "p50_ms": 1.03,
-    "p95_ms": 1.67,
-    "max_ms": 201.12,
-    "total_writes": 200
+    "wall_ms": 6853.3,
+    "burst_window_ms": 6705.0,
+    "writes_per_s": 6.0,
+    "p50_ms": 149.05,
+    "p95_ms": 2880.71,
+    "max_ms": 3986.4,
+    "total_writes": 40
   },
   "serial": {
-    "wall_ms": 87.5,
-    "burst_window_ms": 40.6,
-    "writes_per_s": 615.8,
-    "p50_ms": 1.53,
-    "p95_ms": 2.17,
-    "max_ms": 3.1,
-    "total_writes": 25
+    "wall_ms": 902.3,
+    "burst_window_ms": 759.9,
+    "writes_per_s": 6.6,
+    "p50_ms": 151.54,
+    "p95_ms": 162.9,
+    "max_ms": 162.9,
+    "total_writes": 5
   },
   "passed": true
 }

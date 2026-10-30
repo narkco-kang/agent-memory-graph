@@ -3,6 +3,17 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [Unreleased] — 0.7.0
+
+### Added
+
+- **`AMG_LOCK_TIMEOUT`** (seconds, clamped to `(0, 3600]`, nonsense falls back to
+  5 s) — because the default is now known to be load-dependent rather than safe:
+  on the real 15.6 MB graph a write costs ~147 ms, so 5 s covers about 34 queued
+  writes and 8 writers × 5 writes times out (measured; the run aborted). The
+  timeout error names the variable. Fairness would not fix it — the queue still has
+  to drain — which is now stated with arithmetic in `docs/CONCURRENCY.md`.
+
 ## [0.6.0] — 2026-10-30
 
 ### Fixed

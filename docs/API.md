@@ -40,6 +40,10 @@ only if the whole batch passes. Duplicate ids (against the graph or inside the
 batch), unknown enums, missing sources and conclusion-typed `done` nodes without
 evidence reject the entire batch.
 
+`AMG_LOCK_TIMEOUT` (seconds, `0 < x <= 3600`, invalid values fall back to 5)
+overrides the write-lock wait. Raise it for burst workloads: on a large graph each
+write costs the full rewrite, so 5 s covers roughly 34 queued writes.
+
 Exit codes: `0` success/clean, `1` protocol violation or conflicts, `2` usage,
 `3` lock timeout or IO failure.
 

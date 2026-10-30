@@ -147,3 +147,60 @@ class LockedReadTests(unittest.TestCase):
         with self.assertRaises(ProtocolError):
             Store(missing).read_locked()
         self.assertFalse(os.path.isdir(missing))
+
+
+class LockTimeoutConfigTests(unittest.TestCase):
+    """A default timeout is a policy, not a constant: bursts must be able to raise it."""
+
+    def setUp(self):
+        self.g = TempGraph()
+        self.store = Store(self.g.dir)
+
+    def tearDown(self):
+        self.g.close()
+
+    def test_default_is_five_seconds(self):
+        import amg.store as store_mod
+        os.environ.pop("AMG_LOCK_TIMEOUT", None)
+        self.assertEqual(store_mod.default_lock_timeout(), 5.0)
+
+    def test_env_var_raises_the_ceiling(self):
+        import amg.store as store_mod
+        os.environ["AMG_LOCK_TIMEOUT"] = "42"
+        try:
+            self.assertEqual(store_mod.default_lock_timeout(), 42.0)
+        finally:
+            os.environ.pop("AMG_LOCK_TIMEOUT", None)
+
+    def test_nonsense_values_fall_back_to_the_default(self):
+        import amg.store as store_mod
+        for raw in ("abc", "0", "-3", "999999"):
+            os.environ["AMG_LOCK_TIMEOUT"] = raw
+            try:
+                self.assertEqual(store_mod.default_lock_timeout(), 5.0, raw)
+            finally:
+                os.environ.pop("AMG_LOCK_TIMEOUT", None)
+
+    def test_env_var_actually_changes_the_wait(self):
+        env = dict(os.environ)
+        env["PYTHONPATH"] = os.path.join(ROOT, "src")
+        proc = subprocess.Popen([sys.executable, "-c", HOLDER, os.path.join(ROOT, "src"), self.g.dir],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                encoding="utf-8", env=env)
+        try:
+            if proc.stdout.readline().strip() != "ready":
+                self.fail(f"holder failed: {proc.stderr.read()[:400]}")
+            os.environ["AMG_LOCK_TIMEOUT"] = "0.25"
+            t0 = time.perf_counter()
+            try:
+                with self.assertRaises(LockTimeout) as ctx:
+                    with self.store.locked():
+                        pass
+            finally:
+                os.environ.pop("AMG_LOCK_TIMEOUT", None)
+            waited = time.perf_counter() - t0
+            self.assertLess(waited, 1.5)
+            self.assertIn("AMG_LOCK_TIMEOUT", str(ctx.exception))
+        finally:
+            proc.kill()
+            proc.wait(timeout=5)

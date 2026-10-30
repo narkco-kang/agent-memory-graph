@@ -31,12 +31,12 @@ WRITER = r"""
 import json, sys, time
 sys.path.insert(0, sys.argv[1])
 from amg import Memory
-mem_dir, tag, count = sys.argv[2], sys.argv[3], int(sys.argv[4])
+mem_dir, tag, count, prefix = sys.argv[2], sys.argv[3], int(sys.argv[4]), sys.argv[5]
 latencies, errors = [], []
 m = Memory.open(mem_dir)
 started = time.time()
 for i in range(count):
-    node_id = "stress.%s.n%03d" % (tag, i)
+    node_id = "%s.%s.n%03d" % (prefix, tag, i)
     t0 = time.perf_counter()
     try:
         m.add_node(id=node_id, type="task", label="writer %s item %d" % (tag, i),
@@ -58,14 +58,15 @@ def percentile(values, pct):
     return ordered[index]
 
 
-def run(writers, writes, mem_dir):
+def run(writers, writes, mem_dir, prefix="stress"):
     env = dict(os.environ)
     env["PYTHONPATH"] = os.path.join(ROOT, "src")
     started = time.perf_counter()
     procs = []
     for i in range(writers):
         procs.append(subprocess.Popen(
-            [sys.executable, "-c", WRITER, os.path.join(ROOT, "src"), mem_dir, str(i), str(writes)],
+            [sys.executable, "-c", WRITER, os.path.join(ROOT, "src"), mem_dir, str(i),
+             str(writes), prefix],
             stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", env=env))
     results = []
     for proc in procs:
@@ -85,13 +86,13 @@ def run(writers, writes, mem_dir):
     return results, latencies, errors, wall_ms, burst_window_ms
 
 
-def serial_baseline(writes, mem_dir):
+def serial_baseline(writes, mem_dir, prefix="stress"):
     """Same number of writes from one process, for a contention-free reference."""
     env = dict(os.environ)
     env["PYTHONPATH"] = os.path.join(ROOT, "src")
     started = time.perf_counter()
     proc = subprocess.run([sys.executable, "-c", WRITER, os.path.join(ROOT, "src"),
-                           mem_dir, "serial", str(writes)],
+                           mem_dir, "serial", str(writes), prefix],
                           capture_output=True, text=True, encoding="utf-8", env=env, timeout=300)
     wall_ms = round((time.perf_counter() - started) * 1000, 1)
     item = json.loads(proc.stdout.strip().splitlines()[-1])
@@ -107,20 +108,31 @@ def main(argv):
         if arg == "--writes":
             writes = int(argv[index + 1])
 
-    graph_dir = os.path.join(tempfile.mkdtemp(prefix="amg-stress-"), "mem")
-    Memory.init(graph_dir, group="stress")
-    Memory.open(graph_dir).add_node(id="task.baseline", type="task", label="baseline",
-                                    source="stress setup", note="n", by="stress")
+    prebuilt = None
+    for index, arg in enumerate(argv):
+        if arg == "--graph":
+            prebuilt = argv[index + 1]
+    if prebuilt:
+        graph_dir = prebuilt
+        # unique prefix so repeated runs against the same graph cannot collide
+        prefix = "stressreal" + os.urandom(3).hex()
+    else:
+        graph_dir = os.path.join(tempfile.mkdtemp(prefix="amg-stress-"), "mem")
+        Memory.init(graph_dir, group="stress")
+        Memory.open(graph_dir).add_node(id="task.baseline", type="task", label="baseline",
+                                        source="stress setup", note="n", by="stress")
+        prefix = "stress"
 
-    results, latencies, errors, wall_ms, burst_window_ms = run(writers, writes, graph_dir)
-    serial_latencies, serial_wall_ms, serial_span_ms = serial_baseline(writes, graph_dir)
+    results, latencies, errors, wall_ms, burst_window_ms = run(writers, writes, graph_dir, prefix)
+    serial_latencies, serial_wall_ms, serial_span_ms = serial_baseline(writes, graph_dir, prefix)
 
     m = Memory.open(graph_dir)
     check = m.check()
     ids = [n["id"] for n in m.doc["nodes"]]
     # exclude the serial-baseline probe: it shares the "stress." prefix but is not
     # part of the concurrent burst being verified
-    stress_ids = [i for i in ids if i.startswith("stress.") and not i.startswith("stress.serial.")]
+    stress_ids = [i for i in ids
+                  if i.startswith(prefix + ".") and not i.startswith(prefix + ".serial.")]
     expected = writers * writes
     changes = m.doc["changes"]
     per_target = {}
@@ -128,7 +140,7 @@ def main(argv):
         target = change.get("target")
         per_target[target] = per_target.get(target, 0) + 1
     write_changes = {t: c for t, c in per_target.items()
-                     if t and t.startswith("stress.") and not t.startswith("stress.serial.")}
+                     if t and t.startswith(prefix + ".") and not t.startswith(prefix + ".serial.")}
     lock_stats = [item.get("lock_stats") or {} for item in results]
     worst = max(lock_stats, key=lambda s: s.get("wait_max_ms", 0)) if lock_stats else {}
     report = {
@@ -182,7 +194,8 @@ def main(argv):
     if as_json:
         print(json.dumps(report, indent=2))
     else:
-        print(f"{writers} writers x {writes} writes = {expected} concurrent writes")
+        label = f" on {prebuilt}" if prebuilt else ""
+        print(f"{writers} writers x {writes} writes = {expected} concurrent writes{label}")
         print(f"  nodes present        {report['nodes_present']}  duplicates {report['duplicate_ids']}  "
               f"missing {report['missing_writes']}")
         print(f"  change records        {report['changes_for_stress_writes']} "
