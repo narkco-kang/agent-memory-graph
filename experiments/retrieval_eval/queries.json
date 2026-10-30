@@ -1,0 +1,31 @@
+{
+  "note": "Gold labels are author judgement over the corpus above. Buckets are NOT stored here: run_eval.py buckets every query by measured token overlap with its gold nodes, so intent cannot flatter the result.",
+  "queries": [
+    {"id": "q01", "split": "A", "query": "atomic file replace", "gold": ["decision.atomic-replace"]},
+    {"id": "q02", "split": "A", "query": "does the program crash in the middle of a save corrupt the graph", "gold": ["decision.atomic-replace"]},
+    {"id": "q03", "split": "A", "query": "msvcrt locking", "gold": ["task.windows-lock"]},
+    {"id": "q04", "split": "B", "query": "can I run this on a Windows laptop", "gold": ["task.windows-lock"]},
+    {"id": "q05", "split": "A", "query": "reads.jsonl rotation size", "gold": ["task.read-audit"]},
+    {"id": "q06", "split": "B", "query": "who can see what I searched", "gold": ["task.read-audit"]},
+    {"id": "q07", "split": "A", "query": "expire --apply", "gold": ["task.expiry-command"]},
+    {"id": "q08", "split": "B", "query": "how do old facts get retired automatically", "gold": ["decision.no-daemon", "task.expiry-command"]},
+    {"id": "q09", "split": "A", "query": "zero dependencies install", "gold": ["decision.zero-deps"]},
+    {"id": "q10", "split": "B", "query": "do I need to pip install anything", "gold": ["decision.zero-deps"]},
+    {"id": "q11", "split": "A", "query": "two-key ranking evidence first", "gold": ["decision.two-key-ranking"]},
+    {"id": "q12", "split": "B", "query": "why do notes with proof rank higher", "gold": ["decision.two-key-ranking"]},
+    {"id": "q13", "split": "A", "query": "read-only MCP server", "gold": ["decision.read-only"]},
+    {"id": "q14", "split": "B", "query": "can the AI client be prevented from writing", "gold": ["decision.read-only"]},
+    {"id": "q15", "split": "A", "query": "digest byte budget truncation", "gold": ["task.digest-budget"]},
+    {"id": "q16", "split": "B", "query": "how big can the summary get", "gold": ["task.digest-budget", "issue.unbounded-digest"]},
+    {"id": "q17", "split": "A", "query": "fabricated sha256 evidence", "gold": ["rule.no-fabricated-hash"]},
+    {"id": "q18", "split": "B", "query": "what if the checksum was lost, should I make one up", "gold": ["rule.no-fabricated-hash"]},
+    {"id": "q19", "split": "A", "query": "CJK tokenization single characters", "gold": ["issue.cjk-tokenization"]},
+    {"id": "q20", "split": "B", "query": "does it work for Chinese queries", "gold": ["issue.cjk-tokenization"]},
+    {"id": "q21", "split": "A", "query": "lock timeout exit code three", "gold": ["issue.lock-timeout"]},
+    {"id": "q22", "split": "B", "query": "two processes writing at the same time", "gold": ["issue.double-write", "decision.lock-strategy"]},
+    {"id": "q23", "split": "A", "query": "append-only history", "gold": ["rule.append-only-history"]},
+    {"id": "q24", "split": "B", "query": "would a sentence encoder help", "gold": ["model.embedding", "question.vector-value"]},
+    {"id": "q25", "split": "A", "query": "vector search labelled query set", "gold": ["task.vector-search", "question.vector-value"]},
+    {"id": "q26", "split": "B", "query": "keep the data in something readable by humans", "gold": ["decision.plain-json"]}
+  ]
+}

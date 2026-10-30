@@ -24,6 +24,11 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
 - `docs/THREAT-MODEL.md`: assets, trust boundaries, actor model, threat table,
   what read-only does not cover, and the accepted risks (no tamper evidence,
   read tools unthrottled, same-user file access).
+- **Pre-registered retrieval evaluation** (`experiments/retrieval_eval/`): 27-node
+  corpus, 26 labelled queries, measured baseline (overall `recall@5` 0.865;
+  paraphrase bucket 0.750) and a written acceptance bar a vector retriever must
+  clear before it may ship. Buckets are computed from measured token overlap, not
+  from declared intent; `tests/test_retrieval_eval.py` locks the baseline numbers.
 - `docs/SCHEDULING.md`: cron/systemd usage, rollback, and why there is no daemon.
 
 ### Fixed

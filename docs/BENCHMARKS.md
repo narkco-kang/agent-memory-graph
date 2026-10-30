@@ -67,9 +67,20 @@ on a 10,000-node / 10,000-edge graph:
 Traversal builds the adjacency once per call, so its cost is bounded by the graph
 rather than the depth; expanding ten hits costs about 11 ms on top of the search.
 
+## Retrieval quality (not latency)
+
+Latency is measured above; quality is measured separately and pre-registered in
+[`experiments/retrieval_eval/`](../experiments/retrieval_eval/README.md). Baseline
+on a 27-node corpus with 26 labelled queries: overall `recall@5` **0.865**,
+keyword bucket 0.938, paraphrase bucket **0.750**. The acceptance bar for a
+semantic retriever (C1/C2/C3) is written there before any candidate existed.
+
 ## Not measured
 
-- Edges: the dataset has none, so edge traversal cost is untested.
+- Edges: the latency dataset has none, so edge traversal cost is untested.
 - Concurrency: single process only; the advisory lock is not stress-tested.
-- Windows: not run (POSIX `fcntl` only).
-- Vector retrieval: not implemented.
+- Windows: latency is not benchmarked on Windows. Correctness is — the suite runs
+  on `windows-latest` in CI, including the cross-process lock test.
+- Vector retrieval: no candidate has been measured yet; only the baseline exists.
+- Retrieval quality at scale: the eval corpus has 27 nodes. Nothing here says how
+  `recall@5` behaves on a 10k-node graph.
