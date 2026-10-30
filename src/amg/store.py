@@ -6,6 +6,7 @@ fcntl-based locking is POSIX-only; Windows locking is NOT verified (README).
 import contextlib
 import json
 import os
+import random
 import tempfile
 import time
 
@@ -18,6 +19,13 @@ else:
     import fcntl
     _POSIX = True
 
+# Lock retry policy. The measured problem (docs/CONCURRENCY.md) was tail latency,
+# not throughput: a fixed 20 ms sleep quantises the wait, so a writer that loses
+# the race a few times waits 100-240 ms. Start at 1 ms, double to a 16 ms ceiling,
+# and jitter so waiters do not re-collide in lockstep.
+LOCK_POLL_START_S = 0.001
+LOCK_POLL_MAX_S = 0.016
+
 
 def dumps(doc: dict) -> str:
     return json.dumps(doc, ensure_ascii=False, indent=2, sort_keys=False) + "\n"
@@ -28,6 +36,12 @@ class Store:
         self.dir = os.path.abspath(path)
         self.file = os.path.join(self.dir, "graph.json")
         self.lockfile = os.path.join(self.dir, ".lock")
+        # Lock observations, aggregated in O(1) memory. Behaviour is unchanged:
+        # these numbers exist to answer "was a slow write slow because it waited
+        # for the lock, or because the holder was slow?" (docs/CONCURRENCY.md).
+        self.lock_stats = {"acquisitions": 0, "polls": 0, "timeouts": 0,
+                           "wait_total_ms": 0.0, "wait_max_ms": 0.0,
+                           "polls_max": 0}
 
     def exists(self) -> bool:
         return os.path.isfile(self.file)
@@ -64,8 +78,15 @@ class Store:
         POSIX uses fcntl.flock; Windows uses msvcrt.locking on one byte at offset
         0. Both are advisory and released when the handle closes, so a crashed
         process cannot wedge the graph.
+
+        Polls are counted because the polling loop is the suspected cause of the
+        contention tail: each `OSError` means the lock was held by someone else at
+        that instant, so a large poll count with a large wait is starvation, while
+        a small poll count with a large wait is a slow holder.
         """
         deadline = time.time() + timeout
+        started = time.perf_counter()
+        polls = 0
         while True:
             try:
                 if _POSIX:
@@ -73,11 +94,22 @@ class Store:
                 else:  # pragma: no cover - Windows runner only
                     fh.seek(0)
                     msvcrt.locking(fh.fileno(), msvcrt.LK_NBLCK, 1)
+                wait_ms = (time.perf_counter() - started) * 1000
+                stats = self.lock_stats
+                stats["acquisitions"] += 1
+                stats["polls"] += polls
+                stats["wait_total_ms"] = round(stats["wait_total_ms"] + wait_ms, 3)
+                stats["wait_max_ms"] = max(stats["wait_max_ms"], round(wait_ms, 3))
+                stats["polls_max"] = max(stats["polls_max"], polls)
                 return
             except OSError:
                 if time.time() >= deadline:
+                    self.lock_stats["timeouts"] += 1
                     raise LockTimeout(f"write lock timeout after {timeout}s: {self.lockfile}")
-                time.sleep(0.02)
+                polls += 1
+                ceiling = LOCK_POLL_MAX_S
+                backoff = min(ceiling, LOCK_POLL_START_S * (2 ** min(polls - 1, 8)))
+                time.sleep(backoff * (0.5 + random.random() / 2))
 
     def _release(self, fh) -> None:
         if _POSIX:

@@ -5,6 +5,19 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
 
 ## [Unreleased] — 0.6.0
 
+### Changed
+
+- **Lock retry now backs off with jitter** (`LOCK_POLL_START_S` 1 ms doubling to a
+  16 ms ceiling) instead of sleeping a flat 20 ms. Measured effect on an 8-writer
+  burst: throughput ~700 → ~870 writes/s, p50/p95 unchanged, **tail unchanged**
+  (168–199 ms). The change is kept for the throughput, not for the tail — see the
+  diagnosis in `docs/CONCURRENCY.md`.
+- **The contention tail is diagnosed, not hypothesised**: `Store.lock_stats`
+  (observation only) shows the worst waiter loses only ~15 polls while the other
+  seven writers complete ~200 writes, and its wait matches the whole burst — i.e.
+  starvation from non-FIFO `flock` wakeups, not the polling interval. Fairness was
+  not implemented; the open issue records the numbers and the trigger.
+
 ### Added
 
 - **Concurrency burst test** (`experiments/concurrency/run_stress.py`,

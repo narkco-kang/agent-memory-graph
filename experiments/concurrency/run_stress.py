@@ -45,6 +45,7 @@ for i in range(count):
     except Exception as exc:
         errors.append("%s: %s" % (type(exc).__name__, exc))
 print(json.dumps({"tag": tag, "latencies": latencies, "errors": errors,
+                  "lock_stats": m.store.lock_stats,
                   "started": started, "finished": time.time()}))
 """
 
@@ -128,7 +129,17 @@ def main(argv):
         per_target[target] = per_target.get(target, 0) + 1
     write_changes = {t: c for t, c in per_target.items()
                      if t and t.startswith("stress.") and not t.startswith("stress.serial.")}
+    lock_stats = [item.get("lock_stats") or {} for item in results]
+    worst = max(lock_stats, key=lambda s: s.get("wait_max_ms", 0)) if lock_stats else {}
     report = {
+        "lock": {
+            "acquisitions": sum(s.get("acquisitions", 0) for s in lock_stats),
+            "polls_total": sum(s.get("polls", 0) for s in lock_stats),
+            "worst_wait_ms": worst.get("wait_max_ms", 0),
+            "worst_wait_polls": worst.get("polls_max", 0),
+            "timeouts": sum(s.get("timeouts", 0) for s in lock_stats),
+            "waits_over_100ms": sum(1 for s in lock_stats if s.get("wait_max_ms", 0) > 100),
+        },
         "writers": writers,
         "writes_per_writer": writes,
         "expected_writes": expected,
@@ -186,6 +197,10 @@ def main(argv):
         print(f"  serial baseline      {report['serial']['p50_ms']} / "
               f"{report['serial']['p95_ms']} / {report['serial']['max_ms']} ms, "
               f"{report['serial']['writes_per_s']} writes/s over {serial_span_ms} ms")
+        lock = report["lock"]
+        print(f"  lock                   worst wait {lock['worst_wait_ms']} ms after "
+              f"{lock['worst_wait_polls']} failed polls; {lock['polls_total']} polls total, "
+              f"{lock['timeouts']} timeouts")
         print(f"  => {'PASSED' if report['passed'] else 'FAILED'}")
 
     out_path = os.path.join(HERE, "result.json")

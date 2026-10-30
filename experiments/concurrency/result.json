@@ -1,4 +1,12 @@
 {
+  "lock": {
+    "acquisitions": 200,
+    "polls_total": 66,
+    "worst_wait_ms": 199.302,
+    "worst_wait_polls": 15,
+    "timeouts": 0,
+    "waits_over_100ms": 3
+  },
   "writers": 8,
   "writes_per_writer": 25,
   "expected_writes": 200,
@@ -12,21 +20,21 @@
   "targets_with_wrong_change_count": 0,
   "rev": 226,
   "contended": {
-    "wall_ms": 337.7,
-    "burst_window_ms": 282.3,
-    "writes_per_s": 708.5,
-    "p50_ms": 0.99,
-    "p95_ms": 1.69,
-    "max_ms": 242.09,
+    "wall_ms": 288.3,
+    "burst_window_ms": 234.4,
+    "writes_per_s": 853.2,
+    "p50_ms": 1.03,
+    "p95_ms": 1.67,
+    "max_ms": 201.12,
     "total_writes": 200
   },
   "serial": {
-    "wall_ms": 82.9,
-    "burst_window_ms": 38.6,
-    "writes_per_s": 647.7,
-    "p50_ms": 1.56,
-    "p95_ms": 1.67,
-    "max_ms": 2.11,
+    "wall_ms": 87.5,
+    "burst_window_ms": 40.6,
+    "writes_per_s": 615.8,
+    "p50_ms": 1.53,
+    "p95_ms": 2.17,
+    "max_ms": 3.1,
     "total_writes": 25
   },
   "passed": true

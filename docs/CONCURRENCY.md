@@ -52,21 +52,64 @@ something happened.
 ## What this says
 
 1. **No throughput penalty.** ~700 writes/s contended vs ~640 writes/s serial on
-   this graph size. No parallelism gain either — the advisory lock serialises the
-   critical section, as designed. The point is that contention does not *cost*
-   throughput, only latency distribution.
-2. **The median does not move.** p50 is ~1.0 ms under contention, ~1.55 ms serial
+   the original fixed 20 ms poll; the advisory lock serialises the critical section
+   as designed. Contention costs latency distribution, not throughput.
+2. **The median does not move.** p50 ~1.0 ms under contention vs ~1.55 ms serial
    (the contended number is slightly lower, most plausibly because another writer's
    `fsync` has already made the page cache hot for the next one).
-3. **The tail is 100× the median.** One write in each run waited **~234–243 ms**.
-   That is the number a user would feel, and it is not explained by the work: at
-   ~1 ms per write, a 240 ms wait means a waiter was passed over many times. The
-   plausible mechanism is that `flock` wakeups are not fair and the waiter polls in
-   20 ms steps, so a steady stream of arrivals can starve it for dozens of rounds.
+3. **The tail is 100× the median, and it is starvation, not polling.** The first
+   run of this test showed one write in each run waiting ~234–243 ms. Two
+   experiments followed.
 
-   **This is a hypothesis, not a measurement** — the experiment shows the tail, not
-   its cause. Proving it needs lock-acquisition counters inside the store, which
-   does not exist yet.
+### Diagnosis 1 — counters: only a few polls, a long wait
+
+`Store.lock_stats` (observation only) counts acquisitions, failed polls, wait time
+and timeouts. Before any change:
+
+| run | worst wait | failed polls by that waiter | polls across all 200 writes |
+|---|---|---|---|
+| 1 | 226.3 ms | 9 | 31 |
+| 2 | 231.0 ms | 8 | 30 |
+| 3 | 189.3 ms | 7 | 32 |
+
+Only ~30 failed polls in 200 writes: most acquisitions succeed on the first try,
+a handful of writers lose repeatedly. With a 20 ms sleep, 7–9 losses is 140–180 ms
+of sleeping, which *looked like* the cause — a fixed poll interval quantising the
+wait.
+
+### Diagnosis 2 — faster polling: throughput up, tail unchanged
+
+The retry policy changed to jittered exponential backoff (`LOCK_POLL_START_S` 1 ms,
+doubling, ceiling `LOCK_POLL_MAX_S` 16 ms): waiters retry sooner instead of sleeping
+a flat 20 ms.
+
+| run | worst wait | failed polls | polls total | p50 | p95 | max | burst throughput |
+|---|---|---|---|---|---|---|---|
+| 1 | 188.0 ms | 15 | 74 | 1.01 | 2.12 | 189.9 ms | 871 writes/s |
+| 2 | 168.2 ms | 14 | 80 | 1.07 | 2.61 | 170.1 ms | 888 writes/s |
+| 3 | 199.3 ms | 15 | 66 | 1.03 | 1.67 | 201.1 ms | 853 writes/s |
+
+Throughput rose ~20% (700 → ~870 writes/s, burst window 282 → 229 ms) and p50/p95
+did not get worse — but **the tail did not move**. If the tail were the 20 ms
+quantum, faster polling would have cut it. It did not, so the quantum hypothesis is
+**disproven**.
+
+The arithmetic that fits instead: the worst waiter's wait (168–199 ms) is the same
+order as the whole burst (225–234 ms), and it failed only ~15 polls while the other
+seven writers performed ~200 writes. One writer was passed over for essentially the
+entire burst. `flock` wakeups are not FIFO, so a steady stream of arrivals can keep
+a waiter from ever being chosen. **This is starvation, and it is a property of the
+lock primitive, not of the retry loop.**
+
+### What changed, and what did not
+
+- **Changed** (measured, kept): jittered exponential backoff instead of a flat
+  20 ms sleep. Burst throughput +20%, median and p95 unchanged, same correctness.
+- **Not changed** (no evidence yet that it is worth the risk): fairness. A ticket
+  lock or an explicit waiter queue would cap the starvation tail, and it would
+  touch the one component that must never be wrong. Tracked as an open issue with
+  the numbers above; the trigger for building it is a real workflow feeling the
+  tail (repeated 200 ms stalls) or a lock timeout in the field, not a benchmark.
 
 ## Limits (read before quoting a number)
 
@@ -76,7 +119,8 @@ something happened.
 - **Node-sized writes only.** Batch ingest changes the shape entirely.
 - **POSIX `flock` here.** Windows uses `msvcrt` locking and is covered only by the
   two-process exclusivity test in CI — no burst test on Windows, so the tail
-  behaviour there is **unmeasured**.
+  behaviour there is **unmeasured**. (Fairness characteristics of `msvcrt` byte-range
+  locking may differ from `flock`; nothing here says they are the same.)
 - **No crash during the burst.** Atomicity under concurrent writers is tested
   separately (`test_lock.py`, `test_store.py`), not here.
 
