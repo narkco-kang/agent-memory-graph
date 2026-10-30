@@ -93,9 +93,14 @@ bash examples/quickstart.sh && bash examples/lifecycle.sh # end-to-end
 python3 tools/check_doc_symbols.py                        # README + every docs/*.md
 
 # and the published artifact, separately from the checkout
+TAG=v0.7.1   # replace with the tag you mean to audit
 python3 -m venv /tmp/amg-install && /tmp/amg-install/bin/pip install \
-  "git+https://github.com/narkco-kang/agent-memory-graph@v0.7.0"
+  "git+https://github.com/narkco-kang/agent-memory-graph@$TAG"
 /tmp/amg-install/bin/amg version
+
+# build the artifacts and check what is inside them
+python3 -m pip install build && python3 -m build --outdir dist .
+python3 tools/check_dist.py dist
 ```
 
 Commands run from the repository root. The doc gate and the clean install are not

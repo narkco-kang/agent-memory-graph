@@ -1,0 +1,24 @@
+# Everything the sdist needs to be self-contained.
+#
+# Why this file exists: without it, `python -m build` produced an sdist with
+# src/ and tests/ but no docs/, tools/, experiments/ or examples/. The tests it
+# shipped could not run — 17 errors and 4 failures, all of them "file not found"
+# — so the artifact contradicted the one rule this project is built on. The
+# package job in CI now unpacks the sdist and runs its own test suite, so this
+# cannot regress silently.
+
+include LICENSE
+include README.md
+include CHANGELOG.md
+include CONTRIBUTING.md
+include SECURITY.md
+include RELEASE.md
+
+recursive-include docs *.md
+recursive-include examples *.sh
+recursive-include experiments *.py *.json *.md
+recursive-include benchmarks *.py *.json
+recursive-include tools *.py
+recursive-include tests *.py
+
+global-exclude __pycache__ *.py[cod]

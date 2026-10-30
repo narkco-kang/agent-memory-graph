@@ -7,6 +7,38 @@ v0.5.0 and nine at v0.6.0. The gate now derives its list (`README.md` plus every
 `docs/*.md`), so from v0.7.0 on the count is whatever is in `docs/`, and a new
 document cannot silently escape it. Checked against the tags on 2026-10-30.
 
+## v0.7.1 — 2026-10-30
+
+Status: **released**. A packaging release: the sdist now contains everything its
+own tests read, and CI builds the artifacts instead of trusting the checkout.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on five jobs | ✅ 190 tests ×4 platforms + the new `package` job |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` |
+| 3 | Examples run | ✅ quickstart + lifecycle |
+| 4 | Every "not implemented" claim re-run against code | ✅ unchanged set; no library code touched in this release (`src/amg/` diff is the version string only) |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.7.1" — identical to 0.7.0 |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.7.1 everywhere |
+| 7 | Artifacts built, inspected and installed from the tag | ✅ `check_dist.py` clean; wheel installed into a fresh venv; the sdist's **own 190 tests pass from inside the archive** |
+| 8 | Clean install from the tag | ✅ `git+...@v0.7.1` (criterion 7 from v0.7.0) |
+
+### What was wrong
+
+0.7.0's sdist shipped `tests/` without `docs/`, `tools/` or `experiments/`. Its own
+suite gave 17 errors and 4 failures, all file-not-found. The wheel was fine — which
+is exactly why an install-only check would never have found it. `MANIFEST.in` fixes
+the contents (70 KB → 376 KB) and `tools/check_dist.py` fails the build if a module
+or document is absent from the artifact; expectations are derived from the working
+tree, not listed.
+
+### What to know before upgrading
+
+No library change. If you vendor the sdist, it is now substantially larger because
+it carries its documentation and experiments; the wheel is unchanged in shape.
+
+---
+
 ## v0.7.0 — 2026-10-30
 
 Status: **released**. A small release: one operational knob, one design note that

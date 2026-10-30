@@ -26,3 +26,31 @@ jobs:
         run: |
           bash examples/quickstart.sh
           bash examples/lifecycle.sh
+
+  package:
+    # The artifact is a claim too. v0.7.0's first sdist shipped tests that could
+    # not run (docs/, tools/ and experiments/ were missing), and an install-only
+    # check would not have caught it because the wheel was fine.
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: build sdist and wheel
+        run: |
+          python -m pip install --quiet build
+          python -m build --outdir dist .
+      - name: artifact contents
+        run: python tools/check_dist.py dist
+      - name: install the built wheel into a clean environment
+        run: |
+          python -m venv /tmp/wheel-venv
+          /tmp/wheel-venv/bin/python -m pip install --quiet dist/*.whl
+          /tmp/wheel-venv/bin/amg version
+      - name: run the test suite shipped inside the sdist
+        run: |
+          mkdir -p /tmp/sdist
+          tar xzf dist/*.tar.gz -C /tmp/sdist
+          cd /tmp/sdist/agent_memory_graph-*
+          PYTHONPATH=src python -m unittest discover -s tests

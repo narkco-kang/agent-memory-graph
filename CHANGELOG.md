@@ -3,6 +3,45 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.7.1] — 2026-10-30
+
+A packaging release: **no library behaviour changes**. It exists because the sdist
+published with 0.7.0 could not run the tests it contained.
+
+### Fixed
+
+- **The sdist was incomplete.** With no `MANIFEST.in`, `python -m build` shipped
+  `src/` and `tests/` but not `docs/`, `tools/`, `experiments/`, `examples/` or
+  `benchmarks/`. Running the shipped suite from the unpacked archive gave **17
+  errors and 4 failures — every one of them file-not-found** (`docs/API.md`,
+  `tools/check_doc_symbols.py`, the experiment scripts). The wheel was unaffected,
+  which is why install-only verification missed it. `MANIFEST.in` now carries
+  everything the tests read; the sdist goes 70 KB → 376 KB, and its own **190-test
+  suite passes from inside the unpacked archive**.
+- **License metadata modernised.** `license = {text = "MIT"}` is deprecated
+  (PEP 639; setuptools warns that builds stop working after 2027-02-18). Now
+  `license = "MIT"` with `license-files = ["LICENSE"]`, build requires
+  `setuptools>=77`, and the wheel metadata carries `License-Expression: MIT`.
+
+### Added
+
+- **`tools/check_dist.py`** — checks the built artifacts, deriving its expectations
+  from the working tree: every module in `src/amg/` must be in the wheel, the
+  entry point must be `amg = amg.cli:main`, the metadata must carry an SPDX licence,
+  and the sdist must contain every `docs/*.md`, the tools, examples and experiment
+  scripts its own tests read. Against 0.7.0's first sdist it reports **20
+  problems**; against the fixed build it is clean.
+- **CI job `package`** — builds sdist and wheel, runs `check_dist.py`, installs the
+  wheel into a fresh venv, then unpacks the sdist and runs its shipped test suite.
+
+### Not shipped in 0.7.1 (do not assume)
+
+Identical to 0.7.0 — nothing was added to the library: no authentication /
+authorization / multi-tenancy (out of scope by decision), no vector retrieval in
+the default path (measured, rejected), no tamper *proof*, no TTL scheduler, no
+encryption at rest, no lock fairness, and history compression remains a design
+(`docs/DESIGN-HISTORY.md`), not a capability.
+
 ## [0.7.0] — 2026-10-30
 
 A small release: one operational knob, one design note, and a reading index. The
