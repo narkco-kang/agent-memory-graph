@@ -320,3 +320,23 @@ Each entry states the decision, the evidence behind it, and what it costs.
     second scan. Two predictions were wrong and are recorded: the small-corpus gain
     (+0.057, expected flat) and the N3 baseline (0.712, predicted 0.45–0.65).
     *Signed 2026-10-31; `experiments/retrieval_idf/`, `result.json`; v0.18.0.*
+
+29. **Field-specific document frequency is rejected: the noise gain is paid for by
+    note-only queries.** Pre-registered (`experiments/retrieval_field_df/PREREGISTRATION.md`)
+    as the one-variable follow-up to #28, taking the third direction in the retrieval
+    attack brief: count `df` per (field, term) so a word that fills `note` cannot make
+    the same word look common in `id`. Measured against the frozen v0.18.0 scorer in one
+    process on four corpora: **N2 query-vocabulary noise improved 0.538 → 0.596**
+    (r@10 0.577 → 0.635, MRR 0.536 → 0.575), N3 held at 0.865, p95 0.991× — but the
+    **frozen 26-query recall@5 fell 0.865 → 0.827** because exactly one query moved:
+    q18 `3 → 6`, a query whose gold's only literal match is in `note`, which now pays
+    note's own lower IDF. C1 and C2 failed; the pre-registered rule said a frozen drop
+    >0.01 kills the direction, so **no release was cut and `src/amg/retrieval.py` was
+    reverted** to v0.18.0. C6 ("hit sets unchanged") also failed **as written** and is
+    recorded as my pre-registration error, not reinterpreted: at 10k the harness compares
+    top-100 membership, so reordering moves the cut; control/N1/N3 had zero changes and
+    no match is dropped (IDF > 0 by construction). Two predictions were wrong (the frozen
+    direction; the size of the note-only cost was named correctly). The open policy
+    question, which must be pre-registered before any future round may act on it: is
+    `frozen −0.038` an acceptable price for `N2 +0.058`?
+    *Signed 2026-10-31; `experiments/retrieval_field_df/`, `result.json`.*
