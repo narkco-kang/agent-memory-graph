@@ -11,6 +11,10 @@ capabilities that are absent stay under **Not yet**.
 
 ### Added
 
+- **Windows and macOS support is now tested, not assumed**: CI runs the suite on
+  `ubuntu-latest`, `macos-latest` and `windows-latest`; the write lock has a
+  `msvcrt` implementation and a cross-process exclusivity test.
+
 - **Read-side audit (opt-in)**: `--audit-read` on `search` / `related` records
   high-risk reads (L4 rules, strict queries, results touching superseded nodes)
   to a bounded, rotated `reads.jsonl`. Deliberately not written into `changes[]`,
@@ -80,7 +84,6 @@ capabilities that are absent stay under **Not yet**.
 - Vector / embedding retrieval (lexical only).
 - MCP server, authentication, multi-tenancy.
 - Background expiry scheduling. `valid_until` is only acted on by `amg expire`.
-- Windows file locking (POSIX `fcntl` only; untested on Windows).
 - Concurrency stress beyond the advisory lock; graphs above 10,000 nodes.
 - Python 3.10/3.12 are exercised in CI only; local runs used 3.15.
 

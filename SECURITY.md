@@ -23,7 +23,7 @@ Open a private security advisory on the GitHub repository (Security → Advisori
 
 ## Known limitations that are not vulnerabilities
 
-- The advisory write lock uses POSIX `fcntl`; Windows behaviour is untested.
+- The advisory write lock uses `fcntl` on POSIX and `msvcrt` on Windows; both paths run in CI (ubuntu, macos, windows).
 - `amg adopt` reads legacy graphs and preserves their evidence strings verbatim
   in `legacy_evidence`. If a legacy graph contains secrets, they stay in the
   adopted file — review before publishing.
