@@ -47,11 +47,12 @@ class Store:
                 fh.flush()
                 os.fsync(fh.fileno())
             os.replace(tmp, self.file)
-            dirfd = os.open(self.dir, os.O_RDONLY)
-            try:
-                os.fsync(dirfd)
-            finally:
-                os.close(dirfd)
+            if os.name != "nt":  # opening a directory for fsync is POSIX-only
+                dirfd = os.open(self.dir, os.O_RDONLY)
+                try:
+                    os.fsync(dirfd)
+                finally:
+                    os.close(dirfd)
         except BaseException:
             if os.path.exists(tmp):
                 os.unlink(tmp)

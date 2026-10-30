@@ -404,7 +404,17 @@ def build_parser():
     return p
 
 
+def _utf8_console() -> None:
+    """Windows consoles default to cp1252 and cannot encode the status glyphs."""
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):  # pragma: no cover
+            pass
+
+
 def main(argv=None) -> int:
+    _utf8_console()
     args = build_parser().parse_args(argv)
     try:
         return args.func(args)

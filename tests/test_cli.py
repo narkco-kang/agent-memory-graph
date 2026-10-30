@@ -13,7 +13,7 @@ def run(*args, cwd=None):
     env = dict(os.environ)
     env["PYTHONPATH"] = os.path.join(ROOT, "src")
     return subprocess.run([sys.executable, "-m", "amg.cli", *args],
-                          capture_output=True, text=True, env=env, cwd=cwd or ROOT)
+                          capture_output=True, text=True, encoding="utf-8", env=env, cwd=cwd or ROOT)
 
 
 class CliTests(unittest.TestCase):

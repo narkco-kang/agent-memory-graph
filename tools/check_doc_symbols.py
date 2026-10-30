@@ -30,6 +30,11 @@ def scan(path):
 
 
 def main(argv):
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):  # pragma: no cover
+            pass
     files = argv[1:] or ["README.md"]
     missing = []
     for path in files:

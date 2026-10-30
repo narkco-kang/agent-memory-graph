@@ -34,7 +34,7 @@ class LockTests(unittest.TestCase):
         env = dict(os.environ)
         env["PYTHONPATH"] = os.path.join(ROOT, "src")
         proc = subprocess.Popen([sys.executable, "-c", HOLDER, os.path.join(ROOT, "src"), self.g.dir],
-                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, env=env)
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True, encoding="utf-8", env=env)
         try:
             line = proc.stdout.readline().strip()
             if line != "ready":  # do NOT read stderr eagerly: read() blocks until exit

@@ -99,7 +99,7 @@ class RelatedCliTests(unittest.TestCase):
         env = dict(os.environ)
         env["PYTHONPATH"] = os.path.join(ROOT, "src")
         return subprocess.run([sys.executable, "-m", "amg.cli", *args],
-                              capture_output=True, text=True, env=env, cwd=ROOT)
+                              capture_output=True, text=True, encoding="utf-8", env=env, cwd=ROOT)
 
     def test_cli_related(self):
         self.cli("init", self.dir, "--group", "t")
