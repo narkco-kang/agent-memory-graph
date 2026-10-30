@@ -333,6 +333,18 @@ Each entry states the decision, the evidence behind it, and what it costs.
     (`issue.mem-arch-evidence-sha-forgeable`). v0.20.0 ships disclosure (`docs/API.md`,
     `docs/THREAT-MODEL.md`: `present` means *declared*) and `amg verify-evidence`:
     re-hashes `path:` locators, exit 1 on mismatch, `cmd:`/`url:`/`sha256:` reported
-    `unverifiable`, never a pass. Not shipped: per-read verification, an
-    `anchor_state` verified/claimed split, any claim `--strict` means verified.
+    `unverifiable`, never a pass. Not shipped: per-read verification, an `anchor_state`
+    verified/claimed split, any claim `--strict` means verified.
     *Signed 2026-10-31; `tests/test_evidence_verify.py`; v0.20.0.*
+
+32. **v0.20.0's verifier leaked the graph root; `--include-archive` starved.** Fixed
+    in v0.21.0 with tests. (a) `path:` evidence could leave the graph root
+    (absolute/`..`/symlink), making a public store a content oracle: it must now resolve
+    inside, escapes are `outside_root` and never hashed.
+    (b) `--strict` ignored `unverifiable` and JSON said `ok: true` on a strict exit 1: the
+    report separates `ok` (nothing violated) from `all_verified` (all matched);
+    `--strict` requires the latter; `not_a_file`/`unreadable`/empty are explicit, not
+    green. (c) `--include-archive` returned zero archived hits when `k` live records
+    matched: from `k >= 5` it keeps `max(1, k // 5)` slots, one per file first; below 5,
+    unchanged. *Signed 2026-10-31; tests;
+    v0.21.0.*

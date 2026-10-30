@@ -3,6 +3,47 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.21.0] — 2026-10-31
+
+Three boundary defects in shipped behaviour, found by the post-release review and fixed
+together: two in v0.20.0's verifier, one in `--include-archive` since v0.15.0.
+
+### Security
+
+- **`verify-evidence` no longer reads outside the graph root.** `path:` evidence with an
+  absolute path, `..` or a symlink escape resolved to any file on the host, so a public,
+  unauthenticated store could be used to hash files it does not own
+  (`issue.mem-arch-evidence-locator-out-of-tree`). Paths must resolve inside the root;
+  escapes are reported `outside_root`, never opened, and exit 1.
+
+### Fixed
+
+- **`--strict` and JSON no longer fake green**
+  (`issue.mem-arch-verify-strict-unverifiable`, `...verify-evidence-boundaries`): `--strict`
+  ignored `unverifiable`, and `--json` printed `ok: true` on a strict exit 1. The report
+  now separates `ok` (nothing violated) from `all_verified` (every item matched);
+  `--strict` requires the latter, and `not_a_file`, `unreadable` and an empty check are
+  explicit outcomes instead of passes or crashes.
+- **`--include-archive` is no longer starved by `k`** (`issue.mem-arch-archive-k-starve`):
+  archived records are older by construction, so a time-ordered merge cut to `k` returned
+  **zero** archived hits whenever `k` live records matched — the flag silently did
+  nothing. From `k >= 5` the archive keeps `max(1, k // 5)` slots, one per archive file
+  first, then recency; below 5 the previous order stands, so live-only searches are
+  unchanged.
+
+### Tests
+
+290 tests (+10: 7 verifier boundary cases, 3 archive reservation cases), nine
+CI jobs, `tools/verify.py` green.
+
+### Not shipped in 0.21.0 (do not assume)
+
+- No anchored "verified" state is persisted on nodes; `anchor_state: "present"` still
+  means *declared*.
+- No per-read verification, no search cache, no `verified`/`claimed` split.
+- The archive reservation is a floor, not a guarantee that every archived file fits when
+  more files than slots have matches.
+
 ## [0.20.0] — 2026-10-31
 
 Closes the evidence-authenticity finding from the retrieval attack brief (E1 / `R3`):

@@ -80,7 +80,11 @@ exits 1 on mismatch. Deliberately not fixed: no per-read verification (I/O on th
 path, and referenced files legitimately move); no `anchor_state` split into
 `verified`/`claimed` (without a persisted verification result that would be a label, not
 a measurement); `cmd:`/`url:`/`sha256:` evidence cannot be checked offline and is
-reported `unverifiable`, never a pass. Treat `--strict` as "anchored as declared".
+reported `unverifiable`, never a pass. Path confinement (v0.21.0): `path:` evidence must
+resolve inside the graph directory; absolute and `..`/symlink paths are `outside_root` and
+never hashed, so a public store cannot be used as a hash oracle for files it does not own
+(`issue.mem-arch-evidence-locator-out-of-tree`). Treat `--strict` as "anchored as
+declared".
 
 ## 5. Read-only mode: what it guarantees
 

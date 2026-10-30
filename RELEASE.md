@@ -19,6 +19,26 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.21.0 — 2026-10-31
+
+Status: **released**. Post-release review round: three boundary defects fixed, each with a
+regression test, and the one that was a security exposure fixed by confinement.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 290 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate + size budget | ✅ 15 documents; DECISIONS moved detail to owning docs to fit |
+| 3 | The defects were reproduced before being fixed | ✅ issues carry exit codes/JSON readings; tests encode them |
+| 4 | The security defect is closed by refusal, not warning | ✅ outside-root evidence is never opened, exit 1 |
+| 5 | Strict means strict | ✅ `all_verified` required; JSON `ok` matches the exit code |
+| 6 | The flagged parameter does what it says | ✅ k=10 with 12 live hits now returns archived hits, per file |
+| 7 | Old behaviour preserved where it was defensible | ✅ k < 5 order unchanged; live-only searches untouched |
+| 8 | Clean install from the tag | ✅ `git+...@v0.21.0` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | The residual limits are stated | ✅ Not-shipped: no persisted verified state, quota is a floor |
+
+---
+
 ## v0.20.0 — 2026-10-31
 
 Status: **released**. Closes R3 from the retrieval attack brief with an observation

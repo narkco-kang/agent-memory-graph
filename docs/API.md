@@ -18,7 +18,7 @@ amg status <dir> <id> <new-status> --note TEXT       # note required (IR-4)
 amg link   <dir> --from ID --to ID --kind KIND
 amg supersede <dir> OLD NEW --note TEXT            # keep the old node, stamp its window
 amg search <dir> "query" [--layer L1|L2|L3|L4] [--k 10] [--strict] [--expand] [--json]
-                                     [--include-archive]  # L2 only: also search cold history
+                                     [--include-archive]  # L2 only: cold history, reserved quota (k≥5)
 amg related <dir> ID [--depth N] [--kind KIND] [--json]   # walk edges (new in v0.2)
 amg digest <dir> [--max-bytes 65536] [--out PATH]
 amg check  <dir> [--strict] [--json]
@@ -32,7 +32,7 @@ amg expire <dir> [--apply] [--json]                # opt-in TTL expiry (dry-run 
 amg archive <dir> [--older-than-days N] [--apply] [--verify] [--json]
                                      # move cold ledger records out, prove no loss
 amg fingerprint <dir> [--json] [--out PATH]        # canonical state + history digests
-amg verify-evidence <dir> [--id ID] [--strict] [--json]   # hash path: evidence vs declared sha (new in v0.20.0)
+amg verify-evidence <dir> [--id ID] [--strict] [--json]   # hash path: evidence vs declared sha
 amg verify <dir> --expect PATH | --expect-state HEX [--expect-history HEX]
 amg handoff <dir> [--by NAME] [--owner NAME] [--note TEXT|-] [--json]
                                      # one bounded handover card; newest supersedes previous
@@ -83,7 +83,7 @@ fail loudly instead of guessing, and `tests/test_exit_codes.py` scans
 | exit | codes | meaning |
 |---|---|---|
 | `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` · `E_NO_EXPECTATION` · `E_BAD_FINGERPRINT` · `E_BAD_HANDOFF` · `E_HANDOFF_TOO_LARGE` · `E_ARCHIVE_LAYER` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
-| `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_EVIDENCE_MISMATCH` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` · `E_INSECURE_GRAPH` · `E_ARCHIVE_VERIFY` | the evidence gate rejected the content, or the graph would break an invariant |
+| `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_EVIDENCE_MISMATCH` · `E_EVIDENCE_OUTSIDE_ROOT` · `E_EVIDENCE_UNVERIFIED` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` · `E_INSECURE_GRAPH` · `E_ARCHIVE_VERIFY` | the evidence gate rejected the content, or the graph would break an invariant |
 | `0` | — | success / clean `check` / clean `audit` |
 | `3` | — | lock timeout or IO failure (not a `ProtocolError`) |
 
@@ -325,11 +325,11 @@ taken from `updatedAt`).
 ```
 
 `content_sha256` is **declared, not verified** by `add`/`import`/`check`. `amg
-verify-evidence` hashes `path:` locators (relative to the graph directory unless absolute)
-and compares them with the declared digest: exit 1 on `E_EVIDENCE_MISMATCH`, `--strict`
-also fails on missing paths; `cmd:`, `url:` and `sha256:` locators report `unverifiable`
-and never count as passes. `anchor_state: "present"` therefore means *evidence declared*,
-not *evidence verified*.
+verify-evidence` hashes `path:` locators **inside the graph dir** (absolute paths and `..`/symlink
+escapes are `outside_root`) and compares with the digest. Statuses: `ok`, `mismatch`, `missing`, `not_a_file`, `unreadable`,
+`outside_root`, `unverifiable` (`cmd:`/`url:`/`sha256:`). `ok` = nothing violated (mismatch/outside-root exit 1);
+`all_verified` = every item matched; `--strict` requires it, so missing, unverifiable,
+outside-root, unreadable and empty checks all fail. `anchor_state: "present"` still means *evidence declared*.
 
 ## Expiry and `valid_time_known`
 

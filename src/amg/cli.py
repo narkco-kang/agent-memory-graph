@@ -291,11 +291,19 @@ def cmd_verify(a):
 
 
 def cmd_verify_evidence(a):
-    """Hash `path:` evidence and compare it with the declared content_sha256.
+    """Hash `path:` evidence inside the graph root and compare with the declared digest.
 
-    Exit 1 on a mismatch (the claim and the bytes disagree); `--strict` also fails on a
-    missing target. `cmd:`/`url:`/`sha256:` locators are reported `unverifiable` and
-    never counted as passes: the tool refuses to call unobservable evidence verified.
+    Two booleans, on purpose (v0.20.1, `issue.mem-arch-verify-evidence-boundaries`):
+
+    * `ok` — nothing is *violated*: no mismatch and no path escaping the graph root.
+      Only this drives the non-strict exit code.
+    * `all_verified` — every evidence item was actually observed and matched. `--strict`
+      requires this, so `missing`, `unverifiable`, `outside_root`, `unreadable` and a
+      vacuous zero-item check all fail there instead of looking green.
+
+    `path:` locators are confined to the graph directory: absolute paths and `..`/symlink
+    escapes are reported `outside_root` and never opened, so a public store cannot be
+    used to hash files it does not own.
     """
     m = Memory.open(a.dir)
     nodes = m.doc.get("nodes") or []
@@ -311,27 +319,42 @@ def cmd_verify_evidence(a):
     for row in rows:
         counts[row["status"]] = counts.get(row["status"], 0) + 1
     mismatched = [r for r in rows if r["status"] == "mismatch"]
+    outside = [r for r in rows if r["status"] == "outside_root"]
+    unreadable = [r for r in rows if r["status"] == "unreadable"]
     missing = [r for r in rows if r["status"] == "missing"]
-    report = {"ok": not mismatched, "root": os.path.abspath(a.dir), "checked": len(rows),
-              "counts": counts, "mismatched": mismatched, "missing": missing,
-              "rows": rows}
+    all_verified = bool(rows) and all(r["status"] == "ok" for r in rows)
+    # `ok` is "this invocation passed", so a strict run with unproven items must not
+    # report ok=true while exiting 1 (the fake-green in `verify-evidence-boundaries`).
+    ok = not (mismatched or outside) and (all_verified if a.strict else True)
+    report = {"ok": ok, "all_verified": all_verified, "strict": bool(a.strict),
+              "root": os.path.abspath(a.dir), "checked": len(rows), "counts": counts,
+              "mismatched": mismatched, "outside_root": outside,
+              "unreadable": unreadable, "missing": missing, "rows": rows}
     if a.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:
         for row in rows:
-            mark = {"ok": "✓", "mismatch": "✗", "missing": "?", "unverifiable": "~"}[row["status"]]
+            mark = {"ok": "✓", "mismatch": "✗", "missing": "?",
+                    "not_a_file": "?", "unreadable": "!",
+                    "outside_root": "⊘", "unverifiable": "~"}[row["status"]]
             print(f"{mark} {row['node']} {row['locator']} [{row['status']}]")
-        print(f"checked {report['checked']}: " + ", ".join(
-            f"{name} {count}" for name, count in sorted(counts.items())))
-        if counts.get("unverifiable"):
-            print("  ~ = no observed bytes (cmd:/url:/sha256:); not a pass")
+        print(f"checked {report['checked']}: " + (", ".join(
+            f"{name} {count}" for name, count in sorted(counts.items())) or "nothing to verify"))
+        if counts.get("unverifiable") or counts.get("not_a_file"):
+            print("  ~/? = no bytes observed (cmd:/url:/sha256:, or a directory); not a pass")
     if mismatched:
         raise ProtocolError("E_EVIDENCE_MISMATCH",
                             f"{len(mismatched)} evidence item(s) do not match the file bytes; "
                             "the declared content_sha256 is not what the locator contains")
-    if a.strict and missing:
-        raise ProtocolError("E_EVIDENCE_MISSING",
-                            f"{len(missing)} evidence path(s) are missing (--strict)")
+    if outside:
+        raise ProtocolError("E_EVIDENCE_OUTSIDE_ROOT",
+                            f"{len(outside)} evidence path(s) escape the graph directory; "
+                            "only files inside the memory root can be verified")
+    if a.strict and not all_verified:
+        raise ProtocolError("E_EVIDENCE_UNVERIFIED",
+                            f"--strict requires every item verified and matched; "
+                            f"{report['checked'] - counts.get('ok', 0)} item(s) are not "
+                            f"(counts: {counts or 'nothing to verify'})")
     return EXIT_OK
 
 
@@ -409,6 +432,8 @@ ERROR_EXIT_CODES = frozenset({
     "E_NO_SOURCE", "E_NOTE_REQUIRED", "E_EVIDENCE_MISSING", "E_EVIDENCE_FORMAT",
     # verify-evidence: the declared hash is not the hash of the bytes at the locator
     "E_EVIDENCE_MISMATCH",
+    # verify-evidence: the path leaves the graph root, or --strict found unproven items
+    "E_EVIDENCE_OUTSIDE_ROOT", "E_EVIDENCE_UNVERIFIED",
     "E_DUP_ID", "E_DUP_EDGE", "E_NO_NODE", "E_IMMUTABLE",
     # adopt-specific: the legacy source itself violates the protocol
     "E_ADOPT_UNSUPPORTED", "E_ADOPT_DANGLING",
@@ -649,7 +674,8 @@ def build_parser():
                        help="hash path: evidence and compare with its declared sha256")
     s.add_argument("dir"); s.add_argument("--id", help="check one node only")
     s.add_argument("--strict", action="store_true",
-                   help="also exit 1 when a path: target is missing")
+                   help="require every evidence item to be verified and matched; "
+                        "missing/unverifiable/outside-root/empty all fail")
     s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_verify_evidence)
 
     s = sub.add_parser("export"); s.add_argument("dir"); s.add_argument("--format", default="json",

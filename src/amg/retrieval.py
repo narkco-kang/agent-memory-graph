@@ -272,8 +272,15 @@ def _search_changes(doc: dict, matchers, k: int, archived=None):
     Archived records are history that was moved out to keep writes cheap
     (`docs/ARCHIVE.md`); they are searched only when the caller asks, and every
     hit says which archive file it came from, so "this is old" is never a guess.
+
+    Archived hits get a reserved share of `k` (v0.21.0, `issue.mem-arch-archive-k-starve`):
+    archive records are older than live ones by construction, so a merge sorted by time
+    and then cut to `k` returned **zero** archived hits whenever `k` live records
+    matched — `--include-archive` silently did nothing. The reservation is
+    `max(1, k // 5)` slots, one per archive file first (so no file with a match is
+    invisible), then by recency. Live-only searches are untouched.
     """
-    hits = []
+    live, archive = [], []
     nodes = {n.get("id"): n for n in doc.get("nodes") or []}
     entries = [(None, c) for c in doc.get("changes") or []]
     for item in archived or []:
@@ -300,6 +307,40 @@ def _search_changes(doc: dict, matchers, k: int, archived=None):
             if archive_file:
                 hit["archived"] = True
                 hit["archive_file"] = archive_file
-            hits.append(hit)
-    hits.sort(key=lambda h: (h.get("at") or "", h.get("rev") or 0), reverse=True)
-    return hits[:k]
+                archive.append(hit)
+            else:
+                live.append(hit)
+    order = lambda h: (h.get("at") or "", h.get("rev") or 0)  # noqa: E731
+    live.sort(key=order, reverse=True)
+    archive.sort(key=order, reverse=True)
+    if not archive:
+        return live[:k]
+    if k <= 0:
+        return []
+    # The reservation starts at k >= 5: below that a single-slot answer is dominated by
+    # recency (the old behaviour, kept), from 5 up the archive always gets a share.
+    quota = max(1, k // 5) if k >= 5 else 0
+    if not quota:
+        merged = live + archive
+        merged.sort(key=order, reverse=True)
+        return merged[:k]
+    picked, seen = [], set()
+    for hit in archive:                     # one per archive file first
+        if len(picked) >= quota:
+            break
+        if hit["archive_file"] not in seen:
+            picked.append(hit)
+            seen.add(hit["archive_file"])
+    for hit in archive:                     # then fill the quota by recency
+        if len(picked) >= quota:
+            break
+        if hit not in picked:
+            picked.append(hit)
+    merged = live[:max(0, k - len(picked))] + picked
+    for hit in archive:                     # spare capacity goes to history, not waste
+        if len(merged) >= k:
+            break
+        if hit not in merged:
+            merged.append(hit)
+    merged.sort(key=order, reverse=True)
+    return merged[:k]

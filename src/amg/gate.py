@@ -82,23 +82,47 @@ def enforce_conclusion(node: dict, evidence: list) -> None:
         )
 
 
+def _resolve_inside(root: str, raw: str):
+    """Resolve a `path:` locator inside `root`; None when it escapes the root.
+
+    v0.20.1: absolute paths and `..`/symlink escapes used to be read, which made a
+    public, unauthenticated memory store an oracle for hashing files it does not own
+    (`issue.mem-arch-evidence-locator-out-of-tree`). Evidence must live inside the graph
+    directory; escaping is reported `outside_root`, never hashed.
+    """
+    root_real = os.path.realpath(root)
+    candidate = raw if os.path.isabs(raw) else os.path.join(root_real, raw)
+    real = os.path.realpath(candidate)
+    if real == root_real:
+        return real
+    try:
+        inside = os.path.commonpath([root_real, real]) == root_real
+    except ValueError:  # different drives on Windows
+        inside = False
+    return real if inside else None
+
+
 def verify_evidence(items, root: str, node_id: str = None) -> list:
     """Check evidence locators against what can actually be observed offline.
 
-    Until v0.20.0 the gate validated only the *shape* of `content_sha256` (64 lowercase
-    hex), so a caller could declare any hash and still get `anchor_state: "present"` —
-    a sorting hard key on a fabricated claim (`issue.mem-arch-evidence-sha-forgeable`).
-    This function is the observation mechanism: `sha256_of_file` is finally called, for
-    `path:` locators, resolved against `root` unless absolute.
+    `content_sha256` is caller-declared; until v0.20.0 the gate validated only its shape,
+    so a fabricated hash still produced `anchor_state: "present"` — a sorting hard key on
+    a claim (`issue.mem-arch-evidence-sha-forgeable`). This function is the observation
+    mechanism for the observable half: `path:` locators are hashed with
+    `sha256_of_file`.
 
-    Honest by construction: a locator that cannot be checked offline (`cmd:`, `url:`,
-    `sha256:` — the last carries no bytes) is reported `unverifiable`, never `ok`.
-    `captured_at` is not re-verified: a timestamp is a claim about the past, not a
-    fingerprint of bytes.
+    Status is one of:
 
-    Verification is explicit (`amg verify-evidence`), never implied by `check`, `audit`
-    or `search`: hashing every evidence target on every read would cost I/O on the hot
-    path and fail whenever a referenced file has legitimately moved.
+    * `ok` — the file inside the graph root hashes to the declared digest;
+    * `mismatch` — it hashes to something else;
+    * `missing` — the path does not exist; `not_a_file` — it is a directory;
+    * `unreadable` — the bytes exist but cannot be read (permission/IO);
+    * `outside_root` — the path (absolute, `..`, or via a symlink) leaves the graph
+      directory; it is never opened (v0.20.1);
+    * `unverifiable` — `cmd:`, `url:` and `sha256:` locators carry no local bytes.
+
+    Only `ok` is a pass. `captured_at` is not re-verified: a timestamp is a claim about
+    the past, not a fingerprint of bytes.
     """
     rows = []
     for index, item in enumerate(items or []):
@@ -107,17 +131,25 @@ def verify_evidence(items, root: str, node_id: str = None) -> list:
         expected = str(item.get("content_sha256") or "")
         row = {"node": node_id, "index": index, "locator": locator,
                "expected": expected, "actual": None}
-        if locator.startswith("path:"):
-            raw = locator[len("path:"):]
-            path = raw if os.path.isabs(raw) else os.path.join(root, raw)
-            if not os.path.isfile(path):
-                row["status"] = "missing"
-            else:
+        if not locator.startswith("path:"):
+            row["status"] = "unverifiable"
+            rows.append(row)
+            continue
+        path = _resolve_inside(root, locator[len("path:"):])
+        if path is None:
+            row["status"] = "outside_root"
+        elif os.path.isdir(path):
+            row["status"] = "not_a_file"
+        elif not os.path.exists(path):
+            row["status"] = "missing"
+        else:
+            try:
                 actual = sha256_of_file(path)
+            except OSError:
+                row["status"] = "unreadable"   # not a crash, and not a pass
+            else:
                 row["actual"] = actual
                 row["status"] = "ok" if actual == expected else "mismatch"
-        else:
-            row["status"] = "unverifiable"
         rows.append(row)
     return rows
 

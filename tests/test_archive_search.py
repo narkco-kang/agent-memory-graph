@@ -9,7 +9,10 @@ Pre-registered criteria:
    invented);
 2. `include_archive=True` finds the moved record and marks it `archived` with the
    archive file it came from — a reader can always tell old history from live history;
-3. the limit `k` applies across live and archived records together, newest first;
+3. the limit `k` applies across live and archived records together, newest first, and
+   from `k >= 5` the archive keeps a reserved share — otherwise `--include-archive`
+   returns nothing whenever live records fill `k` (`issue.mem-arch-archive-k-starve`,
+   v0.21.0); a per-file first pass means no archive file with a match is invisible;
 4. the flag is refused on node layers (`E_ARCHIVE_LAYER`, exit 2) rather than quietly
    ignored;
 5. archived hits keep their original `at` and `rev`.
@@ -44,6 +47,48 @@ def at(stamp):
 def quiet(fn, *args):
     with contextlib.redirect_stdout(io.StringIO()), contextlib.redirect_stderr(io.StringIO()):
         return fn(*args)
+
+
+class ArchiveReservationTests(unittest.TestCase):
+    """The reservation that keeps `--include-archive` from being a no-op."""
+
+    def _doc(self):
+        return {"nodes": [], "edges": [], "changes": [
+            {"op": "add", "target": f"task.l{i}", "note": "needle",
+             "at": f"2026-10-31T00:0{i}:00+08:00", "rev": 100 + i} for i in range(12)]}
+
+    def _archived(self):
+        return [{"file": f"archive/changes-000{file_index}.json",
+                 "record": {"op": "add", "target": f"task.a{file_index}{i}",
+                            "note": "needle", "rev": i,
+                            "at": f"2026-10-0{file_index}T00:0{i}:00+08:00"}}
+                for file_index in (1, 2) for i in range(6)]
+
+    def test_live_hits_cannot_starve_the_archive(self):
+        from amg import retrieval
+        hits = retrieval.search(self._doc(), "needle", layer="L2", k=10,
+                                archived=self._archived())
+        self.assertEqual(len(hits), 10)
+        archived = [h for h in hits if h.get("archived")]
+        self.assertGreaterEqual(len(archived), 2)
+        self.assertEqual({h["archive_file"] for h in archived},
+                         {"archive/changes-0001.json", "archive/changes-0002.json"},
+                         "every archive file with a match must be visible at k=10")
+
+    def test_small_k_keeps_recency_order(self):
+        from amg import retrieval
+        for k in (1, 3):
+            hits = retrieval.search(self._doc(), "needle", layer="L2", k=k,
+                                    archived=self._archived())
+            self.assertEqual(len(hits), k)
+            self.assertFalse(any(h.get("archived") for h in hits),
+                             "below k=5 the newest live record still wins, as before")
+
+    def test_spare_capacity_is_filled_with_history(self):
+        from amg import retrieval
+        hits = retrieval.search(self._doc(), "needle", layer="L2", k=24,
+                                archived=self._archived())
+        self.assertEqual(sum(1 for h in hits if h.get("archived")), 12)
 
 
 class ArchiveSearchTests(unittest.TestCase):

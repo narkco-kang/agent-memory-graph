@@ -96,7 +96,12 @@ direction, and re-run the script for a number you intend to quote.
 - **No deletion.** Records leave the live file; they are not destroyed. Delete
   nothing is the recovery story: restore = copy the archived `changes` back, or take
   the snapshot.
-- **`L2` search sees live history by default.** A plain `amg search --layer L2`
+- **From v0.21.0 archived hits keep a reserved share of `k`: `max(1, k // 5)` slots when
+`k >= 5`, one per archive file first, then by recency. Without it, a merge sorted by time
+returned **zero** archived hits whenever live records filled `k`
+(`issue.mem-arch-archive-k-starve`); below `k = 5` recency wins outright, unchanged.
+
+`L2` search sees live history by default.** A plain `amg search --layer L2`
   answers from the live ledger; moved history is searched only when you ask:
   `--include-archive` (or `Memory.search(..., include_archive=True)`), and every hit
   then carries `archived: true` plus the `archive_file` it came from, so old history is

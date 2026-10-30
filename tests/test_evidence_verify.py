@@ -49,6 +49,52 @@ class VerifyEvidenceUnitTests(unittest.TestCase):
             [{"locator": "path:note.txt", "content_sha256": "0" * 64}], self.dir)
         self.assertEqual(rows[0]["status"], "mismatch")
 
+    def test_absolute_path_outside_the_root_is_not_read(self):
+        outside = tempfile.mkdtemp(prefix="amg-outside-")
+        path = os.path.join(outside, "secret.txt")
+        with open(path, "wb") as fh:
+            fh.write(b"outside bytes")
+        rows = gate.verify_evidence([{"locator": "path:" + path,
+                                      "content_sha256": sha(b"outside bytes")}], self.dir)
+        self.assertEqual(rows[0]["status"], "outside_root")
+        self.assertIsNone(rows[0]["actual"], "an outside file must never be hashed")
+
+    def test_traversal_and_symlink_escape_are_outside_root(self):
+        outside = tempfile.mkdtemp(prefix="amg-outside-")
+        with open(os.path.join(outside, "x.txt"), "wb") as fh:
+            fh.write(b"x")
+        link = os.path.join(self.dir, "link.txt")
+        try:
+            os.symlink(os.path.join(outside, "x.txt"), link)
+        except (OSError, NotImplementedError):  # pragma: no cover - sandboxed hosts
+            link = None
+        locators = [{"locator": "path:../" + os.path.basename(outside) + "/x.txt",
+                     "content_sha256": sha(b"x")}]
+        if link:
+            locators.append({"locator": "path:link.txt", "content_sha256": sha(b"x")})
+        rows = gate.verify_evidence(locators, self.dir)
+        self.assertEqual([r["status"] for r in rows], ["outside_root"] * len(locators))
+
+    def test_directory_is_not_a_file(self):
+        os.makedirs(os.path.join(self.dir, "subdir"), exist_ok=True)
+        rows = gate.verify_evidence([{"locator": "path:subdir",
+                                      "content_sha256": sha(b"")}], self.dir)
+        self.assertEqual(rows[0]["status"], "not_a_file")
+
+    def test_unreadable_file_is_reported_not_crashed(self):
+        path = os.path.join(self.dir, "locked.txt")
+        with open(path, "wb") as fh:
+            fh.write(b"locked")
+        os.chmod(path, 0o000)
+        try:
+            if os.access(path, os.R_OK):  # running as root: cannot be tested here
+                self.skipTest("permissions are not enforced for this user")
+            rows = gate.verify_evidence([{"locator": "path:locked.txt",
+                                          "content_sha256": sha(b"locked")}], self.dir)
+        finally:
+            os.chmod(path, 0o600)
+        self.assertEqual(rows[0]["status"], "unreadable")
+
     def test_missing_and_unverifiable_are_never_ok(self):
         rows = gate.verify_evidence([{"locator": "path:absent.txt",
                                       "content_sha256": "0" * 64},
@@ -61,9 +107,9 @@ class VerifyEvidenceUnitTests(unittest.TestCase):
         self.assertEqual([r["status"] for r in rows],
                          ["missing", "unverifiable", "unverifiable", "unverifiable"])
 
-    def test_absolute_path_is_used_as_aware(self):
+    def test_absolute_path_inside_the_root_is_allowed(self):
         rows = gate.verify_evidence([{"locator": "path:" + self.path,
-                                      "content_sha256": sha(b"the bytes")}], "/nowhere")
+                                      "content_sha256": sha(b"the bytes")}], self.dir)
         self.assertEqual(rows[0]["status"], "ok")
 
 
@@ -100,9 +146,42 @@ class VerifyEvidenceCliTests(unittest.TestCase):
     def test_missing_path_reports_but_strict_fails(self):
         self.add("decision.gone", "path:absent.txt", "0" * 64)
         self.assertEqual(cli("verify-evidence", self.dir).returncode, 0)
+        strict = cli("verify-evidence", self.dir, "--strict", "--json")
+        self.assertEqual(strict.returncode, 1)
+        self.assertIn("E_EVIDENCE_UNVERIFIED", strict.stderr)
+        report = json.loads(strict.stdout)
+        self.assertFalse(report["ok"], "a failing strict run must not report ok=true")
+        self.assertFalse(report["all_verified"])
+
+    def test_strict_rejects_unverifiable_evidence(self):
+        self.add("decision.url", "url:https://example.test/report", "1" * 64)
+        self.assertEqual(cli("verify-evidence", self.dir).returncode, 0)
         strict = cli("verify-evidence", self.dir, "--strict")
         self.assertEqual(strict.returncode, 1)
-        self.assertIn("E_EVIDENCE_MISSING", strict.stderr)
+        self.assertIn("E_EVIDENCE_UNVERIFIED", strict.stderr)
+        report = json.loads(cli("verify-evidence", self.dir, "--strict", "--json").stdout)
+        self.assertFalse(report["ok"])
+
+    def test_outside_root_exits_one_even_without_strict(self):
+        res = cli("add", self.dir, "--id", "decision.out", "--type", "decision",
+                  "--label", "a claim", "--source", "group:t", "--status", "done",
+                  "--evidence", f"path:/etc/hosts|{'0' * 64}|2026-10-31T00:00:00+08:00")
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        res = cli("verify-evidence", self.dir, "--json")
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("E_EVIDENCE_OUTSIDE_ROOT", res.stderr)
+        report = json.loads(res.stdout)
+        self.assertFalse(report["ok"])
+        self.assertEqual(report["outside_root"][0]["locator"], "path:/etc/hosts")
+
+    def test_empty_graph_is_not_a_strict_pass(self):
+        self.assertEqual(cli("verify-evidence", self.dir).returncode, 0)
+        strict = cli("verify-evidence", self.dir, "--strict", "--json")
+        self.assertEqual(strict.returncode, 1)
+        report = json.loads(strict.stdout)
+        self.assertEqual(report["checked"], 0)
+        self.assertFalse(report["ok"])
+        self.assertFalse(report["all_verified"])
 
     def test_unverifiable_is_counted_but_never_passes_silently(self):
         self.add("decision.url", "url:https://example.test/report", "1" * 64)
