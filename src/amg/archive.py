@@ -279,10 +279,20 @@ def _verify_roundtrip(graph_dir: str, moved: list, rest: list, snapshot_text: st
         reasons.append(f"graph check failed after archiving: {len(check['errors'])} error(s)")
 
     # 5. Rev numbers must stay contiguous across the boundary (no silent hole).
+    #
+    # A record without an integer `rev` is *unknown*, not a violation: graphs written
+    # before `amg migrate` existed can carry such records, and refusing the archive
+    # because we cannot prove contiguity would be a false alarm about data that is
+    # fine. The check is skipped (reported as unknown) in that case, and the fix is
+    # `amg migrate`, which numbers them.
     revs = [c.get("rev") for c in archived_back if isinstance(c.get("rev"), int)]
     live_revs = [c.get("rev") for c in live_changes if isinstance(c.get("rev"), int)]
+    unnumbered = sum(1 for c in list(archived_back) + list(live_changes)
+                     if not isinstance(c.get("rev"), int))
     contiguous = None
-    if revs and live_revs:
+    if unnumbered:
+        contiguous = None
+    elif revs and live_revs:
         contiguous = (max(revs) + 1 == min(live_revs)
                       and revs == sorted(revs) and live_revs == sorted(live_revs))
         if not contiguous:
@@ -295,6 +305,7 @@ def _verify_roundtrip(graph_dir: str, moved: list, rest: list, snapshot_text: st
         "state_unchanged": state_ok,
         "check_ok": check_ok,
         "rev_contiguous": contiguous,
+        "rev_unnumbered": unnumbered,
         "archived": len(moved),
         "live": len(live_changes),
         "reasons": reasons,
@@ -367,18 +378,18 @@ def verify(graph_dir: str) -> dict:
     duplicates = sorted(rev for rev, seen in counts.items() if seen > 1)
     gaps = []
     continuity = None
+    undated = sum(1 for c in archived_records + live_changes if not isinstance(c.get("rev"), int))
     if all_revs:
-        continuity = True
         expected = list(range(min(all_revs), max(all_revs) + 1))
         gaps = [r for r in expected if r not in set(all_revs)]
-        if gaps or duplicates:
-            continuity = False
-            if gaps:
-                reasons.append(f"rev gap(s) across archive and live ledger: {gaps[:10]}"
-                               + ("" if len(gaps) <= 10 else f" (+{len(gaps) - 10} more)"))
-            if duplicates:
-                reasons.append(f"rev number(s) appear twice: {duplicates[:10]}")
-    undated = sum(1 for c in archived_records + live_changes if not isinstance(c.get("rev"), int))
+        # Unnumbered records (pre-`amg migrate`) make contiguity unknowable rather
+        # than false; a duplicate rev is still hard evidence and is always reported.
+        continuity = None if undated else (not gaps and not duplicates)
+        if gaps and not undated:
+            reasons.append(f"rev gap(s) across archive and live ledger: {gaps[:10]}"
+                           + ("" if len(gaps) <= 10 else f" (+{len(gaps) - 10} more)"))
+        if duplicates:
+            reasons.append(f"rev number(s) appear twice: {duplicates[:10]}")
     return {
         "ok": not reasons,
         "files": files,

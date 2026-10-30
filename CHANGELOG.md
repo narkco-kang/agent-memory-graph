@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.11.1] — 2026-10-31
+
+### Fixed
+
+- **A false alarm on legacy ledgers.** `amg archive`'s rev-contiguity check treated a
+  record without an integer `rev` as a failure, so a graph written before
+  `amg migrate` existed refused to archive and rolled back (`E_ARCHIVE_VERIFY`) —
+  safe, but wrong: contiguity is *unknowable* when numbers are missing, not violated.
+  The check now reports `rev_contiguous: null` with `rev_unnumbered: N` and lets the
+  move through; `amg archive --verify` reports `rev_continuity: null` the same way.
+  Duplicate rev numbers are still hard evidence and still fail. `amg migrate` numbers
+  the records and makes the check enforceable. Found by probing the edge case before
+  calling 0.11.0 done; `tests/test_archive.py` covers it.
+
 ## [0.11.0] — 2026-10-31
 
 New capability: **cold archiving of the change ledger** — move old history out of the

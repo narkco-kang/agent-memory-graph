@@ -202,6 +202,24 @@ class ArchiveTests(unittest.TestCase):
         self.assertFalse(out["ok"])
         self.assertEqual(out["duplicates"], [3])
 
+    def test_unnumbered_record_is_unknown_not_a_failure(self):
+        # Graphs written before `amg migrate` can carry records without `rev`.
+        # Contiguity is then unknowable: report unknown, do not refuse the move.
+        doc = json.loads(self.bytes())
+        doc["changes"][-1].pop("rev", None)
+        with open(self.graph, "w", encoding="utf-8") as fh:
+            json.dump(doc, fh)
+        with at(NOW):
+            rep = Memory.open(self.g.dir).archive(days=30, apply=True)
+            out = Memory.open(self.g.dir).archive_verify()
+        self.assertTrue(rep["verify"]["ok"], rep["verify"]["reasons"])
+        self.assertIsNone(rep["verify"]["rev_contiguous"])
+        self.assertEqual(rep["verify"]["rev_unnumbered"], 1)
+        self.assertEqual(rep["archived"], 11)
+        self.assertTrue(out["ok"], out["reasons"])
+        self.assertIsNone(out["rev_continuity"])
+        self.assertEqual(out["records_without_rev"], 1)
+
     def test_verify_on_a_graph_without_archives(self):
         with at(NOW):
             out = Memory.open(self.g.dir).archive_verify()

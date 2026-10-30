@@ -19,6 +19,28 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.11.1 — 2026-10-31
+
+Status: **released**. Patch: one false alarm removed from the archive proof.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 231 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` (14) |
+| 3 | Examples run | ✅ five, unchanged and still green |
+| 4 | The defect was reproduced before it was fixed | ✅ probe: rev-less last record → `E_ARCHIVE_VERIFY` + rollback; after fix the move succeeds |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Fixed" only; no capability added |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.11.1 everywhere |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; sdist's own 231 tests pass inside the unpacked archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.11.1` |
+| 9 | `python3 tools/verify.py` green | ✅ eight steps, 0 skipped |
+| 10 | The fix is pinned by a test | ✅ `test_unnumbered_record_is_unknown_not_a_failure` |
+
+Unknown and violated are different claims: a record with no `rev` means the hole
+cannot be ruled out, not that it exists. The archive now says which one it is.
+
+---
+
 ## v0.11.0 — 2026-10-31
 
 Status: **released**. New capability: cold archiving of the change ledger, with a

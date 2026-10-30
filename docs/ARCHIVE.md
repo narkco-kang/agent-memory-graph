@@ -52,7 +52,10 @@ Five checks, against artefacts produced independently of each other:
    and after: archiving moves history, never nodes or edges.
 5. **Structure + rev continuity.** `check()` must still pass, and rev numbers must be
    contiguous across the archive/live boundary — a hole there is the visible symptom
-   of a dropped record.
+   of a dropped record. A ledger carrying records **without** an integer `rev`
+   (graphs written before `amg migrate` existed) makes contiguity *unknowable*, not
+   false: that check reports unknown and the move proceeds, with the unnumbered count
+   printed. `amg migrate` numbers such records, after which the check is enforceable.
 
 If any check fails, the snapshot is written back and the command exits 1 with
 `E_ARCHIVE_VERIFY`. The graph is not left in a state whose history nobody can
