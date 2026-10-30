@@ -107,6 +107,58 @@ class AuditTests(unittest.TestCase):
                 self.assertTrue(any("untouched" in c for c in rep["conflicts"]),
                                 f"bad value {bad!r} should fall back to the default")
 
+    def test_findings_mirror_conflicts_and_hints(self):
+        """`findings` is the structured form of the same list. It must not drift:
+        every human string has exactly one entry, in order, with the right severity."""
+        self.m.add_node("task.legacy", "task", "old", source="s", status="done")
+        self.m.add_node("task.old", "task", "stale", source="s", status="in_progress",
+                        owner="someone")
+        self._backdate("task.old", 10)
+        self.m.doc["edges"].append({"from": "task.ghost", "to": "task.old", "kind": "relates_to"})
+        rep = self.m.audit()
+        conflicts = [f for f in rep["findings"] if f["severity"] == "conflict"]
+        hints = [f for f in rep["findings"] if f["severity"] == "hint"]
+        self.assertEqual([f["detail"] for f in conflicts], rep["conflicts"])
+        self.assertEqual([f["detail"] for f in hints], rep["hints"])
+
+    def test_stale_finding_carries_who_and_how_long(self):
+        self.m.add_node("task.old", "task", "stale", source="s", status="in_progress",
+                        owner="kimi")
+        self._backdate("task.old", 10)
+        finding = next(f for f in self.m.audit()["findings"]
+                       if f["kind"] == "stale_work_item")
+        self.assertEqual(finding["node"], "task.old")
+        self.assertEqual(finding["owner"], "kimi")
+        self.assertEqual(finding["age_days"], 10)
+        self.assertEqual(finding["limit_days"], 3)
+        self.assertEqual(finding["status"], "in_progress")
+
+    def test_done_without_evidence_finding_has_node(self):
+        self.m.add_node("task.legacy", "task", "old", source="s", status="done")
+        finding = next(f for f in self.m.audit()["findings"]
+                       if f["kind"] == "done_without_evidence")
+        self.assertEqual(finding["node"], "task.legacy")
+        self.assertEqual(finding["type"], "task")
+        self.assertIsNone(finding["owner"])
+
+    def test_dangling_edge_finding_has_both_endpoints(self):
+        self.m.add_node("task.a", "task", "a", source="s")
+        self.m.doc["edges"].append({"from": "task.ghost", "to": "task.a", "kind": "relates_to"})
+        finding = next(f for f in self.m.audit()["findings"]
+                       if f["kind"] == "dangling_edge")
+        self.assertEqual(finding["edge"], {"from": "task.ghost", "to": "task.a",
+                                           "kind": "relates_to"})
+
+    def test_hint_findings_are_marked_as_hints(self):
+        self.m.add_node("decision.d", "decision", "D", source="s", status="done",
+                        evidence=[ev()])
+        # Strip the evidence after the gate accepted it, to reach a state adoption can
+        # produce: a conclusion recorded `done` with no evidence object at all.
+        self.m.doc["nodes"][0]["evidence"] = []
+        finding = next(f for f in self.m.audit()["findings"]
+                       if f["kind"] == "conclusion_without_grade")
+        self.assertEqual(finding["severity"], "hint")
+
     def test_changes_key_shapes_reported(self):
         self.m.add_node("task.a", "task", "A", source="s")
         doc = self.m.doc

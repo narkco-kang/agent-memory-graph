@@ -208,6 +208,26 @@ expiry = m.expire(apply=False)   # dry-run; apply=True to supersede expired fact
 `Memory` is the only entry point; every write takes the lock, writes the whole
 graph, and replaces the file atomically.
 
+### `audit()` findings (v0.9.0)
+
+`audit()` returns the human lists `conflicts` and `hints` (unchanged) plus a
+structured `findings` array derived from the same entries, in the same order:
+
+```json
+{"severity": "conflict", "kind": "stale_work_item",
+ "detail": "<id>: in_progress untouched for 10d (limit 3d)",
+ "node": "<id>", "type": "task", "status": "in_progress",
+ "owner": "kimi", "age_days": 10, "limit_days": 3}
+```
+
+`severity` is `conflict` (audit fails) or `hint` (informational). Kinds:
+`done_without_evidence`, `stale_work_item`, `expired_but_active`, `dangling_edge`
+(with an `edge` object), `pin_changed`, and the hints `not_yet_valid`,
+`expired_though_validity_unknown`, `conclusion_without_grade`, `unknown_validity`,
+`changes_key_shapes`. `node` is the id the caller has to act on and `owner` is
+carried through (null when absent), because "who is responsible" is the first
+question a reader asks and previously had to be looked up.
+
 ## Node shape
 
 ```

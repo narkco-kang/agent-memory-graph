@@ -82,7 +82,16 @@ def audit(doc: dict, pin: dict = None, now: datetime.datetime = None,
     nodes = doc.get("nodes") or []
     edges = doc.get("edges") or []
     changes = doc.get("changes") or []
-    conflicts, hints = [], []
+    conflicts, hints, findings = [], [], []
+
+    def add(severity: str, kind: str, detail: str, **fields):
+        """Record one finding; the human lists are derived from these, never the
+        reverse, so `--json` consumers and text output cannot describe different
+        realities. Kept append-only and order-preserving for compatibility."""
+        entry = {"severity": severity, "kind": kind, "detail": detail}
+        entry.update(fields)
+        findings.append(entry)
+        (conflicts if severity == "conflict" else hints).append(detail)
 
     legacy = legacy_stats(doc)
     pinned = set()
@@ -100,8 +109,9 @@ def audit(doc: dict, pin: dict = None, now: datetime.datetime = None,
             "match": match,
         }
         if not match:
-            conflicts.append("legacy exemption pin changed without an explicit explanation "
-                            "(new exemptions or backfill) — only forward writes may add exemptions")
+            add("conflict", "pin_changed",
+                "legacy exemption pin changed without an explicit explanation "
+                "(new exemptions or backfill) — only forward writes may add exemptions")
         else:
             pinned = legacy["_ids"]
 
@@ -109,28 +119,42 @@ def audit(doc: dict, pin: dict = None, now: datetime.datetime = None,
     for n in nodes:
         nid = n.get("id")
         if n.get("status") == "done" and not (n.get("evidence") or []) and nid not in pinned:
-            conflicts.append(f"{nid}: done without evidence (IR-4)")
+            add("conflict", "done_without_evidence", f"{nid}: done without evidence (IR-4)",
+                node=nid, type=n.get("type"), status=n.get("status"), owner=n.get("owner"))
         if (n.get("status") in {"in_progress", "blocked"}
                 and n.get("type") not in LONG_LIVED_TYPES):
             ts = _parse(n.get("updatedAt"))
             if ts and (now - ts).days >= stale_days:
-                conflicts.append(f"{nid}: {n.get('status')} untouched for {(now - ts).days}d (limit {stale_days}d)")
+                age = (now - ts).days
+                add("conflict", "stale_work_item",
+                    f"{nid}: {n.get('status')} untouched for {age}d (limit {stale_days}d)",
+                    node=nid, type=n.get("type"), status=n.get("status"),
+                    owner=n.get("owner"), age_days=age, limit_days=stale_days)
         if not_yet_valid(n, now):
-            hints.append(f"{nid}: not yet valid (valid_from {n.get('valid_from')} is in the "
-                         f"future) — treated as not yet in effect by retrieval and expiry")
+            add("hint", "not_yet_valid",
+                f"{nid}: not yet valid (valid_from {n.get('valid_from')} is in the "
+                f"future) — treated as not yet in effect by retrieval and expiry",
+                node=nid, valid_from=n.get("valid_from"))
         vu = _parse(n.get("valid_until"))
         if vu and vu <= now and n.get("status") != "superseded":
             if expiry_eligible(n):
-                conflicts.append(f"{nid}: valid_until passed but status={n.get('status')} (not superseded)")
+                add("conflict", "expired_but_active",
+                    f"{nid}: valid_until passed but status={n.get('status')} (not superseded)",
+                    node=nid, status=n.get("status"), valid_until=n.get("valid_until"))
             else:
-                hints.append(f"{nid}: valid_until passed but validity time is unknown "
-                             f"(valid_time_known=false) — cannot auto-expire, manual review")
+                add("hint", "expired_though_validity_unknown",
+                    f"{nid}: valid_until passed but validity time is unknown "
+                    f"(valid_time_known=false) — cannot auto-expire, manual review",
+                    node=nid, valid_until=n.get("valid_until"))
         if is_conclusion(n) and n.get("status") == "done" and not (n.get("evidence") or []):
-            hints.append(f"{nid}: conclusion without evidence grade")
+            add("hint", "conclusion_without_grade",
+                f"{nid}: conclusion without evidence grade", node=nid, type=n.get("type"))
 
     for e in edges:
         if e.get("from") not in ids or e.get("to") not in ids:
-            conflicts.append(f"dangling edge {e.get('from')} -{e.get('kind')}-> {e.get('to')}")
+            add("conflict", "dangling_edge",
+                f"dangling edge {e.get('from')} -{e.get('kind')}-> {e.get('to')}",
+                edge={"from": e.get("from"), "to": e.get("to"), "kind": e.get("kind")})
 
     shapes = {}
     missing_target = missing_rev = 0
@@ -143,12 +167,16 @@ def audit(doc: dict, pin: dict = None, now: datetime.datetime = None,
             missing_rev += 1
     unknown_validity = sum(1 for n in nodes if n.get("valid_time_known") is False)
     if unknown_validity:
-        hints.append(f"valid_time_known=false on {unknown_validity} node(s): "
-                     f"TTL auto-expiry refuses them (migrated validity time is unknown)")
+        add("hint", "unknown_validity",
+            f"valid_time_known=false on {unknown_validity} node(s): "
+            f"TTL auto-expiry refuses them (migrated validity time is unknown)",
+            count=unknown_validity)
 
     if missing_target or missing_rev:
-        hints.append(f"changes key shapes: {len(shapes)} variants, missing target={missing_target}, "
-                     f"missing rev={missing_rev} (run `amg migrate` before any public release)")
+        add("hint", "changes_key_shapes",
+            f"changes key shapes: {len(shapes)} variants, missing target={missing_target}, "
+            f"missing rev={missing_rev} (run `amg migrate` before any public release)",
+            variants=len(shapes), missing_target=missing_target, missing_rev=missing_rev)
 
     return {
         "ok": not conflicts,
@@ -158,4 +186,8 @@ def audit(doc: dict, pin: dict = None, now: datetime.datetime = None,
         "pin": pin_report,
         "counts": {"nodes": len(nodes), "edges": len(edges), "changes": len(changes),
                    "rev": doc.get("rev", 0)},
+        # Structured form of the same findings: severity, kind, the human detail, and
+        # the node/edge/owner the reader has to act on. Added in 0.9.0; `conflicts`
+        # and `hints` stay for compatibility.
+        "findings": findings,
     }

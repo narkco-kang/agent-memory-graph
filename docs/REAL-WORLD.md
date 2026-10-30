@@ -172,6 +172,10 @@ Measured after the fix, on the same graph at rev 2,610 (1,288 nodes):
 and no registry node. The unpinned count is 1,064, i.e. the legacy-evidence class
 grew with the graph.
 
+Each of those conflicts is also a structured finding (`kind: stale_work_item`) carrying
+the node, its type, its status, its owner and `age_days` — so an agent can act on
+"whose item is 7 days old" without parsing the sentence (v0.9.0).
+
 The threshold is configurable (`AMG_STALE_DAYS`, or `--stale-days` for one run),
 because "too long" depends on the team's cadence. On that graph it reads:
 

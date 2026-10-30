@@ -3,6 +3,32 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.9.0] — 2026-10-31
+
+Additive: `audit` now returns structured findings alongside its strings, so a reader
+(or an agent) can tell who is responsible without parsing a sentence.
+
+### Added
+
+- **`audit()["findings"]`** — one entry per conflict or hint, derived from the same
+  record as the human string, in the same order: `severity` (`conflict`/`hint`),
+  `kind` (`done_without_evidence`, `stale_work_item`, `expired_but_active`,
+  `dangling_edge`, `pin_changed`, and five hint kinds), the `detail` string, plus the
+  node, its type/status/owner, and `age_days`/`limit_days` where relevant; dangling
+  edges carry the `edge` object. `conflicts` and `hints` are unchanged, so existing
+  consumers see no difference. Measured on the first live graph: 3 conflict findings
+  and 602 hint findings, with the string lists matching the findings exactly.
+- The human lists are now **generated from** the findings instead of being built
+  separately, so text and `--json` cannot diverge by construction (DECISIONS #22); a
+  test asserts the two views stay identical.
+
+### Not shipped in 0.9.0 (do not assume)
+
+Unchanged: no authentication / authorization / multi-tenancy (out of scope by
+decision), no vector retrieval in the default path (measured, rejected), no tamper
+*proof*, no TTL scheduler, no encryption at rest, no lock fairness, and history
+compression remains a design (`docs/DESIGN-HISTORY.md`), not a capability.
+
 ## [0.8.0] — 2026-10-31
 
 **A new capability, not a fix**: the staleness threshold is now policy, because the

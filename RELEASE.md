@@ -19,6 +19,33 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.9.0 — 2026-10-31
+
+Status: **released**. Additive change: structured findings in `audit()`, with the
+existing string lists untouched.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 203 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` |
+| 3 | Examples run | ✅ quickstart, lifecycle, `examples/mcp_client.py` |
+| 4 | Every "not implemented" claim re-run against code | ✅ unchanged set |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.9.0" |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.9.0 everywhere |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; sdist's own 203 tests pass inside the archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.9.0` |
+| 9 | `python3 tools/verify.py` green | ✅ including the artifact step |
+| 10 | Backward compatibility tested | ✅ a test asserts `conflicts`/`hints` equal the findings' details in order |
+
+### What changed for an agent, concretely
+
+Before: `"<id>: blocked untouched for 3d (limit 3d)"` — to act on it you parse the
+sentence and look up the owner. After: the same detail plus
+`{"kind": "stale_work_item", "node": ..., "owner": "kimi", "age_days": 3,
+"limit_days": 3}`. The string is still there; nothing that worked before breaks.
+
+---
+
 ## v0.8.0 — 2026-10-31
 
 Status: **released**. New capability: the staleness threshold is configurable, with

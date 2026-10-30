@@ -209,3 +209,13 @@ Each entry states the decision, the evidence behind it, and what it costs.
     Same shape as DECISIONS #16 for the lock timeout, for the same reason — the
     library serves teams with different cadences and cannot infer them.
     *Signed 2026-10-31; three tests in `tests/test_audit.py`.*
+
+22. **One source of truth for audit output: structured findings, human strings
+    derived.** `audit` used to build display strings directly, so any consumer that
+    wanted the node or the owner had to parse them. Now each finding is recorded once
+    as a dict (severity, kind, detail, node/edge/owner/age) and the `conflicts` and
+    `hints` lists are generated from it, which makes drift between text and `--json`
+    impossible by construction rather than by discipline. The string lists stay, in
+    the same order, because they are the existing contract; `findings` is additive.
+    A test asserts the two views match exactly.
+    *Signed 2026-10-31.*
