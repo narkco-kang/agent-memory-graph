@@ -5,6 +5,7 @@ from . import audit as audit_mod
 from . import digest as digest_mod
 from . import migrate as migrate_mod
 from . import protocol
+from . import fingerprint as fingerprint_mod
 from . import readaudit
 from . import relations
 from . import retrieval
@@ -392,6 +393,24 @@ class Memory:
 
     def digest(self, max_bytes: int = 65536) -> str:
         return digest_mod.build(self._doc, max_bytes=max_bytes)
+
+    def fingerprint(self) -> dict:
+        """Canonical digests of current state and of the change log.
+
+        Read-only: it does not write, and it does not record that it ran. The
+        value of a fingerprint comes from keeping it elsewhere (see
+        docs/THREAT-MODEL.md), not from storing it next to the data.
+        """
+        return fingerprint_mod.fingerprint(self._doc)
+
+    def verify_fingerprint(self, expected: dict) -> dict:
+        """Check current digests against a previously recorded fingerprint."""
+        if not isinstance(expected, dict):
+            raise ProtocolError("E_BAD_FINGERPRINT", "expected fingerprint must be an object")
+        if not any(expected.get(f) for f in ("state_sha256", "history_sha256")):
+            raise ProtocolError("E_NO_EXPECTATION",
+                                "fingerprint has neither state_sha256 nor history_sha256")
+        return fingerprint_mod.compare(self.fingerprint(), expected)
 
     def migrate(self) -> dict:
         with self.store.transaction() as (doc, commit):

@@ -24,6 +24,8 @@ amg doctor <dir>                                     # cleans stale tmp files
 amg migrate <dir>                                    # normalizes legacy changes[]
 amg adopt  <src> <dst> [--group NAME] [--drop-dangling] [--pin-out PATH] [--dry-run]
 amg expire <dir> [--apply] [--json]                # opt-in TTL expiry (dry-run default)
+amg fingerprint <dir> [--json] [--out PATH]        # canonical state + history digests
+amg verify <dir> --expect PATH | --expect-state HEX [--expect-history HEX]
 amg version
 ```
 
@@ -50,8 +52,8 @@ fail loudly instead of guessing, and `tests/test_exit_codes.py` scans
 
 | exit | codes | meaning |
 |---|---|---|
-| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
-| `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* | the evidence gate rejected the content, or the graph would break an invariant |
+| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` · `E_NO_EXPECTATION` · `E_BAD_FINGERPRINT` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
+| `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` | the evidence gate rejected the content, or the graph would break an invariant |
 | `0` | — | success / clean `check` / clean `audit` |
 | `3` | — | lock timeout or IO failure (not a `ProtocolError`) |
 
@@ -101,6 +103,41 @@ eight tools: `memory_search`, `memory_add`, `memory_status`, `memory_supersede`,
   file: see [THREAT-MODEL.md](THREAT-MODEL.md) §5.
 - stdout carries protocol frames only; diagnostics go to stderr.
 
+## Fingerprints and what they do not prove (v0.4)
+
+`amg fingerprint <dir>` prints two SHA-256 digests:
+
+- `state_sha256` — nodes and edges, canonicalised so that re-ordering the file
+  does not change it;
+- `history_sha256` — the `changes[]` records, in order.
+
+They are separate because they detect different lies. Editing a node directly in
+the file moves `state_sha256` while `history_sha256` stays put — the mismatch is
+what `amg verify` reports, and it is a fact about the bytes, not an accusation
+about a person.
+
+```bash
+amg fingerprint ./mem --out ./mem.fp.json     # store this OUTSIDE the graph dir
+amg verify ./mem --expect ./mem.fp.json       # exit 0 match, 1 mismatch, 2 usage
+```
+
+**What it proves:** the file you are looking at is byte-for-byte the content the
+digest was computed from (canonicalised), and whether state and history moved
+together.
+
+**What it does not prove:** that no one rewrote anything. A process that can write
+`graph.json` can also recompute the fingerprints. The digest only has value where
+it is *witnessed* somewhere else — a git commit, a CI log, a ticket, another host:
+
+```bash
+amg fingerprint ./mem --json > ./witness.json
+git add ./mem/graph.json ./witness.json && git commit -m "memory: <fingerprint>"
+```
+
+Because of that, there is deliberately **no** in-file hash chain over `changes[]`
+(see DECISIONS.md #11): it would look stronger than the external digest while
+providing less, since an attacker regenerates the whole chain in one pass.
+
 ## Read-side audit (opt-in, v0.3)
 
 `--audit-read` on `search` / `related` writes a JSONL event to `<graph>/reads.jsonl`
@@ -120,6 +157,8 @@ from amg import Memory, ProtocolError, LockTimeout
 
 m = Memory.open("./mem")          # Memory.init("./mem", group="t")
 ro = Memory.open("./mem", read_only=True)   # every write raises E_READ_ONLY
+fp = m.fingerprint()                       # {"state_sha256": ..., "history_sha256": ...}
+report = m.verify_fingerprint(fp)          # {"ok": True, "checked": [...], "mismatched": []}
 m.add_node(id="task.x", type="task", label="do X", source="group:t 2026-10-29")
 m.add_node(id="task.y", type="task", label="do Y", source="plan",
            valid_from="2026-01-15T09:30:00+08:00")   # fact time, optional

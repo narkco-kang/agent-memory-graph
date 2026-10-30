@@ -3,6 +3,20 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [Unreleased] — 0.4.0
+
+### Added
+
+- **`amg fingerprint` / `amg verify`**: canonical `state_sha256` (nodes+edges,
+  order independent) and `history_sha256` (`changes[]`, in order), plus a verify
+  command that exits 1 on mismatch. Keeping them separate is what makes a silent
+  edit visible: changing a node in the file moves state and leaves history alone.
+  Read-only — `verify` writes nothing, proven by comparing file bytes.
+- `docs/THREAT-MODEL.md` §7a states the exact limits, including the row where a
+  determined attacker wins, and DECISIONS.md #11 records why there is no in-file
+  hash chain over `changes[]` (it would look stronger than the external digest
+  while being weaker, because the attacker regenerates it in one pass).
+
 ## [0.3.0] — 2026-10-30
 
 ### Added

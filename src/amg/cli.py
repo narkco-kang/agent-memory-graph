@@ -10,7 +10,7 @@ from .errors import LockTimeout, ProtocolError
 from .memory import Memory
 
 COMMANDS = ["init", "add", "import", "status", "supersede", "link", "related", "search", "digest", "check", "audit", "mcp",
-            "export", "doctor", "migrate", "adopt", "expire", "version"]
+            "export", "doctor", "migrate", "adopt", "expire", "fingerprint", "verify", "version"]
 
 
 def _evidence_args(values):
@@ -201,6 +201,61 @@ def cmd_mcp(a):
     return mcp_mod.serve(m, read_only=a.read_only)
 
 
+def cmd_fingerprint(a):
+    """Print the canonical digests of state and history. Writes nothing to the graph."""
+    m = Memory.open(a.dir)
+    fp = m.fingerprint()
+    if a.out:
+        with open(a.out, "w", encoding="utf-8") as fh:
+            json.dump(fp, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+    if a.json:
+        print(json.dumps(fp, ensure_ascii=False, indent=2))
+    else:
+        print(f"{os.path.abspath(a.dir)}  rev {fp['rev']}  "
+              f"{fp['nodes']} nodes / {fp['edges']} edges / {fp['changes']} changes")
+        print(f"  state_sha256    {fp['state_sha256']}")
+        print(f"  history_sha256  {fp['history_sha256']}")
+        if a.out:
+            print(f"  written to {a.out}")
+        print("  keep this value outside the graph: a fingerprint stored next to the "
+              "data proves nothing (docs/THREAT-MODEL.md)")
+    return EXIT_OK
+
+
+def _load_expected(a):
+    if a.expect:
+        try:
+            with open(a.expect, encoding="utf-8") as fh:
+                return json.load(fh)
+        except (OSError, json.JSONDecodeError) as exc:
+            raise ProtocolError("E_BAD_FINGERPRINT", f"cannot read --expect {a.expect}: {exc}")
+    if a.expect_state or a.expect_history:
+        return {"state_sha256": (a.expect_state or "").lower(),
+                "history_sha256": (a.expect_history or "").lower()}
+    raise ProtocolError("E_NO_EXPECTATION",
+                        "pass --expect FILE, or --expect-state/--expect-history HEX")
+
+
+def cmd_verify(a):
+    """Compare current digests with a recorded fingerprint. Exit 1 on mismatch."""
+    m = Memory.open(a.dir)
+    report = m.verify_fingerprint(_load_expected(a))
+    if a.json:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    else:
+        for name in report["checked"]:
+            data = report["checks"][name]
+            print(f"  {name}: {'ok' if data['match'] else 'MISMATCH'}")
+        print(f"verified {', '.join(report['checked'])} -> "
+              f"{'match' if report['ok'] else 'MISMATCH ' + ', '.join(report['mismatched'])}")
+    if not report["ok"]:
+        raise ProtocolError("E_FINGERPRINT_MISMATCH",
+                            "recorded fingerprint does not match the graph "
+                            f"({', '.join(report['mismatched'])})")
+    return EXIT_OK
+
+
 def cmd_export(a):
     m = Memory.open(a.dir)
     sys.stdout.write(m.export(fmt=a.format))
@@ -248,12 +303,16 @@ USAGE_EXIT_CODES = frozenset({
     # read-only mode: the caller addressed a capability this session does not
     # have (same class as E_ALREADY_AMG), not a violation of graph content
     "E_READ_ONLY",
+    # fingerprint: no expectation given / unusable expectation file
+    "E_NO_EXPECTATION", "E_BAD_FINGERPRINT",
 })
 ERROR_EXIT_CODES = frozenset({
     "E_NO_SOURCE", "E_NOTE_REQUIRED", "E_EVIDENCE_MISSING", "E_EVIDENCE_FORMAT",
     "E_DUP_ID", "E_DUP_EDGE", "E_NO_NODE", "E_IMMUTABLE",
     # adopt-specific: the legacy source itself violates the protocol
     "E_ADOPT_UNSUPPORTED", "E_ADOPT_DANGLING",
+    # the file no longer matches the fingerprint recorded outside it
+    "E_FINGERPRINT_MISMATCH",
 })
 EXIT_CODES_BY_ERROR = {code: 2 for code in USAGE_EXIT_CODES}
 EXIT_CODES_BY_ERROR.update({code: 1 for code in ERROR_EXIT_CODES})
@@ -398,6 +457,15 @@ def build_parser():
     s.add_argument("--read-only", action="store_true", dest="read_only",
                    help="refuse write tools; the graph cannot be modified through this session")
     s.set_defaults(func=cmd_mcp)
+
+    s = sub.add_parser("fingerprint"); s.add_argument("dir")
+    s.add_argument("--json", action="store_true"); s.add_argument("--out")
+    s.set_defaults(func=cmd_fingerprint)
+
+    s = sub.add_parser("verify"); s.add_argument("dir")
+    s.add_argument("--expect"); s.add_argument("--expect-state"); s.add_argument("--expect-history")
+    s.add_argument("--json", action="store_true")
+    s.set_defaults(func=cmd_verify)
 
     s = sub.add_parser("export"); s.add_argument("dir"); s.add_argument("--format", default="json",
                                                                         choices=["json", "jsonl"])

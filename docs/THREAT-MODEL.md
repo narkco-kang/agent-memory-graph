@@ -119,10 +119,30 @@ asserts the same for read-only refusals.
 - **Same-user file access.** Anyone who can run a process as the user can read
   and rewrite the graph. The only defence is OS permissions, disk encryption, or
   keeping the file out of shared locations.
-- **No tamper evidence.** `changes[]` is append-only *by the API*, not
-  cryptographically. A process with file access can rewrite it and no check can
-  tell. If you need tamper evidence, keep the graph in git (each commit is an
-  external witness) or hash it into a system you control and compare out of band.
+- **No tamper evidence inside the file.** `changes[]` is append-only *by the
+  API*, not cryptographically. A process with file access can rewrite it.
+  `amg fingerprint` / `amg verify` (§7a) detect accidental corruption and edits
+  that leave state and history inconsistent, but the digest can be recomputed by
+  the same attacker. Real evidence requires an external witness: commit the
+  fingerprint into git, a CI log, or another host, and compare out of band.
+
+### 7a. What `amg verify` does and does not buy
+
+`amg fingerprint` emits `state_sha256` (nodes+edges, order-independent) and
+`history_sha256` (`changes[]`, in order). `amg verify --expect FILE` exits 1 when
+either differs from the recorded value.
+
+| Situation | Detected? |
+|---|---|
+| Bit rot, partial write, truncated file | yes (state digest) |
+| A node edited in the file with no change record | yes — state moves, history does not |
+| A change appended without touching nodes | yes — history moves, state does not |
+| An attacker who rewrites state **and** history and recomputes the digest | **no** — only an external witness catches this |
+| An attacker who also rewrites your copy of the fingerprint | **no** |
+
+This is why the project does not ship an in-file hash chain over `changes[]`: it
+looks stronger than it is (the attacker regenerates the chain in one pass) while
+costing a schema migration, and it invites people to trust it.
 - **Read tools are unlimited.** `memory_digest` accepts `max_bytes`; the others
   have no output bound beyond `k`. A client can read everything available.
 - **`reads.jsonl` is a plain-text log** of query text for high-risk reads. Do not

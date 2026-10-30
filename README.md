@@ -279,6 +279,18 @@ results that include superseded nodes — to a bounded, rotated `reads.jsonl`
 (1 MiB per segment, one segment kept). Reads are never written into `changes[]`.
 Note that `reads.jsonl` contains query text.
 
+## Fingerprints (tamper evidence, honestly scoped)
+
+`amg fingerprint ./mem --out ./mem.fp.json` records two digests — current state and
+the change log — and `amg verify ./mem --expect ./mem.fp.json` exits 1 when the
+file no longer matches. Keeping them separate is the useful part: a node edited
+directly in the file moves the state digest while the history digest stays put.
+
+It is not tamper *proof*: whoever can write the file can recompute the digests.
+The evidence comes from keeping the fingerprint somewhere else — a git commit, a
+CI log, a ticket — which is why there is no in-file hash chain (DECISIONS.md #11).
+See [docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) §7.
+
 ## Expiry scheduling
 
 Expiry is a command, not a daemon: `amg expire ./mem --apply` is safe to run from
