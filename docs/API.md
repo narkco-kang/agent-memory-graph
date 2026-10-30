@@ -13,7 +13,8 @@ amg import <dir> --from FILE.json                   # batch: all-or-nothing, one
 amg status <dir> <id> <new-status> --note TEXT       # note required (IR-4)
 amg link   <dir> --from ID --to ID --kind KIND
 amg supersede <dir> OLD NEW --note TEXT            # keep the old node, stamp its window
-amg search <dir> "query" [--layer L1|L2|L3|L4] [--k 10] [--strict] [--json]
+amg search <dir> "query" [--layer L1|L2|L3|L4] [--k 10] [--strict] [--expand] [--json]
+amg related <dir> ID [--depth N] [--kind KIND] [--json]   # walk edges (new in v0.2)
 amg digest <dir> [--max-bytes 65536] [--out PATH]
 amg check  <dir> [--strict] [--json]
 amg audit  <dir> [--pin baseline.json] [--json]
@@ -46,7 +47,7 @@ fail loudly instead of guessing, and `tests/test_exit_codes.py` scans
 
 | exit | codes | meaning |
 |---|---|---|
-| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE`* | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
+| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
 | `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* | the evidence gate rejected the content, or the graph would break an invariant |
 | `0` | — | success / clean `check` / clean `audit` |
 | `3` | — | lock timeout or IO failure (not a `ProtocolError`) |
@@ -59,6 +60,16 @@ dangling edge).
 `E_EVIDENCE_FORMAT` is exit **1** on purpose: it looks like a format error, but
 it is the gate rejecting content, and it must never masquerade as a bad command
 line.
+
+## Edges and traversal (v0.2)
+
+`amg related <id> [--depth N] [--kind KIND]` walks edges in both directions and
+returns each neighbor with the connecting edge, its direction, the depth it was
+reached at, and `anchor_state`. `search --expand` attaches 1-hop neighbors of each
+hit, marked `expanded_from`.
+
+Cycle policy: `depends_on` and `supersedes` must form a DAG — a cycle there is a
+`check` error. Other kinds may legitimately cycle and are only counted as a hint.
 
 ## Python
 

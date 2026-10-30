@@ -1,5 +1,6 @@
 """Structural invariants (IR-1..IR-4) as machine-checkable rules."""
 
+from . import relations
 from .const import EDGE_KINDS, NODE_TYPES, SCHEMA, STATUSES, is_conclusion, parse_ts
 from .gate import SHA256_RE
 
@@ -83,6 +84,12 @@ def check(doc: dict, strict: bool = False) -> dict:
             if rev < last_rev:
                 errors.append(f"changes[{i}]: rev went backwards ({rev} < {last_rev}) — IR-1")
             last_rev = rev
+
+    cycles = relations.cycle_report(doc)
+    for v in cycles["violations"]:
+        errors.append(f"cycle on {v['kind']}: " + " -> ".join(v["path"]))
+    if cycles["tolerated_components"]:
+        hints.append(f"{cycles['tolerated_components']} cyclic component(s) on non-DAG edge kinds (allowed)")
 
     return {
         "ok": not errors,

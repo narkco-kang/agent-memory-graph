@@ -52,11 +52,20 @@ magnitude faster than repeated single writes. The batch is all-or-nothing: every
 node and edge is validated with the same gates before the file is written, so a
 single bad record rejects the whole batch and leaves the graph byte-identical.
 
-Edges add roughly 10% to the read paths — and only because `check`/`audit`
-validate their endpoints. **There is no traversal API and no relationship-aware
-retrieval**, so there is no traversal latency to report. In other words: the
-edges are stored, validated and counted, but never walked. That is a gap, not a
-performance result (tracked as an open issue).
+Before v0.2 edges added roughly 10% to the read paths and were never walked —
+they were stored, validated and counted only. v0.2 adds traversal, measured here
+on a 10,000-node / 10,000-edge graph:
+
+| operation | latency |
+|---|---|
+| `related` depth 1 | 8.1 ms |
+| `related` depth 2 | 7.8 ms |
+| `search` plain | 82.2 ms |
+| `search --expand` (1 hop per hit) | 92.8 ms |
+| expand overhead | **+10.6 ms** |
+
+Traversal builds the adjacency once per call, so its cost is bounded by the graph
+rather than the depth; expanding ten hits costs about 11 ms on top of the search.
 
 ## Not measured
 

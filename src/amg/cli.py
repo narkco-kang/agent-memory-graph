@@ -9,7 +9,7 @@ from .const import EXIT_ERROR, EXIT_IO, EXIT_OK, EXIT_USAGE
 from .errors import LockTimeout, ProtocolError
 from .memory import Memory
 
-COMMANDS = ["init", "add", "import", "status", "supersede", "link", "search", "digest", "check", "audit",
+COMMANDS = ["init", "add", "import", "status", "supersede", "link", "related", "search", "digest", "check", "audit",
             "export", "doctor", "migrate", "adopt", "expire", "version"]
 
 
@@ -93,6 +93,23 @@ def cmd_supersede(a):
     return EXIT_OK
 
 
+def cmd_related(a):
+    m = Memory.open(a.dir)
+    res = m.related(a.id, depth=a.depth, kind=a.kind)
+    if a.json:
+        print(json.dumps(res, ensure_ascii=False, indent=2))
+    else:
+        print(f"{res['id']} depth={res['depth']}" + (f" kind={res['kind']}" if res["kind"] else ""))
+        for n in res["neighbors"]:
+            arrow = "->" if n["direction"] == "out" else "<-"
+            flag = "✓" if n["anchor_state"] == "present" else "~"
+            print(f"{flag} {arrow} [{n['kind']}] {n['id']} [{n['status']}] {n.get('label') or ''}"
+                  f" (depth {n['depth']}{', cycle' if n.get('cycle') else ''})")
+        if not res["neighbors"]:
+            print("no neighbors")
+    return EXIT_OK
+
+
 def cmd_link(a):
     m = Memory.open(a.dir)
     m.add_edge(a.from_id, a.to_id, a.kind, by=a.by)
@@ -102,7 +119,7 @@ def cmd_link(a):
 
 def cmd_search(a):
     m = Memory.open(a.dir)
-    hits = m.search(a.query, layer=a.layer, k=a.k, strict=a.strict)
+    hits = m.search(a.query, layer=a.layer, k=a.k, strict=a.strict, expand=a.expand)
     if a.json:
         print(json.dumps(hits, ensure_ascii=False, indent=2))
     else:
@@ -206,7 +223,7 @@ def cmd_migrate(a):
 USAGE_EXIT_CODES = frozenset({
     "E_NO_GRAPH", "E_BAD_TYPE", "E_BAD_STATUS", "E_BAD_LAYER", "E_BAD_EDGE",
     "E_BAD_FORMAT", "E_BAD_ID", "E_EXISTS", "E_RULE_APPLIES", "E_RULE_EXPIRES",
-    "E_BAD_BATCH", "E_BAD_FILE",
+    "E_BAD_BATCH", "E_BAD_FILE", "E_BAD_DEPTH",
     "E_USE_SUPERSEDE", "E_BAD_SUPERSEDE", "E_BAD_VALID_TIME", "E_BAD_VALID_RANGE",
     # adopt-specific (added with the adoption tool; they mean "wrong input",
     # not "bad content"): pointing adopt at an already-amg graph
@@ -335,9 +352,14 @@ def build_parser():
     s.add_argument("--by", default="cli"); s.add_argument("--json", action="store_true")
     s.set_defaults(func=cmd_link)
 
+    s = sub.add_parser("related"); s.add_argument("dir"); s.add_argument("id")
+    s.add_argument("--depth", type=int, default=1); s.add_argument("--kind")
+    s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_related)
+
     s = sub.add_parser("search"); s.add_argument("dir"); s.add_argument("query")
     s.add_argument("--layer", default="L3"); s.add_argument("--k", type=int, default=10)
-    s.add_argument("--strict", action="store_true"); s.add_argument("--json", action="store_true")
+    s.add_argument("--strict", action="store_true"); s.add_argument("--expand", action="store_true")
+    s.add_argument("--json", action="store_true")
     s.set_defaults(func=cmd_search)
 
     s = sub.add_parser("digest"); s.add_argument("dir"); s.add_argument("--max-bytes", type=int, default=65536)

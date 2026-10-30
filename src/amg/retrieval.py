@@ -29,7 +29,8 @@ def _tokens(query: str):
     return [t for t in toks if t]
 
 
-def search(doc: dict, query: str, layer: str = "L3", k: int = 10, strict: bool = False):
+def search(doc: dict, query: str, layer: str = "L3", k: int = 10, strict: bool = False,
+           expand: bool = False):
     if layer not in {"L1", "L2", "L3", "L4"}:
         from .errors import ProtocolError
         raise ProtocolError("E_BAD_LAYER", f"unknown layer: {layer} (use L1/L2/L3/L4)")
@@ -79,7 +80,49 @@ def search(doc: dict, query: str, layer: str = "L3", k: int = 10, strict: bool =
     if strict:
         hits = [h for h in hits if h["anchor_state"] == "present"]
     hits.sort(key=lambda h: (h["anchor_state"] == "present", h["score"], h["id"] or ""), reverse=True)
-    return hits[:k]
+    hits = hits[:k]
+    if expand and layer != "L2":
+        hits = _expand(doc, hits, strict=strict)
+    return hits
+
+
+def _expand(doc: dict, hits, strict: bool):
+    """Attach 1-hop neighbors of each hit, marked with the hit that pulled them in."""
+    from collections import deque
+    from .const import EDGE_KINDS  # noqa: F401  (kept for symmetry with relations)
+    nodes = {n["id"]: n for n in doc.get("nodes") or []}
+    adj = {}
+    for e in doc.get("edges") or []:
+        adj.setdefault(e.get("from"), []).append((e, e.get("to"), "out"))
+        adj.setdefault(e.get("to"), []).append((e, e.get("from"), "in"))
+    have = {h["id"] for h in hits}
+    extra = []
+    seen = set(have)
+    for hit in list(hits):
+        for edge, other, direction in adj.get(hit["id"], []):
+            if other in seen:
+                continue
+            seen.add(other)
+            n = nodes.get(other) or {}
+            if strict and not n.get("evidence"):
+                continue
+            extra.append({
+                "id": other,
+                "label": n.get("label"),
+                "type": n.get("type"),
+                "status": n.get("status"),
+                "score": 0.0,
+                "matched_fields": [],
+                "anchor_state": "present" if n.get("evidence") else "none",
+                "evidence_count": len(n.get("evidence") or []),
+                "evidence_grade": n.get("evidence_grade"),
+                "conclusion": bool(n.get("conclusion") or n.get("type") in {"decision", "artifact"}),
+                "expanded_from": hit["id"],
+                "via_kind": edge.get("kind"),
+                "direction": direction,
+            })
+    extra.sort(key=lambda h: (h["anchor_state"] == "present", h["id"] or ""), reverse=True)
+    return hits + extra
 
 
 def _search_changes(doc: dict, toks, k: int):

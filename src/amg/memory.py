@@ -5,6 +5,7 @@ from . import audit as audit_mod
 from . import digest as digest_mod
 from . import migrate as migrate_mod
 from . import protocol
+from . import relations
 from . import retrieval
 from .const import EDGE_KINDS, NODE_TYPES, SCHEMA, STATUSES, now, parse_ts
 from .errors import ProtocolError
@@ -349,8 +350,14 @@ class Memory:
             return report
 
     # ---------- reads ----------
-    def search(self, query: str, layer: str = "L3", k: int = 10, strict: bool = False):
-        return retrieval.search(self._doc, query, layer=layer, k=k, strict=strict)
+    def search(self, query: str, layer: str = "L3", k: int = 10, strict: bool = False,
+               expand: bool = False):
+        return retrieval.search(self._doc, query, layer=layer, k=k, strict=strict,
+                                expand=expand)
+
+    def related(self, node_id: str, depth: int = 1, kind: str = None) -> dict:
+        """Walk edges around one node. This is the only traversal entry point."""
+        return relations.related(self._doc, node_id, depth=depth, kind=kind)
 
     def check(self, strict: bool = False):
         return protocol.check(self._doc, strict=strict)

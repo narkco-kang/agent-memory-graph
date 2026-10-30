@@ -238,6 +238,13 @@ Read-side audit ("who read what") is likewise not implemented in v0.1, and is
 not claimed as novel: independent verification found no prior implementation in
 the five projects checked, but "no precedent" is not a shipped capability.
 
+## Edges
+
+`amg related <id> [--depth N] [--kind K]` walks edges in both directions;
+`amg search ... --expand` attaches 1-hop neighbors of each hit (marked
+`expanded_from`). `depends_on` / `supersedes` must stay acyclic (`check` errors on
+a cycle); other kinds may cycle and are only counted.
+
 ## Roadmap, contributing, security
 
 The backlog is public as GitHub issues (batch ingest, vector retrieval, MCP

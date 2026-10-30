@@ -4,63 +4,63 @@
       "nodes": 1000,
       "edges": 0,
       "file_bytes": 859615,
-      "check_ms": 5.3,
-      "audit_ms": 5.3,
-      "search_ms": 5.8,
-      "digest_ms": 5.0
+      "check_ms": 6.1,
+      "audit_ms": 5.2,
+      "search_ms": 5.5,
+      "digest_ms": 5.5
     },
     {
       "nodes": 1000,
       "edges": 1000,
       "file_bytes": 929613,
-      "check_ms": 6.1,
+      "check_ms": 10.0,
       "audit_ms": 5.8,
-      "search_ms": 6.1,
-      "digest_ms": 5.9
+      "search_ms": 6.2,
+      "digest_ms": 5.4
     },
     {
       "nodes": 5000,
       "edges": 5000,
       "file_bytes": 4669615,
-      "check_ms": 32.0,
-      "audit_ms": 30.2,
-      "search_ms": 31.4,
+      "check_ms": 59.6,
+      "audit_ms": 30.4,
+      "search_ms": 31.6,
       "digest_ms": 29.3
     },
     {
       "nodes": 10000,
       "edges": 0,
       "file_bytes": 8654617,
-      "check_ms": 59.1,
-      "audit_ms": 57.1,
-      "search_ms": 75.6,
-      "digest_ms": 57.2
+      "check_ms": 73.4,
+      "audit_ms": 58.0,
+      "search_ms": 74.9,
+      "digest_ms": 56.8
     },
     {
       "nodes": 10000,
       "edges": 10000,
       "file_bytes": 9354615,
-      "check_ms": 66.6,
-      "audit_ms": 64.3,
-      "search_ms": 79.3,
-      "digest_ms": 60.5
+      "check_ms": 160.5,
+      "audit_ms": 60.3,
+      "search_ms": 76.3,
+      "digest_ms": 63.0
     }
   ],
   "write": [
     {
       "nodes": 100,
-      "first_add_ms": 1.7,
-      "mean_add_ms": 1.4
+      "first_add_ms": 1.5,
+      "mean_add_ms": 1.3
     },
     {
       "nodes": 1000,
-      "first_add_ms": 8.6,
+      "first_add_ms": 8.5,
       "mean_add_ms": 8.5
     },
     {
       "nodes": 5000,
-      "first_add_ms": 43.3,
-      "mean_add_ms": 38.8
+      "first_add_ms": 38.9,
+      "mean_add_ms": 40.1
     }
   ],
   "batch": [
@@ -80,5 +80,13 @@
       "per_node_ms": 0.01
     }
   ],
+  "traversal": {
+    "graph": "10000 nodes / 10000 edges",
+    "related_depth1_ms": 8.1,
+    "related_depth2_ms": 7.8,
+    "search_expand_ms": 92.8,
+    "search_plain_ms": 82.2,
+    "expand_overhead_ms": 10.6
+  },
   "note": "single host, local disk, median of 3; synthetic schema-valid nodes"
 }

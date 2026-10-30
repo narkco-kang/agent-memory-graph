@@ -9,6 +9,10 @@ CLI surface changes, so the next release is 0.2.0.
 
 ### Added
 
+- Edge traversal: `amg related <id> [--depth N] [--kind K]` and `search --expand`
+  (1-hop neighbors marked `expanded_from`). `depends_on` / `supersedes` cycles
+  are a `check` error; other edge kinds may cycle and are counted as a hint.
+
 - `amg import` / `Memory.add_many`: batch writes that validate the whole batch
   before touching the file (one load, N appends, one atomic replace), removing
   the quadratic cost of importing node by node.

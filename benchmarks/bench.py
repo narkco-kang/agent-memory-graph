@@ -110,7 +110,22 @@ def main():
                            "per_node_ms": round(secs * 1000 / n, 3)})
         print(batch_rows[-1])
 
-    out = {"read": rows, "write": write_rows, "batch": batch_rows,
+    # traversal cost (v0.2): same graph, edges actually walked
+    tpath = build(os.path.join(tempfile.mkdtemp(prefix="amg-bench-t-"), "mem"), 10000, 1)
+    tm = Memory.open(tpath)
+    t_rel1 = timed(lambda: tm.related("task.n000000", depth=1), repeat=3)
+    t_rel2 = timed(lambda: tm.related("task.n000000", depth=2), repeat=3)
+    t_exp = timed(lambda: Memory.open(tpath).search("parser queue", k=10, expand=True), repeat=3)
+    t_noexp = timed(lambda: Memory.open(tpath).search("parser queue", k=10), repeat=3)
+    traversal = {"graph": "10000 nodes / 10000 edges",
+                 "related_depth1_ms": round(t_rel1, 1),
+                 "related_depth2_ms": round(t_rel2, 1),
+                 "search_expand_ms": round(t_exp, 1),
+                 "search_plain_ms": round(t_noexp, 1),
+                 "expand_overhead_ms": round(t_exp - t_noexp, 1)}
+    print(traversal)
+
+    out = {"read": rows, "write": write_rows, "batch": batch_rows, "traversal": traversal,
            "note": "single host, local disk, median of 3; synthetic schema-valid nodes"}
     with open(os.path.join(os.path.dirname(os.path.abspath(__file__)), "result.json"), "w") as fh:
         json.dump(out, fh, ensure_ascii=False, indent=2)
