@@ -52,6 +52,7 @@ def steps(include_examples):
             ("example: quickstart", ["bash", os.path.join("examples", "quickstart.sh")]),
             ("example: lifecycle", ["bash", os.path.join("examples", "lifecycle.sh")]),
             ("example: MCP client", python(os.path.join("examples", "mcp_client.py"))),
+            ("example: handoff", ["bash", os.path.join("examples", "handoff.sh")]),
         ]
     items.append(("artifacts in dist/", python(os.path.join("tools", "check_dist.py"), "dist")))
     return items

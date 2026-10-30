@@ -4,7 +4,8 @@ import os
 
 SCHEMA = "amg/v1"
 
-NODE_TYPES = {"group", "member", "task", "decision", "artifact", "issue", "model", "env", "question", "rule"}
+NODE_TYPES = {"group", "member", "task", "decision", "artifact", "issue", "model", "env",
+              "question", "rule", "handoff"}
 
 STATUSES = {"proposed", "open", "in_progress", "done", "blocked", "superseded"}
 

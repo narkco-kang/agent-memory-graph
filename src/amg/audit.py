@@ -35,7 +35,7 @@ def stale_days_from_env(default: int = DEFAULT_STALE_DAYS) -> int:
 # children change — so the staleness rule, which assumes short-lived work, reported
 # noise (docs/REAL-WORLD.md). Exemptions are explicit on purpose: an unknown type is
 # still checked, so abandoning a new kind of work cannot become invisible by omission.
-LONG_LIVED_TYPES = frozenset({"group", "env", "member"})
+LONG_LIVED_TYPES = frozenset({"group", "env", "member", "handoff"})
 
 
 def _parse(value):
@@ -150,6 +150,20 @@ def audit(doc: dict, pin: dict = None, now: datetime.datetime = None,
             add("hint", "conclusion_without_grade",
                 f"{nid}: conclusion without evidence grade", node=nid, type=n.get("type"))
 
+    from . import handoff as handoff_mod
+    active_cards = handoff_mod.all_active(doc)
+    if len(active_cards) > 1:
+        add("conflict", "multiple_active_handoffs",
+            f"{len(active_cards)} active handoff cards; exactly one may be active "
+            f"(writing a new card supersedes the previous)",
+            count=len(active_cards))
+    for card in active_cards:
+        size = handoff_mod.bytes_of(card.get("note"))
+        if size > handoff_mod.MAX_BYTES:
+            add("conflict", "handoff_over_budget",
+                f"{card.get('id')}: handoff is {size} B (limit {handoff_mod.MAX_BYTES} B)",
+                node=card.get("id"), bytes=size, limit_bytes=handoff_mod.MAX_BYTES)
+
     for e in edges:
         if e.get("from") not in ids or e.get("to") not in ids:
             add("conflict", "dangling_edge",
@@ -165,11 +179,16 @@ def audit(doc: dict, pin: dict = None, now: datetime.datetime = None,
             missing_target += 1
         if "rev" not in c:
             missing_rev += 1
-    unknown_validity = sum(1 for n in nodes if n.get("valid_time_known") is False)
+    # Registrations (group/env/member/handoff) are not facts with a validity window,
+    # so they are not TTL candidates and must not inflate this count.
+    unknown_validity = sum(
+        1 for n in nodes
+        if n.get("valid_time_known") is False and n.get("type") not in LONG_LIVED_TYPES)
     if unknown_validity:
         add("hint", "unknown_validity",
             f"valid_time_known=false on {unknown_validity} node(s): "
-            f"TTL auto-expiry refuses them (migrated validity time is unknown)",
+            f"TTL auto-expiry refuses them (no fact time recorded, so deleting on age "
+            f"would be a guess)",
             count=unknown_validity)
 
     if missing_target or missing_rev:

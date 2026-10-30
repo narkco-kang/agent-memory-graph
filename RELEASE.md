@@ -19,6 +19,35 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.10.0 — 2026-10-31
+
+Status: **released**. New capability: handoff cards, adapted from a field-tested
+external workbench and credited there.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 214 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` (now 12) |
+| 3 | Examples run | ✅ quickstart, lifecycle, MCP client, **handoff** |
+| 4 | Every "not implemented" claim re-run against code | ✅ unchanged set |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.10.0" |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.10.0 everywhere |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; sdist's own 214 tests pass inside the archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.10.0` |
+| 9 | `python3 tools/verify.py` green | ✅ including the artifact step and the new example |
+| 10 | Borrowed pattern credited | ✅ PRIOR-ART records the source (MIT), the quoted rules, and what is ours |
+
+### Why adapt instead of invent
+
+The problem — a long-lived team whose sessions are all temporary — has been solved in
+public with rules that survived contact with real use (overwrite, 4 KB, pointers not
+transcripts). Copying three rules and crediting them is cheaper and more honest than
+rediscovering them badly. What this project contributes is the node-typed form:
+supersede-on-write puts the previous card in the same audit history as every other
+fact, and `audit` enforces the budget on graphs edited outside the API.
+
+---
+
 ## v0.9.0 — 2026-10-31
 
 Status: **released**. Additive change: structured findings in `audit()`, with the

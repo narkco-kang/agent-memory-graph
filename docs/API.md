@@ -30,6 +30,8 @@ amg adopt  <src> <dst> [--group NAME] [--drop-dangling] [--pin-out PATH] [--dry-
 amg expire <dir> [--apply] [--json]                # opt-in TTL expiry (dry-run default)
 amg fingerprint <dir> [--json] [--out PATH]        # canonical state + history digests
 amg verify <dir> --expect PATH | --expect-state HEX [--expect-history HEX]
+amg handoff <dir> [--by NAME] [--owner NAME] [--note TEXT|-] [--json]
+                                     # one bounded handover card; newest supersedes previous
 amg version
 ```
 
@@ -66,7 +68,7 @@ fail loudly instead of guessing, and `tests/test_exit_codes.py` scans
 
 | exit | codes | meaning |
 |---|---|---|
-| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` · `E_NO_EXPECTATION` · `E_BAD_FINGERPRINT` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
+| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` · `E_NO_EXPECTATION` · `E_BAD_FINGERPRINT` · `E_BAD_HANDOFF` · `E_HANDOFF_TOO_LARGE` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
 | `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` · `E_INSECURE_GRAPH` | the evidence gate rejected the content, or the graph would break an invariant |
 | `0` | — | success / clean `check` / clean `audit` |
 | `3` | — | lock timeout or IO failure (not a `ProtocolError`) |
@@ -207,6 +209,26 @@ expiry = m.expire(apply=False)   # dry-run; apply=True to supersede expired fact
 
 `Memory` is the only entry point; every write takes the lock, writes the whole
 graph, and replaces the file atomically.
+
+### Handoff cards (`handoff` nodes, v0.10.0)
+
+A `handoff` node answers four questions for whoever reads next — *who am I, where did
+we get to, what is next, what is blocked* — in one card of **at most 4,096 bytes**.
+Exactly one card is active: writing a new one supersedes the previous, so the history
+stays in the ledger and the reader still gets a single answer.
+
+```bash
+amg handoff ./mem --by kimi --owner mini --note -     # read the card from stdin
+amg handoff ./mem                                    # print the active card
+amg handoff ./mem --json                             # id, by, owner, at, bytes, max_bytes
+```
+
+`Memory.write_handoff(note, by=..., owner=...)` is the same operation from Python;
+`Memory.handoff()` returns the active card or `None`. An empty card and a card over
+the limit are refused (`E_BAD_HANDOFF`, `E_HANDOFF_TOO_LARGE`, exit 2) and write
+nothing. `audit` reports `handoff_over_budget` and `multiple_active_handoffs` as
+conflicts, because a hand-edited graph can hold states the CLI would refuse.
+Background and the rules this follows: [`HANDOFF.md`](HANDOFF.md).
 
 ### `audit()` findings (v0.9.0)
 

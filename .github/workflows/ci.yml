@@ -27,6 +27,7 @@ jobs:
           bash examples/quickstart.sh
           bash examples/lifecycle.sh
           python examples/mcp_client.py
+          bash examples/handoff.sh
 
   package:
     # The artifact is a claim too. v0.7.0's first sdist shipped tests that could

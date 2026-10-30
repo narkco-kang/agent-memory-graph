@@ -97,3 +97,45 @@ legitimate work; fact time must come from the caller), not a capability win.
   the index.
 - The other three cited systems (Letta MemFS, Graphiti, Mem0/A-MEM) were verified
   earlier from their repositories and docs; this file does not re-verify them.
+
+## luanyujia-workbench — a workbench whose memory is files, verified 2026-10-31
+
+[mashanglinyu/luanyujia-workbench](https://github.com/mashanglinyu/luanyujia-workbench)
+(MIT, JavaScript, 359 stars at check time) is a multi-scene AI workbench published as
+method plus a runnable shell. Its `00-核心机制/二-记忆机制.md` is the closest public
+description we have found of the discipline this project also enforces, and its
+`12-源码照搬/工具/场景记忆.mjs` is the working tool behind it.
+
+What was checked, and how: the repository metadata via the GitHub API; the memory
+document in full; and the memory tool source (620 lines) for the handover command, the
+4 KB check and the archive-then-index sequence. **The Bilibili video linked alongside
+it could not be verified** — the page returned a CAPTCHA to an automated fetch — so
+nothing here is claimed on the video's authority.
+
+What its document states, quoted:
+
+- "记忆在文件，不在会话" — memory lives in files, not in the session; a session's value
+  is the files it produced.
+- three layers: injected (auto-loaded every turn, must be tiny), private (per-scene
+  handover ≤ 4 KB, read at session start), shared (boards: what happened, what to do,
+  where things are, is the machine healthy).
+- write-back criteria: "三个月后我还会需要这一行吗？" — only what is still needed in
+  three months; ≤ 10 lines / ≤ 2 KB per write-back.
+- shrinking protocol: snapshot first, then move history to an archive, then **prove
+  nothing was lost** by diffing the non-history lines; a run with no snapshot meant the
+  proof could not be produced.
+- red lines: per-scene memory ≤ 25 KB, handover ≤ 4 KB, single skill ≤ 12 KB.
+
+What this project adopted: the handover card (`docs/HANDOFF.md`) — overwrite, one size
+limit, pointers not transcripts — and the principle that a handover has exactly one
+meaningful version.
+
+What this project did **not** copy, on purpose: the Markdown-file layout (our graph is
+the store), the tool-generated identity cards with fingerprints (we have no per-scene
+identity to bind), and the boards (our tasks and decisions are nodes, already
+queryable). The shifting question "who is this session" is out of scope here: this
+library is a memory layer, not a host.
+
+What is ours: the node-typed card with **supersede-on-write**, so the previous handover
+is in the same audit history as every other fact, and `audit` checks that the budget
+and the "exactly one active card" rule hold even in graphs edited outside the API.

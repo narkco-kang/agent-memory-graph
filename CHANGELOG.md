@@ -3,6 +3,46 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.10.0] — 2026-10-31
+
+New capability: **handoff cards** — a bounded, superseding record of where the work
+stands, so a new session reads one thing instead of searching.
+
+### Added
+
+- **`handoff` node type and `amg handoff <dir>`** (`--by`, `--owner`, `--note -`,
+  `--json`). Exactly one card is active: writing a new one supersedes the previous
+  through the normal supersede path, so the history stays in the ledger. The card is
+  capped at **4,096 bytes**; an empty or oversized card is refused
+  (`E_BAD_HANDOFF`, `E_HANDOFF_TOO_LARGE`, exit 2) and writes nothing.
+  `Memory.write_handoff()` / `Memory.handoff()` are the same operations in Python.
+- **`audit` enforces the invariants a hand-edited graph can break**:
+  `handoff_over_budget` and `multiple_active_handoffs` are conflicts, so the limit is
+  not merely advisory. Handoff nodes are registrations, not work items, so they are
+  exempt from staleness (same class as DECISIONS #20).
+- **`docs/HANDOFF.md`** — the four questions a handover answers, the three rules it
+  follows, and what this project adds over the pattern's source; `examples/handoff.sh`
+  runs the whole cycle in CI.
+- Pattern credit: the handover discipline (`§〇 交接`: overwrite, ≤4 KB, pointers not
+  transcripts) is taken from
+  [mashanglinyu/luanyujia-workbench](https://github.com/mashanglinyu/luanyujia-workbench)
+  (MIT) and recorded in `docs/PRIOR-ART.md`; this is an adaptation, not an invention.
+  The node-typed form, supersede-on-write and the double enforcement are ours.
+
+### Fixed
+
+- **A misleading audit hint**: `valid_time_known=false` counted registrations
+  (group/env/member) and said "migrated validity time is unknown" even on a fresh
+  graph written today. Registrations are not TTL candidates and are no longer counted;
+  the wording now states the actual reason (no fact time recorded).
+
+### Not shipped in 0.10.0 (do not assume)
+
+Unchanged: no authentication / authorization / multi-tenancy (out of scope by
+decision), no vector retrieval in the default path (measured, rejected), no tamper
+*proof*, no TTL scheduler, no encryption at rest, no lock fairness, and history
+compression remains a design (`docs/DESIGN-HISTORY.md`), not a capability.
+
 ## [0.9.0] — 2026-10-31
 
 Additive: `audit` now returns structured findings alongside its strings, so a reader

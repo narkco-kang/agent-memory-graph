@@ -311,6 +311,29 @@ class Memory:
             self._commit(doc, commit)
             return {"old": old_id, "new": new_id, "valid_until": stamp}
 
+    def write_handoff(self, note: str, by: str = "amg", owner: str = None) -> dict:
+        """Write the handoff card for this graph, superseding the previous one."""
+        from . import handoff as handoff_mod
+        return handoff_mod.write(self, note, by=by, owner=owner)
+
+    def handoff(self):
+        """The active handoff card as a dict, or None when none was written."""
+        from . import handoff as handoff_mod
+        node = handoff_mod.active(self._doc)
+        if node is None:
+            return None
+        # The writer lives in the ledger, not on the node: read it back rather than
+        # inventing a field that the schema does not have.
+        by = None
+        for change in reversed(self._doc.get("changes") or []):
+            if change.get("op") == "add-node" and change.get("target") == node.get("id"):
+                by = change.get("by")
+                break
+        return {"id": node.get("id"), "by": by, "owner": node.get("owner"),
+                "at": node.get("updatedAt"), "note": node.get("note") or "",
+                "bytes": handoff_mod.bytes_of(node.get("note")),
+                "max_bytes": handoff_mod.MAX_BYTES}
+
     def expire(self, apply: bool = False, by: str = "amg expire") -> dict:
         """Supersede nodes whose *known* validity window has ended.
 

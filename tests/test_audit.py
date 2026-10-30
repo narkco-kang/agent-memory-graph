@@ -159,6 +159,16 @@ class AuditTests(unittest.TestCase):
                        if f["kind"] == "conclusion_without_grade")
         self.assertEqual(finding["severity"], "hint")
 
+    def test_unknown_validity_hint_skips_registrations(self):
+        """A handoff card or a group node has no validity window by design; counting
+        them made every fresh graph print a misleading "migrated" hint."""
+        self.m.write_handoff("## where we are\n- next: ship", by="kimi")
+        self.m.add_node("member.kimi", "member", "kimi", source="s")
+        self.m.add_node("task.fresh", "task", "fresh", source="s")
+        hint = next(f for f in self.m.audit()["findings"] if f["kind"] == "unknown_validity")
+        self.assertEqual(hint["count"], 1)  # only the task
+        self.assertNotIn("migrated", hint["detail"])
+
     def test_changes_key_shapes_reported(self):
         self.m.add_node("task.a", "task", "A", source="s")
         doc = self.m.doc

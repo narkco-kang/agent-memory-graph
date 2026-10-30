@@ -39,6 +39,8 @@ important — **which ones are contracts and which are proposals**.
 4. **`../examples/mcp_client.py`** — a working MCP client: handshake, tool
    inventory, a gated write refused, read-only enforced. Run it to see the
    protocol rather than read about it.
+5. **[`HANDOFF.md`](HANDOFF.md)** — what a new session should read first: the
+   bounded handover card, and the three rules it follows.
 
 ## If you are changing the storage layer
 
@@ -81,6 +83,7 @@ Read in this order; each one narrows the next:
 | [`DESIGN-HISTORY.md`](DESIGN-HISTORY.md) | How to make writes cheap without losing atomicity | **proposal, not built** |
 | [`THREAT-MODEL.md`](THREAT-MODEL.md) | Who the security boundary is; what read-only cannot do | contract / decision |
 | [`SCHEDULING.md`](SCHEDULING.md) | How to expire on a timer without a daemon | operational |
+| [`HANDOFF.md`](HANDOFF.md) | The bounded handover card: four questions, one 4 KB answer | operational |
 | [`PRIOR-ART.md`](PRIOR-ART.md) | What others did first, verified in full text | verified reference |
 | [`DECISIONS.md`](DECISIONS.md) | Decisions, their evidence, their cost — including reversals | decision record |
 

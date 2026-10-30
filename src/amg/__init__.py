@@ -11,5 +11,5 @@ What this library is today (measured, not aspirational):
 from .errors import LockTimeout, ProtocolError
 from .memory import Memory
 
-__version__ = "0.9.0"
+__version__ = "0.10.0"
 __all__ = ["Memory", "ProtocolError", "LockTimeout", "__version__"]

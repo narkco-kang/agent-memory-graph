@@ -300,6 +300,24 @@ the advertised tool inventory with the documented eight, proves an evidence-free
 `done` write is refused over JSON-RPC (`E_EVIDENCE_MISSING`), and shows
 `--read-only` refusing the same write with `E_READ_ONLY`. CI runs it on every push.
 
+## Handoff cards: what a new session reads first
+
+A ranked search answers "what mentions X". It does not answer "where are we, what is
+next, what is blocked". `amg handoff` stores that answer as a bounded card — at most
+**4,096 bytes**, one active at a time, the previous one superseded rather than deleted:
+
+```bash
+printf '## Where we are\n- did: ...\n- next: ...\n- blocked: nothing\n' \
+  | amg handoff ./mem --by kimi --owner mini --note -
+amg handoff ./mem        # print it
+```
+
+Empty and oversized cards are refused at write time, and `audit` reports
+`handoff_over_budget` / `multiple_active_handoffs` for a graph edited by hand. The
+discipline is adapted from a field-tested public workbench and credited in
+[docs/PRIOR-ART.md](docs/PRIOR-ART.md); the rules and when to write one are in
+[docs/HANDOFF.md](docs/HANDOFF.md).
+
 ## Read-side audit (opt-in)
 
 Writes are always logged in `changes[]`; reads are not, unless you ask for it.

@@ -11,7 +11,7 @@ from .memory import Memory
 from . import security as security_mod
 
 COMMANDS = ["init", "add", "import", "status", "supersede", "link", "related", "search", "digest", "check", "audit", "mcp",
-            "export", "doctor", "migrate", "adopt", "expire", "fingerprint", "verify", "version"]
+            "export", "doctor", "migrate", "adopt", "expire", "fingerprint", "verify", "handoff", "version"]
 
 
 def _evidence_args(values):
@@ -204,6 +204,34 @@ def cmd_mcp(a):
     return mcp_mod.serve(m, read_only=a.read_only)
 
 
+def cmd_handoff(a):
+    """Write the handoff card, or read the active one. Bounded on purpose."""
+    m = Memory.open(a.dir)
+    if a.note is None:
+        card = m.handoff()
+        if card is None:
+            print("no handoff card yet — write one with: amg handoff <dir> --by NAME --note -",
+                  file=sys.stderr)
+            return EXIT_USAGE
+        if a.json:
+            print(json.dumps(card, ensure_ascii=False, indent=2))
+        else:
+            print(card["note"].rstrip())
+            print(f"\n· {card['bytes']}/{card['max_bytes']} B · by {card['by']} · {card['at']}")
+        return EXIT_OK
+    note = a.note
+    if note == "-":
+        note = sys.stdin.read()
+    card = m.write_handoff(note, by=a.by, owner=a.owner)
+    if a.json:
+        print(json.dumps(card, ensure_ascii=False, indent=2))
+    else:
+        print(f"handoff written: {card['id']} ({card['bytes']}/{card['max_bytes']} B)")
+        if card.get("superseded"):
+            print(f"superseded: {card['superseded']}")
+    return EXIT_OK
+
+
 def cmd_fingerprint(a):
     """Print the canonical digests of state and history. Writes nothing to the graph."""
     m = Memory.open(a.dir)
@@ -322,6 +350,9 @@ USAGE_EXIT_CODES = frozenset({
     "E_READ_ONLY",
     # fingerprint: no expectation given / unusable expectation file
     "E_NO_EXPECTATION", "E_BAD_FINGERPRINT",
+    # handoff: empty card or over the 4 KB budget — the caller's input is wrong,
+    # and the fix is to shorten it, not to change the graph
+    "E_BAD_HANDOFF", "E_HANDOFF_TOO_LARGE",
 })
 ERROR_EXIT_CODES = frozenset({
     "E_NO_SOURCE", "E_NOTE_REQUIRED", "E_EVIDENCE_MISSING", "E_EVIDENCE_FORMAT",
@@ -479,6 +510,14 @@ def build_parser():
                    help="refuse write tools; the graph cannot be modified through this session")
     s.set_defaults(func=cmd_mcp)
 
+    s = sub.add_parser("handoff")
+    s.add_argument("dir")
+    s.add_argument("--by", default="amg", help="who is handing over")
+    s.add_argument("--owner", default=None, help="who picks it up next")
+    s.add_argument("--note", default=None,
+                   help="card text; use '-' to read stdin (≤ 4 KB); omit to print the active card")
+    s.add_argument("--json", action="store_true")
+    s.set_defaults(func=cmd_handoff)
     s = sub.add_parser("fingerprint"); s.add_argument("dir")
     s.add_argument("--json", action="store_true"); s.add_argument("--out")
     s.set_defaults(func=cmd_fingerprint)

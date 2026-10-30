@@ -219,3 +219,16 @@ Each entry states the decision, the evidence behind it, and what it costs.
     the same order, because they are the existing contract; `findings` is additive.
     A test asserts the two views match exactly.
     *Signed 2026-10-31.*
+
+23. **Handover discipline is borrowed, credited, and adapted — not reinvented.**
+    A public workbench (luanyujia-workbench, MIT) documents the same problem — a
+    long-lived team whose sessions are all temporary — with three rules that survived
+    real use: overwrite the handover rather than appending, keep it under a fixed size
+    (4 KB), and write pointers rather than transcripts. We adopt the rules and say
+    where they came from (`docs/PRIOR-ART.md`), because re-deriving them badly would
+    be a worse use of the measurement budget. The adaptation is a `handoff` node:
+    exactly one active, supersede-on-write so the previous card lands in the same
+    audited ledger, the budget refused by the writer and re-checked by `audit`, and
+    `multiple_active_handoffs` as a conflict rather than a convention. Registrations,
+    including handoff nodes, are exempt from staleness (#20).
+    *Signed 2026-10-31; `tests/test_handoff.py`.*
