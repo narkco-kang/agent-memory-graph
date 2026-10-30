@@ -143,6 +143,18 @@ either differs from the recorded value.
 This is why the project does not ship an in-file hash chain over `changes[]`: it
 looks stronger than it is (the attacker regenerates the chain in one pass) while
 costing a schema migration, and it invites people to trust it.
+
+### 7b. Checking that the boundary still holds
+
+Because permissions *are* the boundary, `amg doctor` checks the conditions under
+which the boundary stops existing: `SEC_WORLD_WRITABLE`,
+`SEC_GROUP_WRITABLE` (info), `SEC_NETWORK_PATH` (SMB/NFS/UNC — the advisory lock
+is not reliable there), `SEC_GRAPH_SYMLINK`. `amg doctor --strict` exits 1 on a
+warning (`E_INSECURE_GRAPH`); `amg mcp` prints the warnings to stderr at startup
+and keeps serving.
+
+It is a check, not a sandbox: it cannot make a shared filesystem safe, only
+refuse to be quiet about it.
 - **Read tools are unlimited.** `memory_digest` accepts `max_bytes`; the others
   have no output bound beyond `k`. A client can read everything available.
 - **`reads.jsonl` is a plain-text log** of query text for high-risk reads. Do not
@@ -150,16 +162,50 @@ costing a schema migration, and it invites people to trust it.
 - **Timing/resource limits.** A very large graph makes `audit`/`digest` slow; the
   tool has no per-request timeout.
 
-## 8. Out of scope for v0.3.0 (tracked as issue #4b)
+## 8. Authorization: decided out of scope, and what to do instead
 
-- Client identity, tokens, per-caller authorization, multi-tenant separation.
-- Any network transport (that decision belongs to whoever builds one; this
-  project will not ship one, see §2).
-- Tamper-evident history (signatures / HMAC with key management).
-- Encrypted-at-rest storage.
+Earlier versions of this file listed "authentication and multi-tenancy" as
+pending work. That was a deferred decision, not a plan. It is now decided:
+**this project will not implement authentication or per-caller authorization.**
 
-These are listed so that "the docs did not mention it" cannot be read as "it is
-handled".
+The reasoning is not "it is hard". It is that, in this architecture, app-level
+authentication is bypassable in one step:
+
+1. The memory is one file the caller can open. A process that can run `amg` can
+   also `open("graph.json", "w")`. A token check inside `amg` therefore proves
+   only that the caller *has the file* — which they already needed.
+2. Single-user file stores typically end up with the token in a config file
+   readable by that same user, so the check becomes decoration that costs code,
+   tests and maintenance while changing no capability.
+3. Anything that *would* hold — separate users, containers, read-only mounts,
+   filesystem ACLs — is enforced below us by the OS. Re-implementing it above the
+   file would be a weaker copy.
+
+So the boundary is explicit and the work moves to where it actually holds:
+
+| Need | What to do |
+|---|---|
+| Two people, one graph, different rights | two OS users + a group; make the file group-readable and directory group-writable only if you accept shared write |
+| An agent that must never write | `amg mcp --read-only` (blast radius for this session) **and** start that process as a user with no write permission on the file |
+| Several projects, no leakage between them | one graph directory per project; separate mounts if the projects have different trust levels |
+| Read-only dashboards / audits | serve a copy, or mount the directory read-only for that user |
+| Untrusted plugins or code | container or VM; not a flag |
+
+What *is* implemented in this area: `--read-only` (one session), `amg doctor
+--strict` (refuses to stay quiet when the permission boundary does not hold: see
+§7b), and `amg fingerprint` / `verify` (tamper *detection*, §7a).
+
+### What would change this decision
+
+Three things, each of which invalidates the reasoning above rather than merely
+making auth more attractive:
+
+- a network transport (then identity is unavoidable — and should be built by
+  whoever ships the transport, not bolted on here);
+- multi-writer concurrency beyond the advisory lock (then "who wrote this" stops
+  being answerable from the process);
+- a hosted or multi-tenant deployment (then tenant separation must be structural,
+  i.e. separate stores, not a column in a shared file).
 
 ## 9. How to verify the claims above
 

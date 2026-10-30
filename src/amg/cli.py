@@ -8,6 +8,7 @@ from . import __version__
 from .const import EXIT_ERROR, EXIT_IO, EXIT_OK, EXIT_USAGE
 from .errors import LockTimeout, ProtocolError
 from .memory import Memory
+from . import security as security_mod
 
 COMMANDS = ["init", "add", "import", "status", "supersede", "link", "related", "search", "digest", "check", "audit", "mcp",
             "export", "doctor", "migrate", "adopt", "expire", "fingerprint", "verify", "version"]
@@ -194,6 +195,8 @@ def cmd_mcp(a):
     """
     from . import mcp as mcp_mod
     m = Memory.open(a.dir, read_only=a.read_only)
+    for item in m.security_findings():
+        sys.stderr.write(f"amg mcp: warning [{item['code']}] {item['detail']}\n")
     mode = "read-only" if a.read_only else "read-write"
     sys.stderr.write(f"amg mcp: serving {os.path.abspath(a.dir)} over stdio "
                      f"(no network, no auth, {mode})\n")
@@ -269,11 +272,25 @@ def cmd_doctor(a):
         os.unlink(os.path.join(d, f))
     m = Memory.open(a.dir)
     rep = m.check()
+    hygiene = m.security_findings()
     info = {"dir": d, "cleaned_tmp": len(leftovers), "check_ok": rep["ok"],
-            "counts": rep["counts"], "size_bytes": os.path.getsize(os.path.join(d, "graph.json"))}
-    _print(json.dumps(info, ensure_ascii=False, indent=2) if a.json else
-           f"dir {d}\ncleaned {len(leftovers)} tmp file(s)\ncheck_ok={rep['ok']} "
-           f"nodes={rep['counts']['nodes']} size={info['size_bytes']} B", a.json)
+            "counts": rep["counts"], "size_bytes": os.path.getsize(os.path.join(d, "graph.json")),
+            "security": hygiene, "security_worst": security_mod.worst(hygiene)}
+    if a.json:
+        print(json.dumps(info, ensure_ascii=False, indent=2))
+    else:
+        print(f"dir {d}\ncleaned {len(leftovers)} tmp file(s)\ncheck_ok={rep['ok']} "
+              f"nodes={rep['counts']['nodes']} size={info['size_bytes']} B")
+        if hygiene:
+            for item in hygiene:
+                print(f"  [{item['severity']}] {item['code']}: {item['detail']}")
+        else:
+            print("  permissions: graph and directory are not world/group writable, "
+                  "path is local")
+    if a.strict and info["security_worst"] in {"error", "warn"}:
+        raise ProtocolError("E_INSECURE_GRAPH",
+                            f"{info['security_worst']} severity hygiene findings: "
+                            + ", ".join(sorted({h["code"] for h in hygiene})))
     return EXIT_OK if rep["ok"] else EXIT_ERROR
 
 
@@ -313,6 +330,8 @@ ERROR_EXIT_CODES = frozenset({
     "E_ADOPT_UNSUPPORTED", "E_ADOPT_DANGLING",
     # the file no longer matches the fingerprint recorded outside it
     "E_FINGERPRINT_MISMATCH",
+    # the graph sits outside the only boundary this project has (see THREAT-MODEL)
+    "E_INSECURE_GRAPH",
 })
 EXIT_CODES_BY_ERROR = {code: 2 for code in USAGE_EXIT_CODES}
 EXIT_CODES_BY_ERROR.update({code: 1 for code in ERROR_EXIT_CODES})
@@ -472,6 +491,8 @@ def build_parser():
     s.set_defaults(func=cmd_export)
 
     s = sub.add_parser("doctor"); s.add_argument("dir"); s.add_argument("--json", action="store_true")
+    s.add_argument("--strict", action="store_true",
+                   help="exit 1 when the graph is world/group writable or on a network path")
     s.set_defaults(func=cmd_doctor)
 
     s = sub.add_parser("migrate"); s.add_argument("dir"); s.add_argument("--json", action="store_true")

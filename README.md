@@ -273,6 +273,13 @@ through the same library entry points, so the evidence gate applies unchanged.
 **There is no authentication**: whoever can start the process can read and write
 the graph. Do not put a network transport in front of it without authorization.
 
+**Authorization is out of scope by decision, not by omission**: a token check in
+front of a file the caller can already open proves nothing, so isolation is left
+to the OS (separate users, containers, read-only mounts) and the project checks
+that the boundary still holds instead — `amg doctor --strict` fails on a
+world-writable graph or a network mount. Reasoning and alternatives:
+[docs/THREAT-MODEL.md](docs/THREAT-MODEL.md) §8.
+
 `amg mcp <dir> --read-only` refuses the write tools and advertises only the five
 read tools. It is enforced twice — the server refuses before dispatch, and the
 `Memory` instance refuses every commit — so an agent that was told by page

@@ -7,6 +7,7 @@ from . import migrate as migrate_mod
 from . import protocol
 from . import fingerprint as fingerprint_mod
 from . import readaudit
+from . import security as security_mod
 from . import relations
 from . import retrieval
 from .const import EDGE_KINDS, NODE_TYPES, SCHEMA, STATUSES, now, parse_ts
@@ -393,6 +394,15 @@ class Memory:
 
     def digest(self, max_bytes: int = 65536) -> str:
         return digest_mod.build(self._doc, max_bytes=max_bytes)
+
+    def security_findings(self) -> list:
+        """Filesystem hygiene problems around this graph (see docs/THREAT-MODEL.md).
+
+        This project has no authentication: its only boundary is file permissions.
+        A world-writable graph on a network mount is outside that boundary, and
+        these checks say so instead of assuming it away.
+        """
+        return security_mod.findings(self.store.dir)
 
     def fingerprint(self) -> dict:
         """Canonical digests of current state and of the change log.

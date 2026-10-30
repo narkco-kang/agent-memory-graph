@@ -53,7 +53,7 @@ fail loudly instead of guessing, and `tests/test_exit_codes.py` scans
 | exit | codes | meaning |
 |---|---|---|
 | `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` · `E_NO_EXPECTATION` · `E_BAD_FINGERPRINT` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
-| `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` | the evidence gate rejected the content, or the graph would break an invariant |
+| `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` · `E_INSECURE_GRAPH` | the evidence gate rejected the content, or the graph would break an invariant |
 | `0` | — | success / clean `check` / clean `audit` |
 | `3` | — | lock timeout or IO failure (not a `ProtocolError`) |
 
@@ -102,6 +102,27 @@ eight tools: `memory_search`, `memory_add`, `memory_status`, `memory_supersede`,
   authenticate the client and does not stop another process from writing the
   file: see [THREAT-MODEL.md](THREAT-MODEL.md) §5.
 - stdout carries protocol frames only; diagnostics go to stderr.
+
+## Filesystem hygiene (`doctor --strict`, v0.4)
+
+This project has no authentication; its only boundary is file permissions. So
+`amg doctor` reports conditions where that boundary does not hold, using finding
+codes that are **not** protocol errors (`SEC_` prefix):
+
+| finding | severity | meaning |
+|---|---|---|
+| `SEC_WORLD_WRITABLE` | warn | `graph.json` or its directory is world-writable: any local user can rewrite the memory |
+| `SEC_GROUP_WRITABLE` | info | the same for everyone in the file's group |
+| `SEC_NETWORK_PATH` | warn | the path looks like an SMB/NFS/UNC mount, where the advisory lock and the permission boundary do not hold |
+| `SEC_GRAPH_SYMLINK` | warn | `graph.json` is a symlink, so the bytes live somewhere else |
+
+`amg doctor <dir> --strict` exits 1 (`E_INSECURE_GRAPH`) on any `warn`; plain
+`amg doctor` still succeeds and only prints. `amg mcp` prints the same warnings to
+stderr at startup and keeps serving — a warning is not a lock, and pretending
+otherwise would be worse than saying it.
+
+Scheduling advice: run `amg doctor --strict` from cron where a misconfigured
+permission should page someone, not silently pass.
 
 ## Fingerprints and what they do not prove (v0.4)
 

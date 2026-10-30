@@ -5,8 +5,22 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
 
 ## [Unreleased] — 0.4.0
 
+### Added
+
+- **Filesystem hygiene checks**: `amg doctor` reports `SEC_WORLD_WRITABLE`,
+  `SEC_GROUP_WRITABLE`, `SEC_NETWORK_PATH` and `SEC_GRAPH_SYMLINK` — the
+  conditions under which this project's only boundary (file permissions) does not
+  hold. `amg doctor --strict` exits 1 (`E_INSECURE_GRAPH`) on a warning; `amg mcp`
+  prints the warnings to stderr at startup and keeps serving.
+
 ### Changed
 
+- **Authorization decided out of scope** (docs/THREAT-MODEL.md §8, DECISIONS #13):
+  no authentication, no per-caller authorization, no multi-tenancy. A token check
+  in front of a file the caller can open proves only that they have the file; what
+  would actually hold (users, containers, ACLs, read-only mounts) is enforced by
+  the OS. The decision lists what to do instead, and the three conditions that
+  would reopen it.
 - **Semantic retrieval measured, not guessed** (`experiments/retrieval_eval/`):
   a local `nomic-embed-text` candidate (768 dims via ollama) lifts paraphrase
   `recall@5` from 0.750 to 0.950 and `recall@1` from 0.400 to 0.625 with no
