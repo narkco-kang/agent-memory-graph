@@ -12,6 +12,19 @@ from helpers import TempGraph, ev
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 
+
+def read_bytes(path):
+    """Read a file and close it: bare open().read() leaks handles and floods
+    Windows CI logs with ResourceWarnings that hide real ones."""
+    with open(path, "rb") as fh:
+        return fh.read()
+
+
+def read_lines(path):
+    with open(path, encoding="utf-8") as fh:
+        return fh.readlines()
+
+
 class ReadAuditTests(unittest.TestCase):
     def setUp(self):
         self.g = TempGraph()
@@ -39,17 +52,17 @@ class ReadAuditTests(unittest.TestCase):
         self.assertFalse(os.path.exists(self._log_path()))
 
     def test_strict_query_is_logged(self):
-        before = open(os.path.join(self.g.dir, "graph.json"), "rb").read()
+        before = read_bytes(os.path.join(self.g.dir, "graph.json"))
         self.m.search("limit is 32", strict=True, audit_read=True)
         self.assertTrue(os.path.exists(self._log_path()))
-        event = json.loads(open(self._log_path(), encoding="utf-8").readline())
+        event = json.loads(read_lines(self._log_path())[0])
         self.assertEqual(event["op"], "search")
         self.assertTrue(event["strict"])
-        self.assertEqual(open(os.path.join(self.g.dir, "graph.json"), "rb").read(), before)
+        self.assertEqual(read_bytes(os.path.join(self.g.dir, "graph.json")), before)
 
     def test_l4_read_is_logged(self):
         self.m.search("scope rule", layer="L4", audit_read=True)
-        event = json.loads(open(self._log_path(), encoding="utf-8").readline())
+        event = json.loads(read_lines(self._log_path())[0])
         self.assertEqual(event["layer"], "L4")
 
     def test_superseded_history_read_is_logged(self):
@@ -92,7 +105,7 @@ class ReadAuditCliTests(unittest.TestCase):
         self.assertEqual(self.cli("search", self.dir, "a decision", "--strict", "--audit-read").returncode, 0)
         self.assertTrue(os.path.exists(os.path.join(self.dir, "reads.jsonl")))
         self.assertEqual(self.cli("search", self.dir, "a decision").returncode, 0)
-        self.assertEqual(len(open(os.path.join(self.dir, "reads.jsonl"), encoding="utf-8").readlines()), 1)
+        self.assertEqual(len(read_lines(os.path.join(self.dir, "reads.jsonl"))), 1)
 
 
 if __name__ == "__main__":

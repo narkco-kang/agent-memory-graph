@@ -47,6 +47,8 @@ class LockTests(unittest.TestCase):
         finally:
             proc.kill()
             proc.wait(timeout=5)
+            for stream in (proc.stdout, proc.stderr):
+                stream.close()
 
     def test_lock_released_after_context(self):
         with self.store.locked(timeout=1):
@@ -106,6 +108,8 @@ class LockStatsTests(unittest.TestCase):
         finally:
             proc.kill()
             proc.wait(timeout=5)
+            for stream in (proc.stdout, proc.stderr):
+                stream.close()
 
     def test_poll_bounds_are_sane(self):
         import amg.store as store_mod
@@ -140,6 +144,8 @@ class LockedReadTests(unittest.TestCase):
         finally:
             proc.kill()
             proc.wait(timeout=5)
+            for stream in (proc.stdout, proc.stderr):
+                stream.close()
 
     def test_missing_graph_raises_without_creating_the_directory(self):
         import tempfile
@@ -204,3 +210,5 @@ class LockTimeoutConfigTests(unittest.TestCase):
         finally:
             proc.kill()
             proc.wait(timeout=5)
+            for stream in (proc.stdout, proc.stderr):
+                stream.close()
