@@ -11,6 +11,11 @@ capabilities that are absent stay under **Not yet**.
 
 ### Added
 
+- **Read-side audit (opt-in)**: `--audit-read` on `search` / `related` records
+  high-risk reads (L4 rules, strict queries, results touching superseded nodes)
+  to a bounded, rotated `reads.jsonl`. Deliberately not written into `changes[]`,
+  which is the write ledger and can never be rotated.
+
 - **Explicit fact time**: `amg add --valid-from ISO8601 [--valid-until ISO8601]`
   and `Memory.add_node(valid_from=…, valid_until=…)`. Values are stored verbatim;
   `valid_time_known` is true only when `valid_from` was supplied.
@@ -73,7 +78,7 @@ capabilities that are absent stay under **Not yet**.
 ### Not yet (do not assume)
 
 - Vector / embedding retrieval (lexical only).
-- MCP server, authentication, multi-tenancy, read-side audit logging.
+- MCP server, authentication, multi-tenancy.
 - Background expiry scheduling. `valid_until` is only acted on by `amg expire`.
 - Windows file locking (POSIX `fcntl` only; untested on Windows).
 - Concurrency stress beyond the advisory lock; graphs above 10,000 nodes.

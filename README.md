@@ -245,6 +245,14 @@ the five projects checked, but "no precedent" is not a shipped capability.
 `expanded_from`). `depends_on` / `supersedes` must stay acyclic (`check` errors on
 a cycle); other kinds may cycle and are only counted.
 
+## Read-side audit (opt-in)
+
+Writes are always logged in `changes[]`; reads are not, unless you ask for it.
+`--audit-read` logs only high-risk reads — L4 rule access, `--strict` queries, and
+results that include superseded nodes — to a bounded, rotated `reads.jsonl`
+(1 MiB per segment, one segment kept). Reads are never written into `changes[]`.
+Note that `reads.jsonl` contains query text.
+
 ## Expiry scheduling
 
 Expiry is a command, not a daemon: `amg expire ./mem --apply` is safe to run from

@@ -26,6 +26,8 @@ amg expire <dir> [--apply] [--json]                # opt-in TTL expiry (dry-run 
 amg version
 ```
 
+`--audit-read` is available on `search` and `related` (see below).
+
 `--evidence` takes `locator|content_sha256|captured_at[|grade]` (repeatable).
 
 `amg import` takes a JSON file shaped as `{"nodes": [...], "edges": [...]}` (a
@@ -70,6 +72,18 @@ hit, marked `expanded_from`.
 
 Cycle policy: `depends_on` and `supersedes` must form a DAG — a cycle there is a
 `check` error. Other kinds may legitimately cycle and are only counted as a hint.
+
+## Read-side audit (opt-in, v0.3)
+
+`--audit-read` on `search` / `related` writes a JSONL event to `<graph>/reads.jsonl`
+only when the read is **high-risk**: `--layer L4` (rule access), `--strict`
+queries, or results that include `superseded` nodes. Default reads stay zero-cost
+and are not logged.
+
+- Not written into `changes[]`: read events would drown the write ledger, and
+  `changes[]` is append-only so it could never be rotated.
+- Bounded and rotated: 1 MiB per segment, one older segment kept (`reads.jsonl.1`).
+- `reads.jsonl` contains query text — treat it as data, not as a secret store.
 
 ## Python
 

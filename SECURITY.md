@@ -11,6 +11,8 @@ Only the latest release receives fixes. This is a v0.x project.
   read the file can read the memory; any process that can write it can rewrite
   it.
 - It opens **no network port** and makes no outbound requests.
+- With `--audit-read`, `reads.jsonl` records query text for high-risk reads. It
+  is plain text and rotated, not encrypted: do not treat it as a secret store.
 - Do not run it on a shared host with untrusted users, and do not expose the file
   over a network share.
 

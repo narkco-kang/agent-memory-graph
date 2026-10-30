@@ -95,7 +95,7 @@ def cmd_supersede(a):
 
 def cmd_related(a):
     m = Memory.open(a.dir)
-    res = m.related(a.id, depth=a.depth, kind=a.kind)
+    res = m.related(a.id, depth=a.depth, kind=a.kind, audit_read=a.audit_read)
     if a.json:
         print(json.dumps(res, ensure_ascii=False, indent=2))
     else:
@@ -119,7 +119,8 @@ def cmd_link(a):
 
 def cmd_search(a):
     m = Memory.open(a.dir)
-    hits = m.search(a.query, layer=a.layer, k=a.k, strict=a.strict, expand=a.expand)
+    hits = m.search(a.query, layer=a.layer, k=a.k, strict=a.strict, expand=a.expand,
+                    audit_read=a.audit_read)
     if a.json:
         print(json.dumps(hits, ensure_ascii=False, indent=2))
     else:
@@ -354,11 +355,14 @@ def build_parser():
 
     s = sub.add_parser("related"); s.add_argument("dir"); s.add_argument("id")
     s.add_argument("--depth", type=int, default=1); s.add_argument("--kind")
+    s.add_argument("--audit-read", action="store_true")
     s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_related)
 
     s = sub.add_parser("search"); s.add_argument("dir"); s.add_argument("query")
     s.add_argument("--layer", default="L3"); s.add_argument("--k", type=int, default=10)
     s.add_argument("--strict", action="store_true"); s.add_argument("--expand", action="store_true")
+    s.add_argument("--audit-read", action="store_true",
+                   help="log this read to reads.jsonl if it is high-risk (L4/strict/superseded)")
     s.add_argument("--json", action="store_true")
     s.set_defaults(func=cmd_search)
 

@@ -5,6 +5,7 @@ from . import audit as audit_mod
 from . import digest as digest_mod
 from . import migrate as migrate_mod
 from . import protocol
+from . import readaudit
 from . import relations
 from . import retrieval
 from .const import EDGE_KINDS, NODE_TYPES, SCHEMA, STATUSES, now, parse_ts
@@ -351,13 +352,24 @@ class Memory:
 
     # ---------- reads ----------
     def search(self, query: str, layer: str = "L3", k: int = 10, strict: bool = False,
-               expand: bool = False):
-        return retrieval.search(self._doc, query, layer=layer, k=k, strict=strict,
+               expand: bool = False, audit_read: bool = False, by: str = "cli"):
+        hits = retrieval.search(self._doc, query, layer=layer, k=k, strict=strict,
                                 expand=expand)
+        if audit_read and readaudit.is_high_risk(layer=layer, strict=strict,
+                                                 statuses=[h.get("status") for h in hits]):
+            readaudit.log_read(self.store.dir, op="search", query=query, layer=layer,
+                               strict=strict, hits=len(hits), by=by)
+        return hits
 
-    def related(self, node_id: str, depth: int = 1, kind: str = None) -> dict:
+    def related(self, node_id: str, depth: int = 1, kind: str = None,
+                audit_read: bool = False, by: str = "cli") -> dict:
         """Walk edges around one node. This is the only traversal entry point."""
-        return relations.related(self._doc, node_id, depth=depth, kind=kind)
+        result = relations.related(self._doc, node_id, depth=depth, kind=kind)
+        if audit_read and readaudit.is_high_risk(
+                statuses=[n.get("status") for n in result["neighbors"]]):
+            readaudit.log_read(self.store.dir, op="related", node_id=node_id,
+                               hits=len(result["neighbors"]), by=by)
+        return result
 
     def check(self, strict: bool = False):
         return protocol.check(self._doc, strict=strict)
