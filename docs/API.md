@@ -368,6 +368,11 @@ Matching is lexical and, as of v0.14.0, word-aware:
 - The ASCII inflection table is English; other languages get word-boundary matching
   only. `experiments/retrieval_precision/` measures this behaviour and
   `docs/DECISIONS.md` #25 records the recall that changing it costs.
+- **Scoring has no IDF**: matching is weighted by field (`id` 3.0, `label` 2.0,
+  `note` 1.0, `source`/`owner` 0.5), not by how rare a term is. At 10,000 nodes with
+  query-vocabulary noise this costs recall@5 0.808 → 0.538, with 7 of 11 misses pushed
+  beyond rank 100 (`experiments/retrieval_10k/`). Treat long, wordy graphs as a known
+  weakness, not a measured strength.
 
 
 - L1/L3/L4 **hard-filter `superseded` nodes** (`failures.md:118`, non-negotiable):

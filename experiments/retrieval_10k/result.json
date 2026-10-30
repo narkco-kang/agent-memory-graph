@@ -1,0 +1,979 @@
+{
+  "at_10k_n1_unrelated": {
+    "corpus_sha256": "e450c26da1038e3c9a48e8f93904621362726a232c6a71763ad186d9ccd47921",
+    "group": {
+      "authored-split-A": {
+        "mrr@10": 0.952,
+        "n": 14,
+        "recall@1": 0.893,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "authored-split-B": {
+        "mrr@10": 0.542,
+        "n": 12,
+        "recall@1": 0.375,
+        "recall@10": 0.708,
+        "recall@5": 0.583
+      },
+      "keyword": {
+        "mrr@10": 0.969,
+        "n": 16,
+        "recall@1": 0.875,
+        "recall@10": 0.969,
+        "recall@5": 0.969
+      },
+      "keyword-H1": {
+        "mrr@10": 0.938,
+        "n": 8,
+        "recall@1": 0.812,
+        "recall@10": 0.938,
+        "recall@5": 0.938
+      },
+      "keyword-H2": {
+        "mrr@10": 1.0,
+        "n": 8,
+        "recall@1": 0.938,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "overall": {
+        "mrr@10": 0.763,
+        "n": 26,
+        "recall@1": 0.654,
+        "recall@10": 0.865,
+        "recall@5": 0.808
+      },
+      "paraphrase": {
+        "mrr@10": 0.433,
+        "n": 10,
+        "recall@1": 0.3,
+        "recall@10": 0.7,
+        "recall@5": 0.55
+      },
+      "paraphrase-H1": {
+        "mrr@10": 0.367,
+        "n": 5,
+        "recall@1": 0.2,
+        "recall@10": 0.6,
+        "recall@5": 0.5
+      },
+      "paraphrase-H2": {
+        "mrr@10": 0.5,
+        "n": 5,
+        "recall@1": 0.4,
+        "recall@10": 0.8,
+        "recall@5": 0.6
+      }
+    },
+    "latency_ms": {
+      "max": 173.72,
+      "p50": 74.31
+    },
+    "nodes": 10000
+  },
+  "at_10k_n2_query_vocabulary": {
+    "corpus_sha256": "634c8e84e1516698d388357310d51a80b375d2d23c34d012b4b9e46fe1357a3c",
+    "group": {
+      "authored-split-A": {
+        "mrr@10": 0.8,
+        "n": 14,
+        "recall@1": 0.75,
+        "recall@10": 0.821,
+        "recall@5": 0.821
+      },
+      "authored-split-B": {
+        "mrr@10": 0.183,
+        "n": 12,
+        "recall@1": 0.167,
+        "recall@10": 0.208,
+        "recall@5": 0.208
+      },
+      "keyword": {
+        "mrr@10": 0.7,
+        "n": 16,
+        "recall@1": 0.656,
+        "recall@10": 0.719,
+        "recall@5": 0.719
+      },
+      "keyword-H1": {
+        "mrr@10": 0.625,
+        "n": 8,
+        "recall@1": 0.625,
+        "recall@10": 0.625,
+        "recall@5": 0.625
+      },
+      "keyword-H2": {
+        "mrr@10": 0.775,
+        "n": 8,
+        "recall@1": 0.688,
+        "recall@10": 0.812,
+        "recall@5": 0.812
+      },
+      "overall": {
+        "mrr@10": 0.515,
+        "n": 26,
+        "recall@1": 0.481,
+        "recall@10": 0.538,
+        "recall@5": 0.538
+      },
+      "paraphrase": {
+        "mrr@10": 0.22,
+        "n": 10,
+        "recall@1": 0.2,
+        "recall@10": 0.25,
+        "recall@5": 0.25
+      },
+      "paraphrase-H1": {
+        "mrr@10": 0.24,
+        "n": 5,
+        "recall@1": 0.2,
+        "recall@10": 0.3,
+        "recall@5": 0.3
+      },
+      "paraphrase-H2": {
+        "mrr@10": 0.2,
+        "n": 5,
+        "recall@1": 0.2,
+        "recall@10": 0.2,
+        "recall@5": 0.2
+      }
+    },
+    "latency_ms": {
+      "max": 209.34,
+      "p50": 92.52
+    },
+    "nodes": 10000
+  },
+  "control_27": {
+    "corpus_sha256": "243b1ad193198f0c5a1a8f426e72fb1af8103dfa48e94425a5e32665d86661d4",
+    "group": {
+      "authored-split-A": {
+        "mrr@10": 0.952,
+        "n": 14,
+        "recall@1": 0.893,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "authored-split-B": {
+        "mrr@10": 0.542,
+        "n": 12,
+        "recall@1": 0.375,
+        "recall@10": 0.708,
+        "recall@5": 0.583
+      },
+      "keyword": {
+        "mrr@10": 0.969,
+        "n": 16,
+        "recall@1": 0.875,
+        "recall@10": 0.969,
+        "recall@5": 0.969
+      },
+      "keyword-H1": {
+        "mrr@10": 0.938,
+        "n": 8,
+        "recall@1": 0.812,
+        "recall@10": 0.938,
+        "recall@5": 0.938
+      },
+      "keyword-H2": {
+        "mrr@10": 1.0,
+        "n": 8,
+        "recall@1": 0.938,
+        "recall@10": 1.0,
+        "recall@5": 1.0
+      },
+      "overall": {
+        "mrr@10": 0.763,
+        "n": 26,
+        "recall@1": 0.654,
+        "recall@10": 0.865,
+        "recall@5": 0.808
+      },
+      "paraphrase": {
+        "mrr@10": 0.433,
+        "n": 10,
+        "recall@1": 0.3,
+        "recall@10": 0.7,
+        "recall@5": 0.55
+      },
+      "paraphrase-H1": {
+        "mrr@10": 0.367,
+        "n": 5,
+        "recall@1": 0.2,
+        "recall@10": 0.6,
+        "recall@5": 0.5
+      },
+      "paraphrase-H2": {
+        "mrr@10": 0.5,
+        "n": 5,
+        "recall@1": 0.4,
+        "recall@10": 0.8,
+        "recall@5": 0.6
+      }
+    },
+    "latency_ms": {
+      "max": 0.66,
+      "p50": 0.28
+    },
+    "nodes": 27
+  },
+  "diagnostic": {
+    "gold_rank_by_query": {
+      "q01": 1,
+      "q02": 14,
+      "q03": 1,
+      "q04": 1,
+      "q05": 42,
+      "q06": null,
+      "q07": 1,
+      "q08": null,
+      "q09": 1,
+      "q10": null,
+      "q11": 1,
+      "q12": null,
+      "q13": 1,
+      "q14": 1,
+      "q15": 1,
+      "q16": 99,
+      "q17": 5,
+      "q18": null,
+      "q19": 1,
+      "q20": 68,
+      "q21": 1,
+      "q22": 5,
+      "q23": 1,
+      "q24": null,
+      "q25": 1,
+      "q26": null
+    },
+    "matched_but_ranked_11_100": 4,
+    "misses_at_5": 11,
+    "unmatched_or_beyond_100": 7
+  },
+  "frozen_baseline": {
+    "corpus_sha256": "a183dc443ee4a1e75a08139860f77d3a120636fc0ef534ad34ea6f1b6ea24be8",
+    "overall": {
+      "mrr@10": 0.763,
+      "n": 26,
+      "recall@1": 0.654,
+      "recall@10": 0.865,
+      "recall@5": 0.808
+    },
+    "queries_sha256": "3dced7bb2fcfa1c0a5ce2a9659cf576a57a043a651dd126dc17d706c09ab86ed"
+  },
+  "inputs": {
+    "corpus_sha256": "a183dc443ee4a1e75a08139860f77d3a120636fc0ef534ad34ea6f1b6ea24be8",
+    "queries_sha256": "3dced7bb2fcfa1c0a5ce2a9659cf576a57a043a651dd126dc17d706c09ab86ed"
+  },
+  "inputs_match_frozen": true,
+  "rows": [
+    {
+      "bucket": "keyword",
+      "gold": [
+        "decision.atomic-replace"
+      ],
+      "half": "keyword-H1",
+      "id": "q01",
+      "overlap": 1.0,
+      "query": "atomic file replace",
+      "ranked": [
+        "decision.atomic-replace",
+        "task.n008398",
+        "task.n008954",
+        "task.n008323",
+        "task.n008269",
+        "task.n007736",
+        "task.n007622",
+        "task.n007302",
+        "task.n006292",
+        "task.n005807"
+      ],
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 1.0,
+      "split": "A"
+    },
+    {
+      "bucket": "paraphrase",
+      "gold": [
+        "decision.atomic-replace"
+      ],
+      "half": "paraphrase-H1",
+      "id": "q02",
+      "overlap": 0.25,
+      "query": "does the program crash in the middle of a save corrupt the graph",
+      "ranked": [
+        "task.n005814",
+        "task.n005542",
+        "task.n008076",
+        "task.n007425",
+        "task.n007065",
+        "task.n005851",
+        "task.n005317",
+        "task.n005012",
+        "task.n004189",
+        "task.n003028"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 0.0,
+      "recall@5": 0.0,
+      "reciprocal_rank": 0.0,
+      "split": "A"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "task.windows-lock"
+      ],
+      "half": "keyword-H2",
+      "id": "q03",
+      "overlap": 1.0,
+      "query": "msvcrt locking",
+      "ranked": [
+        "task.windows-lock",
+        "decision.lock-strategy",
+        "task.n004541",
+        "issue.lock-timeout",
+        "task.n007411",
+        "task.n007399",
+        "task.n006858",
+        "task.n006340",
+        "task.n005892",
+        "task.n004631"
+      ],
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 1.0,
+      "split": "A"
+    },
+    {
+      "bucket": "paraphrase",
+      "gold": [
+        "task.windows-lock"
+      ],
+      "half": "paraphrase-H2",
+      "id": "q04",
+      "overlap": 0.2,
+      "query": "can I run this on a Windows laptop",
+      "ranked": [
+        "task.windows-lock",
+        "decision.read-only",
+        "task.n005877",
+        "task.n002004",
+        "task.n008812",
+        "task.n007882",
+        "task.n006615",
+        "task.n005940",
+        "task.n004983",
+        "task.n004883"
+      ],
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 1.0,
+      "split": "B"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "task.read-audit"
+      ],
+      "half": "keyword-H1",
+      "id": "q05",
+      "overlap": 0.5,
+      "query": "reads.jsonl rotation size",
+      "ranked": [
+        "task.n000532",
+        "task.n007710",
+        "task.n005339",
+        "task.n004676",
+        "task.n004284",
+        "task.n001839",
+        "task.n000889",
+        "task.n000818",
+        "task.n009873",
+        "task.n009730"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 0.0,
+      "recall@5": 0.0,
+      "reciprocal_rank": 0.0,
+      "split": "A"
+    },
+    {
+      "bucket": "paraphrase",
+      "gold": [
+        "task.read-audit"
+      ],
+      "half": "paraphrase-H1",
+      "id": "q06",
+      "overlap": 0.0,
+      "query": "who can see what I searched",
+      "ranked": [
+        "task.n003939",
+        "task.n008392",
+        "task.n008152",
+        "task.n006934",
+        "task.n006607",
+        "task.n006157",
+        "task.n005309",
+        "task.n004931",
+        "task.n001868",
+        "task.n000990"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 0.0,
+      "recall@5": 0.0,
+      "reciprocal_rank": 0.0,
+      "split": "B"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "task.expiry-command"
+      ],
+      "half": "keyword-H2",
+      "id": "q07",
+      "overlap": 1.0,
+      "query": "expire --apply",
+      "ranked": [
+        "task.expiry-command",
+        "task.n009452",
+        "task.n008865",
+        "task.n004515",
+        "task.n003391",
+        "task.n000268",
+        "task.n000077",
+        "task.n009701",
+        "task.n009667",
+        "task.n009401"
+      ],
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 1.0,
+      "split": "A"
+    },
+    {
+      "bucket": "paraphrase",
+      "gold": [
+        "decision.no-daemon",
+        "task.expiry-command"
+      ],
+      "half": "paraphrase-H2",
+      "id": "q08",
+      "overlap": 0.0,
+      "query": "how do old facts get retired automatically",
+      "ranked": [
+        "task.n005051",
+        "task.n003865",
+        "task.n009806",
+        "task.n009680",
+        "task.n009470",
+        "task.n008630",
+        "task.n008626",
+        "task.n007398",
+        "task.n007290",
+        "task.n006089"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 0.0,
+      "recall@5": 0.0,
+      "reciprocal_rank": 0.0,
+      "split": "B"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "decision.zero-deps"
+      ],
+      "half": "keyword-H1",
+      "id": "q09",
+      "overlap": 0.667,
+      "query": "zero dependencies install",
+      "ranked": [
+        "decision.zero-deps",
+        "task.n008870",
+        "task.n008649",
+        "task.n008440",
+        "task.n008327",
+        "task.n007886",
+        "task.n007779",
+        "task.n006986",
+        "task.n006308",
+        "task.n005907"
+      ],
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 1.0,
+      "split": "A"
+    },
+    {
+      "bucket": "paraphrase",
+      "gold": [
+        "decision.zero-deps"
+      ],
+      "half": "paraphrase-H1",
+      "id": "q10",
+      "overlap": 0.0,
+      "query": "do I need to pip install anything",
+      "ranked": [
+        "task.n008771",
+        "task.n005848",
+        "task.n004889",
+        "task.n002696",
+        "task.n002552",
+        "task.n002472",
+        "task.n002068",
+        "task.n001577",
+        "task.n009315",
+        "task.n009254"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 0.0,
+      "recall@5": 0.0,
+      "reciprocal_rank": 0.0,
+      "split": "B"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "decision.two-key-ranking"
+      ],
+      "half": "keyword-H2",
+      "id": "q11",
+      "overlap": 0.8,
+      "query": "two-key ranking evidence first",
+      "ranked": [
+        "decision.two-key-ranking",
+        "task.n006955",
+        "task.n002448",
+        "task.n002065",
+        "task.n009874",
+        "task.n009663",
+        "task.n009284",
+        "task.n007265",
+        "task.n006839",
+        "task.n006505"
+      ],
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 1.0,
+      "split": "A"
+    },
+    {
+      "bucket": "paraphrase",
+      "gold": [
+        "decision.two-key-ranking"
+      ],
+      "half": "paraphrase-H2",
+      "id": "q12",
+      "overlap": 0.0,
+      "query": "why do notes with proof rank higher",
+      "ranked": [
+        "task.n009482",
+        "task.n008265",
+        "task.n007267",
+        "task.n005886",
+        "task.n005271",
+        "task.n000140",
+        "task.n009840",
+        "task.n009540",
+        "task.n009288",
+        "task.n007968"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 0.0,
+      "recall@5": 0.0,
+      "reciprocal_rank": 0.0,
+      "split": "B"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "decision.read-only"
+      ],
+      "half": "keyword-H1",
+      "id": "q13",
+      "overlap": 1.0,
+      "query": "read-only MCP server",
+      "ranked": [
+        "decision.read-only",
+        "artifact.mcp-server",
+        "task.n008313",
+        "task.n008122",
+        "task.n004347",
+        "task.n004064",
+        "task.n003456",
+        "task.n002828",
+        "task.n002742",
+        "task.n001617"
+      ],
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 1.0,
+      "split": "A"
+    },
+    {
+      "bucket": "paraphrase",
+      "gold": [
+        "decision.read-only"
+      ],
+      "half": "paraphrase-H1",
+      "id": "q14",
+      "overlap": 0.333,
+      "query": "can the AI client be prevented from writing",
+      "ranked": [
+        "decision.read-only",
+        "task.n008157",
+        "task.n003803",
+        "task.n001812",
+        "task.n009706",
+        "task.n008966",
+        "task.n008071",
+        "task.n006070",
+        "task.n005851",
+        "task.n005434"
+      ],
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 1.0,
+      "split": "B"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "task.digest-budget"
+      ],
+      "half": "keyword-H2",
+      "id": "q15",
+      "overlap": 0.75,
+      "query": "digest byte budget truncation",
+      "ranked": [
+        "task.digest-budget",
+        "task.n008529",
+        "task.n003551",
+        "task.n003139",
+        "issue.unbounded-digest",
+        "task.n009946",
+        "task.n009717",
+        "task.n009715",
+        "task.n009603",
+        "task.n009563"
+      ],
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 1.0,
+      "split": "A"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "task.digest-budget",
+        "issue.unbounded-digest"
+      ],
+      "half": "keyword-H1",
+      "id": "q16",
+      "overlap": 0.5,
+      "query": "how big can the summary get",
+      "ranked": [
+        "task.n009418",
+        "task.n008178",
+        "task.n006434",
+        "task.n005021",
+        "task.n004525",
+        "task.n004189",
+        "task.n003803",
+        "task.n001851",
+        "task.n001789",
+        "task.n001272"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 0.0,
+      "recall@5": 0.0,
+      "reciprocal_rank": 0.0,
+      "split": "B"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "rule.no-fabricated-hash"
+      ],
+      "half": "keyword-H2",
+      "id": "q17",
+      "overlap": 0.667,
+      "query": "fabricated sha256 evidence",
+      "ranked": [
+        "task.n008833",
+        "task.n003116",
+        "task.n001291",
+        "task.n000289",
+        "rule.no-fabricated-hash",
+        "task.n009473",
+        "task.n009172",
+        "task.n008571",
+        "task.n008161",
+        "task.n007537"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 0.2,
+      "split": "A"
+    },
+    {
+      "bucket": "paraphrase",
+      "gold": [
+        "rule.no-fabricated-hash"
+      ],
+      "half": "paraphrase-H2",
+      "id": "q18",
+      "overlap": 0.125,
+      "query": "what if the checksum was lost, should I make one up",
+      "ranked": [
+        "task.n002782",
+        "task.n009966",
+        "task.n008946",
+        "task.n008639",
+        "task.n008551",
+        "task.n008364",
+        "task.n008119",
+        "task.n006884",
+        "task.n006618",
+        "task.n006596"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 0.0,
+      "recall@5": 0.0,
+      "reciprocal_rank": 0.0,
+      "split": "B"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "issue.cjk-tokenization"
+      ],
+      "half": "keyword-H1",
+      "id": "q19",
+      "overlap": 1.0,
+      "query": "CJK tokenization single characters",
+      "ranked": [
+        "issue.cjk-tokenization",
+        "task.n008606",
+        "task.n008333",
+        "task.n004956",
+        "task.n003879",
+        "task.n002766",
+        "task.n002551",
+        "task.n001002",
+        "task.n009932",
+        "task.n008929"
+      ],
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 1.0,
+      "split": "A"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "issue.cjk-tokenization"
+      ],
+      "half": "keyword-H2",
+      "id": "q20",
+      "overlap": 0.4,
+      "query": "does it work for Chinese queries",
+      "ranked": [
+        "task.n000302",
+        "task.n006762",
+        "task.n003594",
+        "task.n000848",
+        "task.n000306",
+        "task.n009846",
+        "task.n009731",
+        "task.n009680",
+        "task.n009652",
+        "task.n009509"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 0.0,
+      "recall@5": 0.0,
+      "reciprocal_rank": 0.0,
+      "split": "B"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "issue.lock-timeout"
+      ],
+      "half": "keyword-H1",
+      "id": "q21",
+      "overlap": 0.8,
+      "query": "lock timeout exit code three",
+      "ranked": [
+        "issue.lock-timeout",
+        "task.windows-lock",
+        "task.n006985",
+        "task.n002631",
+        "task.n001743",
+        "decision.lock-strategy",
+        "task.n009234",
+        "task.n007561",
+        "task.n007497",
+        "task.n007300"
+      ],
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 1.0,
+      "split": "A"
+    },
+    {
+      "bucket": "paraphrase",
+      "gold": [
+        "issue.double-write",
+        "decision.lock-strategy"
+      ],
+      "half": "paraphrase-H1",
+      "id": "q22",
+      "overlap": 0.333,
+      "query": "two processes writing at the same time",
+      "ranked": [
+        "decision.two-key-ranking",
+        "task.n009408",
+        "task.n007256",
+        "task.n001963",
+        "issue.double-write",
+        "task.n005851",
+        "task.n005365",
+        "task.n003972",
+        "task.n003735",
+        "task.n001887"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 0.5,
+      "recall@5": 0.5,
+      "reciprocal_rank": 0.2,
+      "split": "B"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "rule.append-only-history"
+      ],
+      "half": "keyword-H2",
+      "id": "q23",
+      "overlap": 1.0,
+      "query": "append-only history",
+      "ranked": [
+        "rule.append-only-history",
+        "task.n005842",
+        "task.n003391",
+        "task.n009909",
+        "task.n009858",
+        "task.n009850",
+        "task.n009845",
+        "task.n009806",
+        "task.n009797",
+        "task.n009769"
+      ],
+      "recall@1": 1.0,
+      "recall@10": 1.0,
+      "recall@5": 1.0,
+      "reciprocal_rank": 1.0,
+      "split": "A"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "model.embedding",
+        "question.vector-value"
+      ],
+      "half": "keyword-H1",
+      "id": "q24",
+      "overlap": 0.75,
+      "query": "would a sentence encoder help",
+      "ranked": [
+        "task.n005438",
+        "task.n004981",
+        "task.n003724",
+        "task.n009298",
+        "task.n009195",
+        "task.n009158",
+        "task.n009111",
+        "task.n009072",
+        "task.n009066",
+        "task.n009018"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 0.0,
+      "recall@5": 0.0,
+      "reciprocal_rank": 0.0,
+      "split": "B"
+    },
+    {
+      "bucket": "keyword",
+      "gold": [
+        "task.vector-search",
+        "question.vector-value"
+      ],
+      "half": "keyword-H2",
+      "id": "q25",
+      "overlap": 1.0,
+      "query": "vector search labelled query set",
+      "ranked": [
+        "task.vector-search",
+        "task.n002150",
+        "task.n008987",
+        "task.n008941",
+        "task.n008454",
+        "task.n008284",
+        "task.n007617",
+        "task.n005746",
+        "task.n005587",
+        "task.n004824"
+      ],
+      "recall@1": 0.5,
+      "recall@10": 0.5,
+      "recall@5": 0.5,
+      "reciprocal_rank": 1.0,
+      "split": "A"
+    },
+    {
+      "bucket": "paraphrase",
+      "gold": [
+        "decision.plain-json"
+      ],
+      "half": "paraphrase-H2",
+      "id": "q26",
+      "overlap": 0.167,
+      "query": "keep the data in something readable by humans",
+      "ranked": [
+        "task.n004265",
+        "task.n006031",
+        "task.n002370",
+        "task.n009293",
+        "task.n007758",
+        "task.n007565",
+        "task.n007438",
+        "task.n007352",
+        "task.n006105",
+        "task.n006030"
+      ],
+      "recall@1": 0.0,
+      "recall@10": 0.0,
+      "recall@5": 0.0,
+      "reciprocal_rank": 0.0,
+      "split": "B"
+    }
+  ]
+}

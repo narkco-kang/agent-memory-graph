@@ -3,6 +3,46 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.17.0] — 2026-10-31
+
+Second half of the 10k gap: **retrieval recall at 10,000 nodes is measured**, and the
+result inverts the obvious guess.
+
+### Added
+
+- `experiments/retrieval_10k/` — pre-registration (with predictions, an amendment for a
+  second noise model, and an outcome table), harness, `result.json`, README.
+- Two noise models on the same frozen 26 queries: **N1** unrelated distractors
+  (bench generator), **N2** distractors built from the queries' own tokens (seeded).
+
+### Measured
+
+| run | nodes | recall@1 | recall@5 | recall@10 | MRR@10 | p50 |
+|---|---|---|---|---|---|---|
+| control | 27 | 0.654 | 0.808 | 0.865 | 0.763 | — |
+| N1 unrelated | 10,000 | 0.654 | 0.808 | 0.865 | 0.763 | 74.3 ms |
+| N2 query-vocabulary | 10,000 | **0.481** | **0.538** | 0.538 | **0.515** | 92.5 ms |
+
+1. **Size alone costs nothing** (370× more unrelated nodes, identical metrics).
+2. **Vocabulary overlap costs 0.27 recall@5, and the cause is scoring**: 7 of the 11
+   misses are beyond rank 100. `WEIGHTS` in `src/amg/retrieval.py` has no IDF, so a note
+   repeating common query words outscores the node that answers.
+
+### Fixed
+
+- The README no longer says "retrieval recall at 10k is unmeasured"; it states both
+  halves of the 10k question, with the weakness named. `docs/API.md`'s retrieval rules
+  now warn that scoring has no IDF and point at the numbers.
+
+### Not shipped in 0.17.0 (do not assume)
+
+- **No IDF, no re-ranking change, no code touched at all** — criterion C4 of the
+  pre-registration forbade tuning in the same round. IDF weighting is the next candidate
+  with its own pre-registration.
+- No real-graph 10k retrieval numbers: this is synthetic noise on a frozen corpus.
+- No semantic recall; no claim that a bigger graph is "fine" — only that *unrelated*
+  size is, and that *related* noise is not.
+
 ## [0.16.0] — 2026-10-31
 
 Removed a documented gap: **concurrency at 10,000 nodes is measured**, and the naive

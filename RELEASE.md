@@ -19,6 +19,30 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.17.0 — 2026-10-31
+
+Status: **released**. Measurement round: retrieval at 10,000 nodes, pre-registered, with
+one amendment and two wrong predictions recorded.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 255 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate + size budget | ✅ 15 documents, both gates green |
+| 3 | Criteria and predictions existed before the run | ✅ `PREREGISTRATION.md`, including a prediction that was wrong |
+| 4 | Amendment declared before the run it applies to | ✅ N2 noise model added after N1, predicted before N2 ran |
+| 5 | No tuning in the same round | ✅ no `src/` change; criterion C4 |
+| 6 | The weak result is in the product text | ✅ README + `docs/API.md` now say scoring has no IDF, with the numbers |
+| 7 | Frozen baseline untouched | ✅ `retrieval_eval/result.json` and its pinned numbers unchanged |
+| 8 | Clean install from the tag | ✅ `git+...@v0.17.0` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | Reproducible from the repo | ✅ `run_eval.py` rebuilds both corpora deterministically and records digests |
+
+The headline is uncomfortable in a useful way: making the graph 370× bigger changed
+nothing, while making the noise *relevant* cost a quarter of recall@5 — and the fixed
+cost is in the scorer, which this round deliberately did not touch.
+
+---
+
 ## v0.16.0 — 2026-10-31
 
 Status: **released**. Measurement round: 10k-node concurrency, pre-registered, with a

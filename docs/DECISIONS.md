@@ -286,3 +286,18 @@ Each entry states the decision, the evidence behind it, and what it costs.
     limit, not the lock (`WRITE-COST.md`). Burst users are told the safe sizing rule:
     timeout ≥ writers × writes × per-write cost.
     *Signed 2026-10-31; `docs/CONCURRENCY.md` §"At 10,000 nodes", `result-10k*.{json,txt}`.*
+
+27. **Scale does not dilute lexical recall; vocabulary overlap does — and the scorer,
+    not the matcher, is why.** Pre-registered at 10,000 nodes
+    (`experiments/retrieval_10k/PREREGISTRATION.md`), same frozen 26 queries and gold
+    set, two noise models. Unrelated distractors left every metric identical
+    (0.654/0.808/0.865/0.763) — 370× more nodes cost nothing measurable, which retires
+    the naive "big memory dilutes search" worry. Distractors built from the queries' own
+    vocabulary cost **recall@5 0.808 → 0.538** and recall@1 0.654 → 0.481; of the 11
+    misses, **7 sit beyond rank 100**, i.e. dozens of distractors outscored the gold
+    node. The scorer weights fields (`id` 3.0, `label` 2.0, `note` 1.0) with **no IDF**,
+    so repetition of common query words is as good as an answer. Two predictions were
+    wrong and are recorded as wrong; the round touched no code on purpose (criterion
+    C4). IDF weighting is now the named next candidate — it needs its own
+    pre-registration and must not regress the frozen 27-node baseline.
+    *Signed 2026-10-31; `experiments/retrieval_10k/`, `result.json`.*

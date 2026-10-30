@@ -132,10 +132,12 @@ authorization, a TTL daemon, node archiving. Two claims that used to sit in this
 were **wrong in the other direction** and were corrected on 2026-10-31: Windows locking
 *is* exercised (cross-process lock tests pass on `windows-latest` in CI — only the
 latency tail is unmeasured), and synthetic benchmarks *do* reach 10k nodes
-(`docs/BENCHMARKS.md`). Concurrency at 10k is now measured too (v0.16.0: 200 writes,
-0 lost, and a default timeout that does *not* survive the burst —
-`docs/CONCURRENCY.md`); **retrieval recall at 10k is still unmeasured**. Every claim
-here is repeated in the document that would otherwise imply it.
+(`docs/BENCHMARKS.md`). Both 10k numbers now exist: concurrency (v0.16.0 — 200 writes,
+0 lost, and a default timeout that does *not* survive the burst,
+`docs/CONCURRENCY.md`) and retrieval (v0.17.0 — size alone costs nothing, but
+query-vocabulary noise costs 0.27 recall@5 because the scorer has no IDF,
+`experiments/retrieval_10k/`). Every claim here is repeated in the document that would
+otherwise imply it.
 
 ## Measurement, not marketing
 
