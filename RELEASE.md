@@ -21,6 +21,30 @@ building the index.
 | 4 | Every "not implemented" claim re-run against code | ✅ `socket`/`threading`/`encrypt`/`embedding`/`zlib`/fairness: no implementation (only prose asserting absence); designed-only history compression confirmed absent from `src/amg/` |
 | 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.7.0", naming history compression explicitly |
 | 6 | Version, changelog, tag, notes agree | ✅ 0.7.0 everywhere |
+| 7 | **Installed from the tag into a clean venv** (new criterion) | ✅ 0.7.0 from `git+...@v0.7.0`, zero dependencies, CLI + MCP exercised |
+
+### Clean install from the tag (new standing check)
+
+Until this release every test used `pip install -e .` against the checkout, so the
+*artifact* had never been installed or run on its own. It is cheap to check and it
+covers what an editable install cannot: the build backend, the console script, and
+what actually lands in `site-packages`.
+
+```bash
+python3 -m venv /tmp/amg-install-test
+/tmp/amg-install-test/bin/python -m pip install \
+  "git+https://github.com/narkco-kang/agent-memory-graph@v0.7.0"
+/tmp/amg-install-test/bin/amg version            # amg 0.7.0
+/tmp/amg-install-test/bin/python -m pip show agent-memory-graph | grep Requires:
+```
+
+Result on 2026-10-30: install exit 0, `amg 0.7.0`, `Requires:` empty, and a graph
+built entirely through the installed binary — `init`, `add`, `status`, a conclusion
+with evidence, `search`, `check --strict`, `fingerprint`, `doctor`, `export
+--format jsonl`, and an MCP `initialize` + `tools/list` handshake that reports
+server version 0.7.0 over stdio. Only `pip` is present in the venv besides `amg`.
+
+From v0.8.0 on this is a release criterion, not an anecdote.
 
 ### What to know before upgrading
 

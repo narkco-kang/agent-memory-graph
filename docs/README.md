@@ -90,10 +90,18 @@ Root-level documents: **[`../CHANGELOG.md`](../CHANGELOG.md)**, **`../RELEASE.md
 PYTHONPATH=src python3 -m unittest discover -s tests -v   # correctness
 PYTHONPATH=src python3 benchmarks/bench.py                # synthetic numbers
 bash examples/quickstart.sh && bash examples/lifecycle.sh # end-to-end
-python3 tools/check_doc_symbols.py README.md docs/API.md docs/THREAT-MODEL.md \
-  docs/PRIOR-ART.md docs/REAL-WORLD.md docs/WRITE-COST.md docs/CONCURRENCY.md \
-  docs/DESIGN-HISTORY.md docs/README.md                   # documentation == code
+python3 tools/check_doc_symbols.py                        # README + every docs/*.md
+
+# and the published artifact, separately from the checkout
+python3 -m venv /tmp/amg-install && /tmp/amg-install/bin/pip install \
+  "git+https://github.com/narkco-kang/agent-memory-graph@v0.7.0"
+/tmp/amg-install/bin/amg version
 ```
+
+Commands run from the repository root. The doc gate and the clean install are not
+redundant with the tests: a hand-written gate list hides documents, and an editable
+install hides packaging mistakes — both passed silently until v0.7.0 (see
+[`../RELEASE.md`](../RELEASE.md)).
 
 Two deliberate habits, visible throughout:
 
