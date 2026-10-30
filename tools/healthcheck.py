@@ -29,6 +29,19 @@ from amg import Memory  # noqa: E402
 from amg.gate import verify_evidence  # noqa: E402
 
 
+def _utf8_console():
+    """Windows consoles default to a legacy code page; the verdict line must not crash.
+
+    The output strings are ASCII on purpose (the glyphs in the CLI are not printable
+    everywhere either), and this is the belt: the stream is reconfigured when possible.
+    """
+    for stream in (sys.stdout, sys.stderr):
+        try:
+            stream.reconfigure(encoding="utf-8", errors="replace")
+        except (AttributeError, ValueError):  # pragma: no cover
+            pass
+
+
 def collect(path, check_evidence=True):
     memory = Memory.open(path, read_only=True)
     doc = memory.doc
@@ -49,15 +62,15 @@ def collect(path, check_evidence=True):
 
     problems = []
     if check["errors"]:
-        problems.append(f"{len(check['errors'])} structural error(s) — run `amg check`")
+        problems.append(f"{len(check['errors'])} structural error(s) - run `amg check`")
     if mismatched:
         problems.append(f"{len(mismatched)} evidence file(s) do not match their declared "
-                        f"sha256 — run `amg verify-evidence`")
+                        f"sha256 - run `amg verify-evidence`")
     if outside:
         problems.append(f"{len(outside)} evidence path(s) leave the graph directory "
-                        f"(outside_root) — run `amg verify-evidence`")
+                        f"(outside_root) - run `amg verify-evidence`")
     if not archive.get("ok", True):
-        problems.append("archive verification failed — run `amg archive --verify`")
+        problems.append("archive verification failed - run `amg archive --verify`")
 
     warnings = []
     if audit.get("conflicts"):
@@ -81,6 +94,7 @@ def collect(path, check_evidence=True):
 
 
 def main(argv=None):
+    _utf8_console()
     parser = argparse.ArgumentParser(description="read-only health report for a graph")
     parser.add_argument("dir")
     parser.add_argument("--json", action="store_true")
@@ -91,15 +105,15 @@ def main(argv=None):
     args = parser.parse_args(argv)
 
     if not os.path.isdir(args.dir):
-        print(f"✗ not a directory: {args.dir}", file=sys.stderr)
+        print(f"x not a directory: {args.dir}", file=sys.stderr)
         return 2
     if not os.path.isfile(os.path.join(args.dir, "graph.json")):
-        print(f"✗ no graph.json in {args.dir}", file=sys.stderr)
+        print(f"x no graph.json in {args.dir}", file=sys.stderr)
         return 2
     try:
         report = collect(args.dir, check_evidence=not args.no_evidence)
     except Exception as exc:  # a store that cannot be opened is the finding
-        print(f"✗ cannot open graph: {type(exc).__name__}: {exc}", file=sys.stderr)
+        print(f"x cannot open graph: {type(exc).__name__}: {exc}", file=sys.stderr)
         return 1
 
     failed = bool(report["problems"]) or (args.strict and bool(report["warnings"]))
@@ -119,13 +133,13 @@ def main(argv=None):
         conflicts = report["audit"]["conflicts"]
         print(f"  audit: {len(conflicts)} conflict(s)")
         counts = report["evidence"]["counts"] or {"none": 0}
-        print(f"  evidence: {report['evidence']['checked']} item(s) — "
+        print(f"  evidence: {report['evidence']['checked']} item(s) - "
               + ", ".join(f"{name} {count}" for name, count in sorted(counts.items())))
         archive = report["archive"]
         print(f"  archive: {'ok' if archive.get('ok') else 'FAILED'} "
               f"({archive.get('archived_records', 0)} archived record(s))")
         for problem in report["problems"]:
-            print(f"  ✗ {problem}")
+            print(f"  x {problem}")
         for warning in report["warnings"]:
             print(f"  ! {warning}")
         print("  verdict: " + ("healthy" if report["healthy"] else "NEEDS ATTENTION"))

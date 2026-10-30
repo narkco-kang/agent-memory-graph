@@ -100,6 +100,17 @@ class HealthcheckTests(unittest.TestCase):
             self.assertIn(key, report)
         self.assertEqual(report["store"]["nodes"], 1)
 
+    def test_windows_code_page_does_not_swallow_the_verdict(self):
+        # v0.23.0 printed "✗"/"—", which raised UnicodeEncodeError on a cp1252 console
+        # and silently dropped the problems/verdict lines while exiting 1.
+        with open(self.proof, "ab") as fh:
+            fh.write(b"tampered")
+        res = subprocess.run([sys.executable, TOOL, self.g.dir], capture_output=True,
+                             text=True, env=dict(ENV, PYTHONIOENCODING="cp1252"))
+        self.assertEqual(res.returncode, 1)
+        self.assertIn("do not match", res.stdout)
+        self.assertIn("verdict: NEEDS ATTENTION", res.stdout)
+
     def test_missing_graph_is_usage_error(self):
         self.assertEqual(run(os.path.join(self.g.dir, "nope")).returncode, 2)
 

@@ -3,6 +3,23 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.23.1] — 2026-10-31
+
+Patch: the health report survives a legacy Windows console code page.
+
+### Fixed
+
+- `tools/healthcheck.py` printed `✗` and `—`. On `windows-latest` (cp1252 stdout) the
+  first such line raised `UnicodeEncodeError`, so the report stopped after the archive
+  line, dropped every problem and the verdict, and still exited 1 — a failing store
+  looked like a silently truncated report. Output is now ASCII and the stream is
+  reconfigured where the interpreter allows it; a regression test runs the tool with
+  `PYTHONIOENCODING=cp1252` and asserts the problem line and verdict are present.
+
+### Not shipped in 0.23.1 (do not assume)
+
+- No change to what the report checks or how it classifies problems versus debt.
+
 ## [0.23.0] — 2026-10-31
 
 Operational readiness: a one-page health check and the runbook that says what to run on

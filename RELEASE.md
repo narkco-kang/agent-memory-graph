@@ -19,6 +19,25 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.23.1 — 2026-10-31
+
+Status: **released**. Patch for the Windows red that v0.23.0 shipped.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | Failure diagnosed from CI, not assumed | ✅ `UnicodeEncodeError` on cp1252 stdout, three failing tests |
+| 2 | Fixed at the cause | ✅ ASCII output + best-effort stream reconfigure |
+| 3 | The failure has a regression test on every platform | ✅ `PYTHONIOENCODING=cp1252` run asserts problem line + verdict |
+| 4 | CI green on nine jobs | ✅ 301 tests ×4 + `package` ×5 |
+| 5 | Documentation↔code gates | ✅ 16 documents, sizes unchanged in meaning |
+| 6 | No behaviour change beyond the fix | ✅ checks and classifications are identical |
+| 7 | The story is in the log | ✅ CHANGELOG 0.23.1 |
+| 8 | Clean install from the tag | ✅ `git+...@v0.23.1` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | Reproducible | ✅ the code-page test reproduces the old crash path |
+
+---
+
 ## v0.23.0 — 2026-10-31
 
 Status: **released**. Operational-readiness round: one health command, one runbook, and
