@@ -108,6 +108,14 @@ class McpSession:
             self.proc.wait(timeout=self.timeout)
         except (OSError, subprocess.TimeoutExpired):
             self.proc.kill()
+        finally:
+            # Windows CI warned about unclosed pipes on every run; the readers'
+            # threads hold them, so close them explicitly after the process is gone.
+            for stream in (self.proc.stdout, self.proc.stderr):
+                try:
+                    stream.close()
+                except (OSError, AttributeError):
+                    pass
 
 
 class McpConcurrencyTests(unittest.TestCase):

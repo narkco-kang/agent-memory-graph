@@ -120,6 +120,12 @@ class Client:
             self.proc.wait(timeout=self.timeout)
         except (OSError, subprocess.TimeoutExpired):
             self.kill()
+        finally:
+            for stream in (self.proc.stdout, self.proc.stderr):
+                try:
+                    stream.close()
+                except (OSError, AttributeError):
+                    pass
 
 
 def text_of(result):
