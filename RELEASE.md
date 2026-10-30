@@ -19,6 +19,54 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.11.0 — 2026-10-31
+
+Status: **released**. New capability: cold archiving of the change ledger, with a
+proof of the move on every run and a rollback when the proof fails.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 230 tests ×4 + `package` ×5 (commit 8c3352a) |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` (now 14) |
+| 3 | Examples run | ✅ quickstart, lifecycle, MCP client, handoff, **archive** (tamper case included) |
+| 4 | Every "not implemented" claim re-run against code | ✅ no node archiving, no compression, no MCP tool, `L2` live-only — all still true and stated |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.11.0" |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.11.0 everywhere |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; wheel installed and `amg archive` exercised from the installed console script; sdist's own 230 tests pass inside the unpacked archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.11.0` |
+| 9 | `python3 tools/verify.py` green | ✅ eight steps, 0 skipped |
+| 10 | The measurement is re-runnable, not quoted | ✅ `benchmarks/archive_cost.py` produces every number in this release from any legacy graph |
+
+### What the proof is, in one paragraph
+
+`--apply` snapshots the file, then compares five things produced independently: the
+archive file **re-read from disk** against the records it claims to hold, the live
+ledger against *remainder + one pointer*, `state_sha256` before and after (must be
+identical — nodes and edges are not touched), `check()` on the persisted graph, and
+the rev numbers across the archive/live boundary (must be contiguous). Any failure
+writes the snapshot back and exits 1 with `E_ARCHIVE_VERIFY`. `--verify` re-runs the
+same checks later from disk only, which is how a dropped record becomes a visible
+hole instead of silence.
+
+### Measured before shipping (macOS, 1-min load ≈ 3.4)
+
+| graph | file | ledger share | moved @1 d | file after | single write |
+|---|---|---|---|---|---|
+| 15.7 MB real team graph | 1289 nodes / 2604 changes | 79.0% | 2275 records | 5.9 MB (−62.2%) | 226.1 → 72.7 ms |
+| this project's own graph | 198 nodes / 454 changes | 48.8% | 265 records | 337 KB (−32.3%) | 7.7 → 5.5 ms |
+
+At the default 30-day cutoff, **0 records qualify today** on both graphs (8 days
+old). Quoted as measured, not extrapolated.
+
+### Honest limits of this release
+
+The archive is a second file on the same disk, protected by the same OS user: it is
+not a backup, and it does not survive `rm -rf`. `L2` search no longer covers moved
+history. Snapshots cost one full graph copy per run and are not auto-pruned. Nodes
+are not archived at all (DECISIONS #24 explains why, and what it would cost).
+
+---
+
 ## v0.10.0 — 2026-10-31
 
 Status: **released**. New capability: handoff cards, adapted from a field-tested
