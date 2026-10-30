@@ -1,7 +1,10 @@
 """Single-file graph store: advisory lock, full-graph read, atomic replace.
 
 No partial writes: a crash leaves either the old file or the new one.
-fcntl-based locking is POSIX-only; Windows locking is NOT verified (README).
+Locking is `fcntl.flock` on POSIX and `msvcrt.locking` on Windows. Both are exercised
+by the cross-process lock and concurrent-writer tests on `windows-latest` in CI; what
+is **not** measured on Windows is the latency tail — the burst timings in
+`docs/CONCURRENCY.md` are macOS-only and say so.
 """
 import contextlib
 import json

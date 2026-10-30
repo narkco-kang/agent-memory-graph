@@ -42,13 +42,16 @@ TOOLS = [
     {
         "name": "memory_search",
         "description": "Search the memory graph. Returns hits with anchor_state, evidence count and status. "
-                       "Lexical only; unanchored hits are returned by default (anchor_state='none').",
+                       "Lexical, word-aware; unanchored hits are returned by default (anchor_state='none'). "
+                       "include_archive extends L2 to the cold archive and marks every archived hit.",
         "inputSchema": {"type": "object", "properties": {
             "query": {"type": "string"},
             "layer": {"type": "string", "enum": ["L1", "L2", "L3", "L4"]},
             "k": {"type": "integer", "minimum": 1},
             "strict": {"type": "boolean"},
-            "expand": {"type": "boolean"}},
+            "expand": {"type": "boolean"},
+            "include_archive": {"type": "boolean",
+                                "description": "L2 only: also search the cold archive"}},
             "required": ["query"], "additionalProperties": False},
     },
     {
@@ -129,7 +132,8 @@ def _call_tool(memory, name: str, args: dict, read_only: bool = False):
     if name == "memory_search":
         return memory.search(args["query"], layer=args.get("layer", "L3"),
                              k=args.get("k", 10), strict=args.get("strict", False),
-                             expand=args.get("expand", False), by="mcp")
+                             expand=args.get("expand", False), by="mcp",
+                             include_archive=args.get("include_archive", False))
     if name == "memory_add":
         return memory.add_node(
             id=args["id"], type=args["type"], label=args["label"], source=args["source"],

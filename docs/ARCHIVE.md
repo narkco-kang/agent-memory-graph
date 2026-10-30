@@ -106,8 +106,11 @@ direction, and re-run the script for a number you intend to quote.
 - **Snapshots cost a full graph copy each run** (15.7 MB in the first table row) and
   are never cleaned up automatically. They are emergency restore points; delete old
   ones once you trust the verification.
-- **Not exposed over MCP** (the stdio server's tool list is unchanged in 0.11.0) and
-  **not automatic** — no background job prunes your history.
+- **The command is not exposed over MCP** — the stdio server still has eight tools and
+  none of them archives. Its `memory_search` *can* read the archive: pass
+  `include_archive: true` with `layer: "L2"` (v0.15.0), and archived hits come back
+  marked exactly as they do from the CLI. Nothing archives itself, over MCP or
+  otherwise.
 - **Does not make `history_sha256` cover archived history.** `fingerprint` prints
   the live history digest; the archive's own payload digests plus the contiguity
   check are what cover the moved records.

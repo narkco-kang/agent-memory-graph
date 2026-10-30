@@ -128,9 +128,12 @@ identifier lookup. The precision/recall trade is measured in
 **Not implemented** — measured against a pre-registered bar and rejected for the
 default path, or simply out of scope; do not assume them: vector / embedding search
 (`experiments/retrieval_eval/`), authentication, multi-tenant isolation,
-authorization, a TTL daemon, Windows file-locking verification, node archiving, and
-any benchmark above 1,289 nodes. Every one of these is repeated in the document that
-would otherwise imply it.
+authorization, a TTL daemon, node archiving. Two claims that used to sit in this list
+were **wrong in the other direction** and were corrected on 2026-10-31: Windows locking
+*is* exercised (cross-process lock tests pass on `windows-latest` in CI — only the
+latency tail is unmeasured), and synthetic benchmarks *do* reach 10k nodes
+(`docs/BENCHMARKS.md`; concurrency and recall are not measured at 10k). Every claim
+here is repeated in the document that would otherwise imply it.
 
 ## Measurement, not marketing
 

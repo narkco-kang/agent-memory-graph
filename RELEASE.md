@@ -19,6 +19,30 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.15.0 — 2026-10-31
+
+Status: **released**. The archive is reachable over MCP; two false "not implemented"
+claims are corrected.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 255 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate + size budget | ✅ 15 documents, both gates green |
+| 3 | The MCP change is pinned by a test | ✅ `include_archive` in the schema, tool count still 8, refusal on L3 tested over JSON-RPC |
+| 4 | Every corrected claim cites evidence | ✅ windows-latest job log (test names), `BENCHMARKS.md` table; recorded in the CHANGELOG |
+| 5 | Correction cut both ways | ✅ two claims were *understated*, not just overstated — underclaiming is drift too |
+| 6 | No behaviour change outside MCP | ✅ CLI/library archive path untouched; 255 tests |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; sdist's own 255 tests pass inside the unpacked archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.15.0` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | Not-shipped list re-audited, not copied | ✅ README / store docstring / ARCHIVE / API paragraphs re-read against code and CI |
+
+The uncomfortable part of this release is that the wrong claims were in the *safe*
+direction: saying "unverified" when the matrix verifies it costs credibility in a way
+that a reader cannot detect. An audit that only removes overclaims is not an audit.
+
+---
+
 ## v0.14.0 — 2026-10-31
 
 Status: **released**. Behaviour change: word-aware lexical matching, with the recall

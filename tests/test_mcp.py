@@ -43,6 +43,17 @@ class McpTests(unittest.TestCase):
         # stdout must be protocol-only
         self.assertEqual(res.stdout.count('"jsonrpc"'), len(replies))
 
+    def test_search_schema_advertises_include_archive(self):
+        replies, _ = self.speak([frame(jsonrpc="2.0", id=1, method="initialize", params={}),
+                                 frame(jsonrpc="2.0", method="notifications/initialized"),
+                                 frame(jsonrpc="2.0", id=2, method="tools/list")])
+        tools = {t["name"]: t for t in replies[1]["result"]["tools"]}
+        props = tools["memory_search"]["inputSchema"]["properties"]
+        self.assertIn("include_archive", props)
+        self.assertEqual(props["include_archive"]["type"], "boolean")
+        # The tool list stays at eight: the archive is a search option, not a new tool.
+        self.assertEqual(len(tools), 8)
+
     def test_add_then_search_roundtrip(self):
         evidence = [{"locator": "path:README.md", "content_sha256": SHA,
                      "captured_at": "2026-10-30T10:00:00+08:00"}]
@@ -58,6 +69,43 @@ class McpTests(unittest.TestCase):
         hits = json.loads(replies[1]["result"]["content"][0]["text"])
         self.assertEqual(hits[0]["id"], "decision.limit")
         self.assertEqual(hits[0]["anchor_state"], "present")
+
+    def _old_graph(self):
+        """A graph whose whole ledger is old enough to archive, built with AMG_NOW."""
+        self.dir = os.path.join(tempfile.mkdtemp(prefix="amg-mcp-old-"), "mem")
+        env = dict(os.environ)
+        env["PYTHONPATH"] = os.path.join(ROOT, "src")
+        env["AMG_NOW"] = "2026-08-01T10:00:00+08:00"
+        for args in (["init", self.dir, "--group", "t"],
+                     ["add", self.dir, "--id", "task.alpha", "--type", "task",
+                      "--label", "alpha", "--source", "cmd:x"]):
+            subprocess.run([sys.executable, "-m", "amg.cli", *args], check=True,
+                           capture_output=True, text=True, encoding="utf-8", env=env, cwd=ROOT)
+        env.pop("AMG_NOW")
+        subprocess.run([sys.executable, "-m", "amg.cli", "archive", self.dir,
+                        "--older-than-days", "1", "--apply"], check=True,
+                       capture_output=True, text=True, encoding="utf-8", env=env, cwd=ROOT)
+
+    def test_search_can_include_the_cold_archive(self):
+        self._old_graph()
+        replies, _ = self.speak([
+            frame(jsonrpc="2.0", id=1, method="tools/call", params={
+                "name": "memory_search",
+                "arguments": {"query": "task.alpha", "layer": "L2",
+                              "include_archive": True}}),
+        ])
+        hits = json.loads(replies[0]["result"]["content"][0]["text"])
+        self.assertTrue(any(h.get("archived") for h in hits), hits)
+        self.assertTrue(all("archive_file" in h for h in hits if h.get("archived")))
+
+    def test_include_archive_is_refused_on_node_layers_over_mcp(self):
+        replies, _ = self.speak([
+            frame(jsonrpc="2.0", id=1, method="tools/call", params={
+                "name": "memory_search",
+                "arguments": {"query": "x", "layer": "L3", "include_archive": True}}),
+        ])
+        self.assertTrue(replies[0]["result"]["isError"])
+        self.assertIn("E_ARCHIVE_LAYER", replies[0]["result"]["content"][0]["text"])
 
     def test_gate_rejects_through_mcp(self):
         replies, _ = self.speak([frame(jsonrpc="2.0", id=1, method="tools/call", params={

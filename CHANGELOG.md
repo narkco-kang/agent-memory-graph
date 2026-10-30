@@ -3,6 +3,38 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.15.0] — 2026-10-31
+
+New: the archive is reachable over MCP. Fixed: two "not implemented" claims that were
+false — in the direction that made the project look less verified than it is.
+
+### Added
+
+- **`memory_search` accepts `include_archive`** (MCP, `layer: "L2"` only). Archived
+  hits come back marked `archived: true` with their `archive_file`, exactly as from the
+  CLI; any other layer returns `E_ARCHIVE_LAYER` as `isError: true`. The tool list stays
+  at eight — this is a search option, not a ninth tool, and a test pins both facts.
+  `docs/ARCHIVE.md` no longer says the archive is invisible over MCP.
+
+### Fixed
+
+- **Two stale "not implemented" entries were wrong, and are corrected in the honest
+  direction.** The README listed "Windows file-locking verification" and "any benchmark
+  above 1,289 nodes" as not done. Both were false: `test_lock.py` and
+  `test_concurrency.py` run and pass on `windows-latest` in CI (cross-process
+  exclusivity, serialised writes, concurrent writers losing nothing), and
+  `docs/BENCHMARKS.md` has synthetic 1k/5k/10k measurements. What is still true is
+  narrower and is what the list now says: the **Windows latency tail is unmeasured**
+  (burst timing is macOS-only), and **concurrency and recall are not measured at 10k**.
+  `src/amg/store.py`'s module docstring said "Windows locking is NOT verified" for the
+  same reason and now states the real coverage.
+
+### Not shipped in 0.15.0 (do not assume)
+
+- No MCP tool archives anything: `amg archive` remains a CLI/library operation, because
+  a write that moves history should be an explicit, leased decision, not an agent tool.
+- No Windows burst/latency measurement; no 10k-node concurrency or retrieval numbers.
+
 ## [0.14.0] — 2026-10-31
 
 Changed behaviour: **lexical matching is word-aware**, so queries that cannot

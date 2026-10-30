@@ -122,6 +122,10 @@ eight tools: `memory_search`, `memory_add`, `memory_status`, `memory_supersede`,
 - **no authentication.** Whoever can start the process can read and write the
   graph. It is a local, trusted, single-user tool; do not wrap it in a network
   transport without adding an authorization layer first.
+- **`memory_search` takes `include_archive`** (v0.15.0): with `layer: "L2"` it also
+  searches `archive/changes-*.json`, and each archived hit carries `archived: true` and
+  its `archive_file`. Any other layer returns `E_ARCHIVE_LAYER` as `isError: true` —
+  the same rule as the CLI.
 - **`--read-only`** refuses the write tools (`E_READ_ONLY`, returned as
   `isError: true`) and advertises only the five read tools. The guarantee is
   enforced twice: the server refuses before dispatch, and the underlying
