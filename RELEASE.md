@@ -19,6 +19,34 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.7.5 — 2026-10-30
+
+Status: **released**. No library change. A measurement release: the real-world run
+becomes a script, and a second live graph of different shape is measured.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 191 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` |
+| 3 | Examples run | ✅ quickstart, lifecycle, `examples/mcp_client.py` |
+| 4 | Every "not implemented" claim re-run against code | ✅ unchanged set; no library code touched |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.7.5" — identical to 0.7.4 |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.7.5 everywhere |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; sdist's own 191 tests pass inside the archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.7.5` |
+| 9 | `python3 tools/verify.py` green | ✅ including the artifact step |
+| 10 | Every published number reproducible | ✅ `benchmarks/real_graph.py` reproduces both live-graph tables |
+
+### The point of the second graph
+
+One graph's numbers kept being read as general properties. The second graph (0.44 MB,
+no validity windows, legacy evidence throughout) shows which numbers are shape-driven:
+the IR-4 conflict count (172 of 187 `done` nodes → 0 with the pin) tracks the legacy
+evidence format, and write cost tracks bytes at ~10 ms/MB (4 ms at 0.44 MB, 153 ms at
+15.4 MB). Reads stay single-digit milliseconds on both.
+
+---
+
 ## v0.7.4 — 2026-10-30
 
 Status: **released**. No library change. One-command verification, and warning

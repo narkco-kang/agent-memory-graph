@@ -75,7 +75,7 @@ Read in this order; each one narrows the next:
 |---|---|---|
 | [`API.md`](API.md) | Commands, methods, error codes — the on-disk `amg/v1` contract | contract, CI-enforced |
 | [`BENCHMARKS.md`](BENCHMARKS.md) | How fast on 1k/5k/10k synthetic nodes | measured |
-| [`REAL-WORLD.md`](REAL-WORLD.md) | The same, on a live 1,249-node graph | measured |
+| [`REAL-WORLD.md`](REAL-WORLD.md) | Two live graphs of different shape, and where their numbers disagree | measured |
 | [`WRITE-COST.md`](WRITE-COST.md) | Where the write time goes, and what could move it | measured, all options rejected or deferred |
 | [`CONCURRENCY.md`](CONCURRENCY.md) | What concurrent writers do; why the tail exists | measured |
 | [`DESIGN-HISTORY.md`](DESIGN-HISTORY.md) | How to make writes cheap without losing atomicity | **proposal, not built** |
@@ -100,6 +100,7 @@ check when `dist/` exists. Individually:
 ```bash
 PYTHONPATH=src python3 -W error::ResourceWarning -m unittest discover -s tests -v
 python3 tools/check_doc_symbols.py                        # README + every docs/*.md
+python3 benchmarks/real_graph.py <graph.json>             # the table in REAL-WORLD.md
 bash examples/quickstart.sh && bash examples/lifecycle.sh
 python3 examples/mcp_client.py                            # a real MCP session
 

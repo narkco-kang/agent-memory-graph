@@ -1,8 +1,16 @@
-# Real-world run: 1,249-node graph, 15.3 MB
+# Real-world runs: two live graphs
 
-Everything else in `docs/BENCHMARKS.md` uses synthetic graphs. This page is one
-run against a **live** graph that has been written daily by a multi-agent team for
-a week: 1,249 nodes, 640 edges, 2,558 change records, 15,297,657 bytes.
+Everything else in `docs/BENCHMARKS.md` uses synthetic graphs. This page has
+measurements from two **live** `group-kg/v1` graphs written daily by a multi-agent
+team, of deliberately different shape:
+
+- a command-centre graph: 1,249 nodes, 640 edges, 2,558 changes, 15.3 MB;
+- this project's own bookkeeping graph: 187 nodes, 152 edges, 429 changes, 0.44 MB,
+  no validity windows and legacy evidence throughout.
+
+The second one exists because a single graph invited readers to treat its numbers as
+general. Where the two disagree, the shape is usually the explanation, and the
+sections below say which numbers move and why.
 
 Method (re-runnable, no private content copied into this repository):
 
@@ -12,6 +20,11 @@ Method (re-runnable, no private content copied into this repository):
    `doctor`, `search`, `digest`, `related` and one write, timing each with
    `perf_counter`;
 4. publish aggregates only — no node ids, labels or notes leave the source graph.
+
+Step 3 is now code: `benchmarks/real_graph.py <graph.json>` performs the whole run
+and prints the table below. Timings are **in-process** (library calls), matching this
+page; a CLI invocation additionally costs ~48–51 ms of interpreter startup, measured
+by the script and reported separately, so the two kinds of number are never mixed.
 
 ## Results
 
@@ -57,8 +70,9 @@ Method (re-runnable, no private content copied into this repository):
 
 - **No concurrency.** One process, one writer. The advisory lock was exercised
   only by the test suite (`test_lock.py`), not under load.
-- **One graph, one week, one team.** 1,249 nodes is not 10k; the synthetic
-  benchmarks cover that separately and are labelled as synthetic.
+- **Two graphs, both from one team's tooling.** That is twice the evidence, not a
+  representative sample; 1,282 nodes is still not 10k, and the synthetic benchmarks
+  cover that separately and are labelled as synthetic.
 - **Windows and macOS numbers are not here** — this run is on macOS. Correctness
   on Windows is in CI; latency there is unmeasured.
 - **The 3 stale conflicts are left unfixed** on purpose. Fixing them by touching
@@ -67,9 +81,72 @@ Method (re-runnable, no private content copied into this repository):
 - **No content inspection.** This page deliberately contains no node text, no
   labels and no ids, because the source graph is internal.
 
+## Second live graph: 187 nodes, different shape
+
+The first graph is a command centre: tasks, decisions and artefacts, 15.4 MB, mostly
+written by an agent pipeline. The second is this project's own bookkeeping graph —
+187 nodes, 437,602 bytes, rev 429 — and its shape is different in the ways that
+matter for this library: **no node carries a validity window**, 115 of 187 nodes hold
+legacy evidence as bare locator strings, and the graph is 35× smaller.
+
+| step | result | time |
+|---|---|---|
+| `adopt` | 187 → 187 nodes, 152 → 149 edges (3 duplicate edges merged), 429 → 430 changes | **6 ms** |
+| source file after adopt | `sha256` unchanged | — |
+| `check` | **0 errors** | 0.4 ms |
+| `audit` (no pin) | **172 conflicts** — 172 × `done` without evidence (IR-4) | 0.4 ms |
+| `audit --pin` | **0 conflicts**, pin report `match: true` | 0.3 ms |
+| `expire` (dry-run) | 0 eligible — no node carries `valid_until` | 2.7 ms |
+| `fingerprint` | state + history digests, rev 430 | 1.7 ms |
+| `doctor` | no hygiene findings | 0.0 ms |
+| `search` k=10 / k=50 | 10 hits | 0.4 / 0.4 ms |
+| `digest` (65,536 B budget) | 65,526 bytes | 0.4 ms |
+| `related` depth 1 | 11 neighbours | 0.1 ms |
+| one `add_node` | file rewritten atomically | **4 ms** |
+
+## Re-running the first graph later: the numbers move, and should
+
+The measurement above is dated. Re-running the same script on the same live graph at
+rev 2,604 (it kept being written) gives:
+
+| step | first run (rev ~2,570) | re-run (rev 2,604) |
+|---|---|---|
+| nodes / edges / changes | 1,249 / 636 / 2,570 | 1,282 / 635 / 2,594 |
+| `adopt` | 140 ms | 142 ms |
+| `check` | 4.4 ms | 4.0 ms |
+| `audit` (no pin) | 1,029 conflicts | 1,059 conflicts |
+| `audit --pin` | **3** conflicts | **4** conflicts |
+| `expire` (dry-run) | 78 ms | 78.5 ms |
+| `fingerprint` | 64 ms | 65.5 ms |
+| `search` k=10 | 6.7–7.5 ms | 6.9 ms |
+| one `add` | 147 ms | 153 ms |
+
+The pinned-conflict count went **3 → 4** because time passed: staleness is a
+property of *now*, not of the graph. A tool that reported a constant here would be
+reporting the wrong thing.
+
+## What the two graphs say together
+
+- **Read paths are flat and fast**: single-digit milliseconds on both, 15.4 MB and
+  0.44 MB alike. The `audit` conflict count grows with data; its *time* does not.
+- **Write cost tracks file size**, not node count: ~4–6 ms at 0.44 MB, ~153 ms at
+  15.4 MB — about 10 ms per MB, which is the whole-file rewrite plus `fsync`. That is
+  why the trigger is stated in bytes as well as nodes.
+- **The IR-4 conflict count measures legacy evidence format, not graph health**:
+  172 of 172 `done` nodes here, 1,026 of 1,249 there — both collapse under the pin
+  (to 0 and 4 respectively). Without the pin the number would say "almost everything
+  is broken", which would be false.
+- **Expiry is inert in both, for the same reason**: nobody records `valid_until`.
+  Same honest state on 187 nodes and on 1,282.
+- **Adoption cost is linear in bytes**: 6 ms for 0.44 MB, 142 ms for 15.4 MB.
+
 ## Reproduce on your own graph
 
 ```bash
+# one command, prints the whole table (in-process timings and aggregates only)
+python3 benchmarks/real_graph.py /path/to/graph.json --label "my graph"
+
+# or step by step through the CLI
 SRC=/path/to/legacy-graph.json
 D=$(mktemp -d)/mem
 time amg adopt "$SRC" "$D" --group my-group --pin-out /tmp/pin.json

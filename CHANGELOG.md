@@ -3,6 +3,46 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.7.5] — 2026-10-30
+
+**No library change**; `src/amg/` differs only in the version string. It turns the
+real-world measurement into a re-runnable script and adds a second live graph, so the
+published numbers are no longer one graph's anecdote.
+
+### Added
+
+- **`benchmarks/real_graph.py`** — runs the whole `REAL-WORLD.md` measurement against
+  any `group-kg/v1` graph: adopt, check, audit (with and without the pin), expire,
+  fingerprint, doctor, search, digest, related and one write, then prints the table.
+  In-process timings, matching the published run; CLI startup (~48–51 ms) is measured
+  and reported separately so the two are never mixed. It verifies the source
+  `sha256` before and after and prints **aggregates only** — no ids, labels, notes or
+  query strings.
+- **A second live graph in `docs/REAL-WORLD.md`**: this project's own bookkeeping
+  graph, 187 nodes / 152 edges / 429 changes / 0.44 MB, chosen because its shape is
+  different — 172 of 187 `done` nodes carry legacy evidence, no node has a validity
+  window, and it is 35× smaller. Adopt 6 ms, check 0 errors in 0.4 ms, audit 172
+  conflicts → **0** with the pin, one write **4 ms**.
+
+### Changed
+
+- **`docs/REAL-WORLD.md` records that its numbers move, with evidence.** Re-running
+  the script on the first live graph a few hours later (rev 2,570 → 2,604) gives
+  1,282 nodes, adopt 142 ms, one write 153 ms, and **pinned conflicts 3 → 4** — time
+  passed, so staleness grew. A tool reporting a constant there would be reporting
+  the wrong thing.
+- The page now states which numbers are **shape-dependent** (IR-4 conflict count
+  tracks legacy evidence format, write cost tracks file size at ~10 ms/MB) and which
+  are flat (single-digit-millisecond reads on both graphs).
+
+### Not shipped in 0.7.5 (do not assume)
+
+Unchanged from 0.7.4 — the library gained nothing: no authentication /
+authorization / multi-tenancy (out of scope by decision), no vector retrieval in the
+default path (measured, rejected), no tamper *proof*, no TTL scheduler, no
+encryption at rest, no lock fairness, and history compression remains a design
+(`docs/DESIGN-HISTORY.md`), not a capability.
+
 ## [0.7.4] — 2026-10-30
 
 **No library change**; `src/amg/` differs only in the version string. It makes the
