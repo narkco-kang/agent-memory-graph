@@ -19,6 +19,26 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.22.0 — 2026-10-31
+
+Status: **released**. Maintenance round: canonical `changes[]`, a truthful `check` hint,
+and documentation re-homed before the size gates went red.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 293 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate + size budget | ✅ 15 documents; API 553 B and DECISIONS 33 B of headroom restored by moving detail |
+| 3 | The defect was reproduced first | ✅ legacy `detail` record kept a third shape; `check` advised migrate after migrate |
+| 4 | No data is deleted to normalize | ✅ `detail` is folded into `note` and counted; nothing dropped |
+| 5 | The new behaviour is idempotent | ✅ second `migrate` reports `changed: 0` |
+| 6 | Old behaviour still covered | ✅ pre-migrate hint still says "run `amg migrate`" |
+| 7 | Content moved, not deleted, for the budget | ✅ adoption list → `ADOPTION.md`; decisions #9/#10 → owning docs |
+| 8 | Clean install from the tag | ✅ `git+...@v0.22.0` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | The finding is in the log | ✅ CHANGELOG 0.22.0 + DECISIONS #33 |
+
+---
+
 ## v0.21.0 — 2026-10-31
 
 Status: **released**. Post-release review round: three boundary defects fixed, each with a

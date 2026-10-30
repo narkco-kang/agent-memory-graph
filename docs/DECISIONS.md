@@ -41,28 +41,19 @@ Each entry states the decision, the evidence behind it, and what it costs.
    no claim about semantics, because a fake semantic check would be worse than
    none.
 
-9. **Adoption never fabricates evidence.** A legacy graph stores evidence as bare
-   locator strings (658 of them on the real graph, 0 valid objects). Turning
-   those into evidence objects would require inventing `content_sha256`, which
-   is the exact lie the gate exists to prevent. So `amg adopt` preserves them in
-   `legacy_evidence`, leaves `evidence` empty, and reports the legacy ratio that
-   `audit --pin` already measures. Placeholder sources become explicit
-   provenance (`adopted:<schema>:<sha12>`), `superseded_at` is inferred from
-   `updatedAt` and flagged, and `valid_from` stays `null` rather than being
-   back-filled from `changes[].at`. Cost: adopted history is not retro-actively
-   verified — it is *labelled* as unverified, which is the honest state.
-   *Signed 2026-10-29.*
+9. **Adoption never fabricates evidence.** Legacy graphs store evidence as bare locator
+   strings; turning them into objects would require inventing `content_sha256` — the lie
+   the gate exists to prevent. `amg adopt` preserves them in `legacy_evidence`, leaves
+   `evidence` empty, stamps the placeholder source as `adopted:<schema>:<sha12>`, infers
+   `superseded_at` from `updatedAt` with a flag, and leaves `valid_from` null. Cost:
+   adopted history is *labelled* unverified, not retro-verified. Details:
+   `docs/ADOPTION.md`. *Signed 2026-10-29.*
 
-10. **Unknown validity time can never be auto-expired.** `amg adopt` cannot know
-    when a migrated fact became true (`changes[].at` is write time, not validity
-    time), so adopted nodes carry `valid_time_known: false` and `valid_from:
-    null`. Consequences, all enforced: `audit` downgrades an expired
-    `valid_until` on such a node from conflict to hint; `expiry_eligible()`
-    refuses them; `audit` prints the count. Expiring them would delete real
-    facts on the strength of a timestamp we never had — worse than having no TTL
-    at all. Cost: migrated graphs stay on the 3-day staleness rule only, until
-    someone records a real validity window on the node.
-    *Signed 2026-10-29.*
+10. **Unknown validity time can never be auto-expired.** Adopted nodes carry
+    `valid_time_known: false`; an expired `valid_until` on such a node is a hint, not a
+    conflict, `expiry_eligible()` refuses it, and `audit` counts the class. Expiring on a
+    timestamp we never had would delete a fact on a guess. Details: `docs/API.md`
+    §Expiry. *Signed 2026-10-29.*
 
 11. **Tamper evidence lives outside the file, not inside it.** The obvious design
     is a hash chain over `changes[]` (`changes[i].prev`). It was rejected: anyone
@@ -348,3 +339,9 @@ Each entry states the decision, the evidence behind it, and what it costs.
     matched: from `k >= 5` it keeps `max(1, k // 5)` slots, one per file first; below 5,
     unchanged. *Signed 2026-10-31; tests;
     v0.21.0.*
+33. **`amg migrate` folds legacy `detail` into `note`; `check` stops advising a no-op.**
+    A legacy-only key (`detail`) survived `migrate`, keeping a third `changes[]` shape
+    (`changes-key-shapes`). `normalize()` now moves it into `note` (never drops it) and
+    reports `folded_detail` and any `non_canonical_shapes` left; `check` distinguishes a *missing* rev (run migrate) from
+    a *null* rev left by migrate (unknown by design). Idempotent: a second run reports
+    `changed: 0`. *Signed 2026-10-31; `tests/test_migrate.py`; v0.22.0.*

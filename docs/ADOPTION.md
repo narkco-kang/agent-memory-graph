@@ -11,7 +11,20 @@ and it refuses to invent data:
 - `superseded_at` / `valid_until` inferred from `updatedAt` are flagged
   `superseded_at_inferred`; `valid_from` stays `null` when unknown;
 - duplicate ids, unknown enums and dangling edges are refusals (dangling edges can
-  only be dropped with `--drop-dangling`, and the count is reported).
+  only be dropped with `--drop-dangling`, and the count is reported);
+- edges that repeat an identical `(from, to, kind)` triple are merged (nothing is
+  lost) and the count is reported; `--pin-out` writes the frozen exemption baseline
+  for `amg audit --pin`;
+- the source is byte-identical afterwards (`src_sha256` reported), and an existing
+  destination `graph.json` is refused, never overwritten.
+
+Exit codes: `0` adopted and the result passes `check`; `1` the source is unsupported or
+the result would not pass `check`; `2` wrong input (missing graph, destination exists,
+source already `amg/v1`).
+
+`amg migrate` then canonicalizes `changes[]` in the adopted graph: missing `target`/`rev`
+are filled with `null` (never invented), the legacy `detail` key is folded into `note`
+(never dropped), and the shapes before/after are printed.
 
 ## Measured on a real graph
 

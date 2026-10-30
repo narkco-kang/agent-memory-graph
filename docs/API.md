@@ -412,23 +412,15 @@ Matching is lexical and, as of v0.14.0, word-aware:
 amg adopt <src-dir> <dst-dir> [--group NAME] [--drop-dangling] [--pin-out PATH] [--dry-run] [--json]
 ```
 
-Guarantees, all covered by `tests/test_adopt.py`:
+Guarantees (full list in [ADOPTION.md](ADOPTION.md), each covered by
+`tests/test_adopt.py`): never writes `src`, never overwrites `dst`, never fabricates
+evidence, infers timestamps only with a flag, and refuses duplicate ids, unknown enums
+and dangling edges rather than cleaning them silently.
 
-- **never writes to `src`** (byte-identical before/after, `src_sha256` reported);
-- **never overwrites `dst`** — an existing `graph.json` is refused;
-- **never fabricates evidence**: legacy bare strings are preserved in
-  `legacy_evidence`, `evidence` stays `[]`. The legacy ratio is reported by
-  `audit`, so the debt stays visible instead of being papered over;
-- placeholder sources (`""`/`unknown`/`manual`) become
-  `adopted:<src-schema>:<src-sha12>`, with the old value kept in `legacy_source`;
-- `superseded_at`/`valid_until` are inferred from `updatedAt` only and flagged;
-- `valid_from` stays `null` when unknown (never back-filled from `changes[].at`)
-  and the node is stamped `valid_time_known: false`;
-- duplicate ids, unknown enums and dangling edges are **refusals**; dangling
-  edges may be dropped only with `--drop-dangling`, and the count is reported;
-- edges that repeat an identical `(from, to, kind)` triple are merged (no
-  information is lost) and the count is reported;
-- `--pin-out` writes the frozen exemption baseline for `amg audit --pin`.
+`amg migrate` normalizes legacy `changes[]` to one canonical shape: missing `target`/`rev`
+become `null` (never invented), `detail` is folded into `note` (never dropped), and the
+shapes before/after are reported — a non-canonical shape left over is visible, not
+assumed away.
 
 Exit codes: `0` adopted and the resulting graph passes `check`; `1` the source
 data is unsupported or the result would not pass `check`; `2` wrong input

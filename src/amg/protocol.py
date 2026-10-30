@@ -79,7 +79,13 @@ def check(doc: dict, strict: bool = False) -> dict:
             errors.append(f"changes[{i}]: missing op")
         rev = c.get("rev")
         if rev is None:
-            hints.append(f"changes[{i}]: missing rev (run `amg migrate`)")
+            if "rev" in c:
+                # Left null on purpose by `amg migrate`: the rev was never recorded and
+                # inventing one would be a lie the audit cannot see. Telling the reader
+                # to "run amg migrate" again would be advice that cannot help.
+                hints.append(f"changes[{i}]: rev unknown (legacy record, left null by migrate)")
+            else:
+                hints.append(f"changes[{i}]: missing rev (run `amg migrate`)")
         elif isinstance(rev, int):
             if rev < last_rev:
                 errors.append(f"changes[{i}]: rev went backwards ({rev} < {last_rev}) — IR-1")

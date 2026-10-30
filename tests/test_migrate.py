@@ -37,6 +37,38 @@ class MigrateTests(unittest.TestCase):
             self.assertIsNone(c["rev"])  # never invented
         self.assertTrue(all(len(k) > 0 for k in stats["shapes_after"]))
 
+    def test_detail_is_folded_into_note_not_dropped_and_shapes_become_canonical(self):
+        self._inject_legacy_shapes()
+        stats = self.m.migrate()
+        self.assertEqual(stats["folded_detail"], 1)
+        self.assertEqual(stats["non_canonical_shapes"], {},
+                         f"shapes after migrate: {stats['shapes_after']}")
+        legacy = [c for c in self.m.doc["changes"] if c.get("by") == "x"]
+        filled = [c for c in legacy if c.get("op") == "fix-edge" and c.get("note")]
+        self.assertTrue(any("no target, no rev" in c["note"] for c in filled),
+                        "the only copy of `detail` must survive in `note`")
+        for c in legacy:
+            self.assertNotIn("detail", c)
+
+    def test_check_does_not_advise_migrating_twice(self):
+        self._inject_legacy_shapes()
+        before = self.m.check()
+        self.assertTrue(any("run `amg migrate`" in h for h in before["hints"]))
+        self.m.migrate()
+        after = Memory.open(self.g.dir).check()
+        text = " ".join(after["hints"])
+        self.assertNotIn("run `amg migrate`", text,
+                         "after migrate a null rev is unknown, not an un-migrated record")
+        self.assertIn("rev unknown", text)
+
+    def test_migrate_is_idempotent(self):
+        self._inject_legacy_shapes()
+        self.m.migrate()
+        again = Memory.open(self.g.dir).migrate()
+        self.assertEqual(again["changed"], 0)
+        self.assertEqual(again["filled_target"], 0)
+        self.assertEqual(again["folded_detail"], 0)
+
 
 if __name__ == "__main__":
     unittest.main()

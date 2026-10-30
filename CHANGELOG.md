@@ -3,6 +3,28 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.22.0] — 2026-10-31
+
+One canonical `changes[]` shape after migration, a `check` that stops advising a no-op,
+and documentation moved where it belongs to restore budget headroom.
+
+### Fixed
+
+- `amg migrate` folds the legacy `detail` key into `note` (moved, never dropped) and
+  reports `folded_detail` plus any `non_canonical_shapes` left, so the three legacy
+  `changes[]` shapes collapse to the canonical one (`changes-key-shapes`).
+- `amg check` no longer prints "run `amg migrate`" for a `rev` that `migrate` left null on
+  purpose; it reports the rev as unknown by design. The previous advice was a loop that
+  could not help.
+- **Documentation budget**: the adoption guarantee list moved from `docs/API.md` to
+  `docs/ADOPTION.md`, and decisions #9/#10 detail to their owning docs. Both caps were
+  1–9 bytes from failing `check_doc_sizes`; API now has 553 B and DECISIONS 33 B of room.
+
+### Tests
+
+293 tests (+3): `detail` folded not dropped and shapes canonical, post-migrate hint
+wording, migrate idempotent.
+
 ## [0.21.0] — 2026-10-31
 
 Three boundary defects in shipped behaviour, found by the post-release review and fixed
