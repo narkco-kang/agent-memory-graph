@@ -3,6 +3,41 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.12.0] — 2026-10-31
+
+New contract: **documentation size budgets**, and the README restructured to fit one.
+
+### Added
+
+- **`tools/check_doc_sizes.py`** — the budget gate: `README.md` and `docs/README.md`
+  ≤ 12 KiB, every other `docs/*.md` ≤ 24 KiB. It fails with the exact overshoot, and
+  runs in CI next to the symbol gate and in `tools/verify.py`. The rule is adapted from
+  the same public workbench as the handover card (`docs/PRIOR-ART.md`), where a file
+  over the line is defined as one a reader skips. `CHANGELOG.md` and `RELEASE.md` are
+  out of scope **in words** — append-only logs, where a cap would mean deleting
+  history — not silently exempted.
+- **`docs/ADOPTION.md`** — the adoption contract (nothing fabricated, nothing
+  overwritten) and the measured before/after table on a real 1063-node graph, moved
+  out of the README. The README keeps a three-line summary and links.
+- **`docs/PRIOR-ART.md`** gains an "At a glance" list of the six systems this project is
+  measured against, and the two `grep` commands that re-check the two commitments it
+  does **not** ship (hard authorization, risk-scaled evidence).
+
+### Changed
+
+- **README.md 20,315 → 10,552 bytes**, and nothing was deleted: duplicated material
+  moved back to the document that owns it (adoption → `ADOPTION.md`, prior art →
+  `PRIOR-ART.md`, MCP tools → `API.md`, handoff/archive detail → `HANDOFF.md` /
+  `ARCHIVE.md`). A README that restated the docs was a second source of truth that
+  could drift; the budget makes the drift expensive.
+- `docs/README.md` states the budgets as a contract and says what to do when a
+  document reaches one: move detail to the owning document, do not delete it.
+
+### Not shipped in 0.12.0 (do not assume)
+
+- No automatic document splitting, no word-count or reading-time metric, no per-file
+  budget overrides: one entry budget, one reference budget, no escapes.
+
 ## [0.11.1] — 2026-10-31
 
 ### Fixed

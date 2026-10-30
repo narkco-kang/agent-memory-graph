@@ -19,6 +19,30 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.12.0 — 2026-10-31
+
+Status: **released**. New contract: documentation size budgets, plus the README
+restructured to meet one.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 238 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` (15) |
+| 3 | The new gate can fail | ✅ 7 tests, including a 12 KiB-over README and a 24 KiB-over doc |
+| 4 | Budgets are stated where a reader looks | ✅ `docs/README.md`, asserted by a test against the constants |
+| 5 | Every document is covered by default | ✅ same construction as the symbol gate, asserted by a test |
+| 6 | Nothing was deleted to fit | ✅ 20,315 → 10,552 B by moving material to `ADOPTION.md`/`PRIOR-ART.md`/`API.md`/`HANDOFF.md`/`ARCHIVE.md` |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; sdist's own 238 tests pass inside the unpacked archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.12.0` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | The rule is credited | ✅ `docs/PRIOR-ART.md` + `docs/README.md` name the source (MIT) |
+
+This round had no code change in `src/amg/`: it is a documentation-contract release.
+The gate is the deliverable, because the drift it prevents had already happened — the
+README restated five other documents, and one of them had fallen behind.
+
+---
+
 ## v0.11.1 — 2026-10-31
 
 Status: **released**. Patch: one false alarm removed from the archive proof.

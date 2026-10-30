@@ -46,6 +46,8 @@ def steps(include_examples):
          python("-W", "error::ResourceWarning", "-m", "unittest", "discover", "-s", "tests")),
         ("documentation↔code gate",
          python(os.path.join("tools", "check_doc_symbols.py"))),
+        ("documentation size budget",
+         python(os.path.join("tools", "check_doc_sizes.py"))),
     ]
     if include_examples:
         items += [

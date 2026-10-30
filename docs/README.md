@@ -9,7 +9,7 @@ important — **which ones are contracts and which are proposals**.
 | Status | What it means | Documents |
 |---|---|---|
 | **Measured** | A script in this repo produces the numbers; CI runs the safety-critical ones. | `BENCHMARKS.md`, `REAL-WORLD.md`, `WRITE-COST.md`, `CONCURRENCY.md`, `ARCHIVE.md` |
-| **Contract** | Enforced by code; the doc gate or a test fails when they disagree. | `API.md`, `THREAT-MODEL.md` |
+| **Contract** | Enforced by code; the doc gate or a test fails when they disagree. | `API.md`, `THREAT-MODEL.md`, and the size budget below |
 | **Proposal — not built** | Design work only. Nothing behind it ships. Do not quote it as a feature. | `DESIGN-HISTORY.md` |
 | **Decision record** | Why something is the way it is, including what it costs and when to revisit. | `DECISIONS.md`, `PRIOR-ART.md` |
 | **Operational guide** | How to run it, not what it does. | `SCHEDULING.md` |
@@ -44,6 +44,23 @@ important — **which ones are contracts and which are proposals**.
 6. **[`ARCHIVE.md`](ARCHIVE.md)** — when the ledger outgrows the write budget:
    `amg archive` moves cold history out and proves the move on every run, with
    before/after numbers on two real graphs and an explicit list of what it does not do.
+7. **[`ADOPTION.md`](ADOPTION.md)** — bringing an existing `group-kg/v1` graph in:
+   the migration rules (nothing fabricated, nothing overwritten) and the measured
+   result on a real 1063-node graph.
+
+## The documentation budget (a contract, not a preference)
+
+A document over its budget is a document nobody finishes. This repository enforces
+**README.md and `docs/README.md` ≤ 12 KiB**, and **every other `docs/*.md` ≤ 24 KiB**,
+with `tools/check_doc_sizes.py` in CI. The rule is adapted from a field-tested public
+workbench (credited in `PRIOR-ART.md`), where handovers are capped at 4 KB and a
+single skill at 12 KB.
+
+When a document hits its budget, the answer is to **move detail to the document that
+owns it** — not to delete it. That is why the README no longer carries the adoption
+table or the full prior-art list: both moved to the document responsible for them, and
+the README links. `CHANGELOG.md` and `RELEASE.md` are out of scope on purpose: they are
+append-only logs, and a cap there would mean deleting history.
 
 ## If you are changing the storage layer
 

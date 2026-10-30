@@ -22,6 +22,8 @@ jobs:
         run: python -W error::ResourceWarning -m unittest discover -s tests -v
       - name: doc/code symbol gate (README + every docs/*.md)
         run: python tools/check_doc_symbols.py
+      - name: documentation size budget (README ≤ 12 KiB, docs ≤ 24 KiB)
+        run: python tools/check_doc_sizes.py
       - name: end-to-end examples
         run: |
           bash examples/quickstart.sh

@@ -4,6 +4,41 @@ This file exists because a prior-art claim that nobody checked is worse than no
 claim: it wins an argument it should lose. The README cites five systems; two of
 them were cited from a second-hand summary. This is the independent check.
 
+## At a glance
+
+- **MAP-Graph** (arXiv:2608.10509) — provenance-aware memory layer over a typed
+  execution graph: permission filtering, semantic re-ranking weighted by path
+  trust, and a risk-sensitive gate *before action execution*. Closest prior work;
+  it already implements two things people might mistake for ours.
+- **Letta MemFS** — memory as a git repository of Markdown, shared via
+  commit/push/pull; version history and content hashes.
+- **Graphiti** — bi-temporal invalidation (supersede, never delete) and
+  episode→fact provenance; pluggable judgment backend.
+- **Mem0 / A-MEM** — additive extraction and memory evolution; A-MEM rewrites prior
+  memory in place, which is also a known error-propagation risk.
+- **Governed Shared Memory for Multi-Agent LLM Systems** (arXiv:2606.24535) —
+  scoped retrieval, provenance, temporal supersession, policy propagation in a
+  production service; also documents that a synchronous near-duplicate gate can
+  pre-empt an asynchronous contradiction detector and wrongly reject writes.
+- **luanyujia-workbench** (MIT) — files-as-memory workbench; source of the
+  handover and shrink rules this project adapts (sections below).
+
+What this repository ships is the **discipline pipeline**: task state as the
+authority face, expiry as a first-class citizen, and write-back discipline as a hard
+gate. Each exists as code with tests; none is new on its own — Letta MemFS, Graphiti
+and CrewAI cover parts of it.
+
+Two ideas that shape this project are **not ours and not implemented here**: hard
+authorization kept separate from graded trust, and evidence requirements scaling with
+action risk. MAP-Graph implements and ablates both. Re-check that they are absent:
+
+```bash
+grep -rniE "authoriz|permission" --include=*.py src/amg/   # no matches
+grep -rn "risk" --include=*.py src/amg/
+# only readaudit.is_high_risk and its two call sites: that classifies *reads*,
+# it does not scale write requirements by the risk of the action
+```
+
 ## Method (so the check can be re-run)
 
 - Primary source: `arxiv.org/api/query?id_list=…`, retrieved 2026-10-30 05:00 UTC.
