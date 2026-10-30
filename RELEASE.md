@@ -7,6 +7,18 @@ v0.5.0 and nine at v0.6.0. The gate now derives its list (`README.md` plus every
 `docs/*.md`), so from v0.7.0 on the count is whatever is in `docs/`, and a new
 document cannot silently escape it. Checked against the tags on 2026-10-30.
 
+## Standing CI checks (as of 2026-10-30, after v0.7.1)
+
+Eight jobs per push. Each one exists because something passed without it:
+
+| Job | Checks | What it would have missed |
+|---|---|---|
+| `test` ×4 (ubuntu 3.12/3.10, macos, windows) | 190 unit tests, editable install, doc/code gate, examples | — |
+| `package` ×4 (ubuntu/windows × 3.12/3.10) | builds sdist+wheel, `tools/check_dist.py`, installs the **wheel** and asserts the import comes from `site-packages`, runs the `amg` console script; on ubuntu 3.12 also unpacks the sdist and runs the suite inside it | v0.7.0's sdist shipped 21 tests that could not run; the wheel install had never been tried on 3.10 or Windows |
+
+The wheel install matrix is deliberate: `test` installs editable, so without it the
+artifact users actually get had only been installed on one interpreter and one OS.
+
 ## v0.7.1 — 2026-10-30
 
 Status: **released**. A packaging release: the sdist now contains everything its
@@ -14,7 +26,7 @@ own tests read, and CI builds the artifacts instead of trusting the checkout.
 
 | # | Criterion | State |
 |---|---|---|
-| 1 | CI green on five jobs | ✅ 190 tests ×4 platforms + the new `package` job |
+| 1 | CI green on five jobs | ✅ 190 tests ×4 platforms + the new `package` job (matrixed to eight jobs later the same day — see Standing checks) |
 | 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` |
 | 3 | Examples run | ✅ quickstart + lifecycle |
 | 4 | Every "not implemented" claim re-run against code | ✅ unchanged set; no library code touched in this release (`src/amg/` diff is the version string only) |
