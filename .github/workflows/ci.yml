@@ -18,8 +18,8 @@ jobs:
           python-version: ${{ matrix.python }}
       - name: install
         run: pip install -e .
-      - name: unit tests
-        run: python -m unittest discover -s tests -v
+      - name: unit tests (ResourceWarning is an error)
+        run: python -W error::ResourceWarning -m unittest discover -s tests -v
       - name: doc/code symbol gate (README + every docs/*.md)
         run: python tools/check_doc_symbols.py
       - name: end-to-end examples
@@ -83,4 +83,4 @@ jobs:
           mkdir -p /tmp/sdist
           tar xzf dist/*.tar.gz -C /tmp/sdist
           cd /tmp/sdist/agent_memory_graph-*
-          PYTHONPATH=src python -m unittest discover -s tests
+          PYTHONPATH=src python -W error::ResourceWarning -m unittest discover -s tests

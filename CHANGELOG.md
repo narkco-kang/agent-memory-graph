@@ -3,6 +3,35 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.7.4] — 2026-10-30
+
+**No library change**; `src/amg/` differs only in the version string. It makes the
+project's own checks one command, and turns the resource-leak cleanup of 0.7.3 into
+something CI enforces.
+
+### Added
+
+- **`tools/verify.py`** — runs every self-check in one command and prints one table:
+  unit tests (with `ResourceWarning` promoted to an error), the documentation↔code
+  gate, both end-to-end examples, the MCP client, and the artifact check when
+  `dist/` exists. A skipped step is printed as skipped and never counted as a pass.
+  `docs/README.md` now leads with it instead of listing six commands with no order.
+
+### Changed
+
+- **CI promotes `ResourceWarning` to an error** in both the platform test matrix and
+  the suite run from inside the sdist. The leaks were cleaned in 0.7.3 (90 warnings
+  per Windows run → 0); this keeps them from returning, and it is the same flag
+  `verify.py` uses, so CI and a local run check the same thing.
+
+### Not shipped in 0.7.4 (do not assume)
+
+Unchanged from 0.7.3 — the library gained nothing: no authentication /
+authorization / multi-tenancy (out of scope by decision), no vector retrieval in the
+default path (measured, rejected), no tamper *proof*, no TTL scheduler, no
+encryption at rest, no lock fairness, and history compression remains a design
+(`docs/DESIGN-HISTORY.md`), not a capability.
+
 ## [0.7.3] — 2026-10-30
 
 **No library change**; `src/amg/` differs only in the version string. It adds the

@@ -90,13 +90,21 @@ Root-level documents: **[`../CHANGELOG.md`](../CHANGELOG.md)**, **`../RELEASE.md
 ## Check a claim yourself
 
 ```bash
-PYTHONPATH=src python3 -m unittest discover -s tests -v   # correctness
-PYTHONPATH=src python3 benchmarks/bench.py                # synthetic numbers
-bash examples/quickstart.sh && bash examples/lifecycle.sh # end-to-end
+python3 tools/verify.py    # every check below, in order, one table
+```
+
+That covers: unit tests with `ResourceWarning` promoted to an error, the
+documentation↔code gate, both end-to-end examples, the MCP client, and the artifact
+check when `dist/` exists. Individually:
+
+```bash
+PYTHONPATH=src python3 -W error::ResourceWarning -m unittest discover -s tests -v
 python3 tools/check_doc_symbols.py                        # README + every docs/*.md
+bash examples/quickstart.sh && bash examples/lifecycle.sh
+python3 examples/mcp_client.py                            # a real MCP session
 
 # and the published artifact, separately from the checkout
-TAG=v0.7.1   # replace with the tag you mean to audit
+TAG=v0.7.4   # replace with the tag you mean to audit
 python3 -m venv /tmp/amg-install && /tmp/amg-install/bin/pip install \
   "git+https://github.com/narkco-kang/agent-memory-graph@$TAG"
 /tmp/amg-install/bin/amg version

@@ -19,6 +19,32 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.7.4 — 2026-10-30
+
+Status: **released**. No library change. One-command verification, and warning
+hygiene enforced by CI rather than remembered.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 191 tests ×4 (with `-W error::ResourceWarning`) + `package` ×5 |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` |
+| 3 | Examples run | ✅ quickstart, lifecycle, `examples/mcp_client.py` |
+| 4 | Every "not implemented" claim re-run against code | ✅ unchanged set; no library code touched |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.7.4" — identical to 0.7.3 |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.7.4 everywhere |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; wheel installed on five cells; sdist's own 191 tests pass inside the archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.7.4` |
+| 9 | `python3 tools/verify.py` green | ✅ all steps passed (artifact step requires `dist/`) |
+
+### Why a verification runner and not just a list
+
+`docs/README.md` used to list six commands in no particular order; a reviewer had to
+know which ones mattered and what a green run meant. One command with a table, and a
+skipped step that is never counted as a pass, is a smaller claim to trust — and it is
+the same set of checks CI performs, minus the platform matrix.
+
+---
+
 ## v0.7.3 — 2026-10-30
 
 Status: **released**. No library change. Adds a cross-protocol concurrency test
