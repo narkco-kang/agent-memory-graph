@@ -3,6 +3,59 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.11.0] — 2026-10-31
+
+New capability: **cold archiving of the change ledger** — move old history out of the
+live file and prove on every run that nothing was lost.
+
+### Added
+
+- **`amg archive <dir>`** (`--older-than-days N`, `--apply`, `--verify`, `--json`) and
+  `Memory.archive(days=..., apply=...)` / `Memory.archive_verify()`. A cold **prefix**
+  of `changes[]` moves into `archive/changes-r<rev>-<stamp>.json`, leaving one pointer
+  record; a record without a parseable `at` stops the prefix, and an old record behind
+  a newer one is counted as `deferred_behind_newer` rather than taken out of order.
+  Dry-run by default; nothing is written without `--apply`.
+- **A proof, not a checksum of our own output.** Every `--apply` snapshots the file to
+  `archive/snapshots/`, then verifies five independent things: the archive file
+  re-read from disk reproduces the moved records, the live ledger is exactly
+  remainder + one pointer, `state_sha256` is unchanged (nodes and edges untouched),
+  `check()` still passes, and rev numbers are contiguous across the boundary. A failed
+  proof writes the snapshot back and exits 1 with `E_ARCHIVE_VERIFY`.
+- **`amg archive --verify`** re-runs the proof later from disk only: it recomputes each
+  payload digest and requires every rev number to appear exactly once across archives
+  plus live history, so a dropped record shows up as a hole rather than as silence.
+- **`docs/ARCHIVE.md`** — the rule and its credited source, what qualifies, the five
+  checks, measured before/after numbers on two real graphs, recovery commands, and the
+  list of what it deliberately does not do. `examples/archive.sh` runs the whole cycle
+  (dry-run, apply, verify, tamper rejection) in CI.
+- **`benchmarks/archive_cost.py`** — re-runnable pricing: adopts a legacy graph into a
+  temporary directory and reports file size, ledger share, eligible records, bytes
+  after, single-write latency before/after and verification cost, aggregates only.
+- `AMG_ARCHIVE_DAYS` (policy, not constant: `0 < x <= 3650`, invalid values fall back
+  to 30 — never to 0), same ruling as `AMG_STALE_DAYS`.
+
+### Measured (macOS, 1-minute load ≈ 3.4, re-runnable with the benchmark)
+
+| graph | file | ledger share | archive @1 d | file after | single write |
+|---|---|---|---|---|---|
+| 15.7 MB real team graph | 1289 nodes / 2604 changes | 79.0% | 2275 records | 5.9 MB (−62.2%) | 226.1 → 72.7 ms |
+| this project's own graph | 198 nodes / 454 changes | 48.8% | 265 records | 337 KB (−32.3%) | 7.7 → 5.5 ms |
+
+At the default 30-day cutoff **0 records qualify** on both graphs (they are 8 days
+old). That is stated rather than worked around.
+
+### Not shipped in 0.11.0 (do not assume)
+
+- **No node archiving.** Edges cross the boundary; moving cold *nodes* is a different
+  design that this release does not pretend to have.
+- **`L2` search sees live history only.** Archived records are not searched; `grep` or
+  `--verify` is how you inspect them.
+- **No compression and no dependencies** — the archive is plain JSON.
+- **Not exposed over MCP**, and **not automatic**: no background job prunes history.
+- **Snapshots are kept, one full graph copy per run**, and never cleaned up
+  automatically.
+
 ## [0.10.0] — 2026-10-31
 
 New capability: **handoff cards** — a bounded, superseding record of where the work

@@ -127,8 +127,9 @@ What its document states, quoted:
 - red lines: per-scene memory ≤ 25 KB, handover ≤ 4 KB, single skill ≤ 12 KB.
 
 What this project adopted: the handover card (`docs/HANDOFF.md`) — overwrite, one size
-limit, pointers not transcripts — and the principle that a handover has exactly one
-meaningful version.
+limit, pointers not transcripts — the principle that a handover has exactly one
+meaningful version, and the shrinking protocol (`docs/ARCHIVE.md`): snapshot first,
+then move history to an archive, then prove nothing was lost.
 
 What this project did **not** copy, on purpose: the Markdown-file layout (our graph is
 the store), the tool-generated identity cards with fingerprints (we have no per-scene
@@ -138,4 +139,8 @@ library is a memory layer, not a host.
 
 What is ours: the node-typed card with **supersede-on-write**, so the previous handover
 is in the same audit history as every other fact, and `audit` checks that the budget
-and the "exactly one active card" rule hold even in graphs edited outside the API.
+and the "exactly one active card" rule hold even in graphs edited outside the API. For
+the shrinking protocol, ours is the machine-checkable form: the proof is five
+independent comparisons run on every `--apply` (disk snapshot, archive payload re-read,
+live remainder, unchanged state digest, contiguous rev numbers), with a rollback when
+it fails — not a manual diff of the lines a human remembered to keep.

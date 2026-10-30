@@ -28,6 +28,8 @@ amg doctor <dir>                                     # cleans stale tmp files
 amg migrate <dir>                                    # normalizes legacy changes[]
 amg adopt  <src> <dst> [--group NAME] [--drop-dangling] [--pin-out PATH] [--dry-run]
 amg expire <dir> [--apply] [--json]                # opt-in TTL expiry (dry-run default)
+amg archive <dir> [--older-than-days N] [--apply] [--verify] [--json]
+                                     # move cold ledger records out, prove no loss
 amg fingerprint <dir> [--json] [--out PATH]        # canonical state + history digests
 amg verify <dir> --expect PATH | --expect-state HEX [--expect-history HEX]
 amg handoff <dir> [--by NAME] [--owner NAME] [--note TEXT|-] [--json]
@@ -56,6 +58,10 @@ which `audit` calls an `in_progress`/`blocked` work item stale. `amg audit
 cadence, not of the tool (DECISIONS #21); node types that register something
 long-lived (`group`, `env`, `member`) are never reported as stale.
 
+`AMG_ARCHIVE_DAYS` (days, `0 < x <= 3650`, invalid values fall back to 30) is the
+default cutoff for `amg archive`; `--older-than-days N` overrides it for one run.
+Same ruling as the other thresholds: a typo must not archive everything from today.
+
 Exit codes: `0` success/clean, `1` protocol violation or conflicts, `2` usage,
 `3` lock timeout or IO failure.
 
@@ -69,7 +75,7 @@ fail loudly instead of guessing, and `tests/test_exit_codes.py` scans
 | exit | codes | meaning |
 |---|---|---|
 | `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` · `E_NO_EXPECTATION` · `E_BAD_FINGERPRINT` · `E_BAD_HANDOFF` · `E_HANDOFF_TOO_LARGE` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
-| `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` · `E_INSECURE_GRAPH` | the evidence gate rejected the content, or the graph would break an invariant |
+| `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` · `E_INSECURE_GRAPH` · `E_ARCHIVE_VERIFY` | the evidence gate rejected the content, or the graph would break an invariant |
 | `0` | — | success / clean `check` / clean `audit` |
 | `3` | — | lock timeout or IO failure (not a `ProtocolError`) |
 
@@ -205,6 +211,8 @@ hits = m.search("concurrency", layer="L3", k=10)
 report = m.check(); audit = m.audit()
 adoption = Memory.adopt("./legacy-graph", "./mem", pin_out="./pin.json")
 expiry = m.expire(apply=False)   # dry-run; apply=True to supersede expired facts
+cold = m.archive(days=30, apply=False)    # dry-run; apply=True to move cold history
+proof = m.archive_verify()                # re-check archives against the live ledger
 ```
 
 `Memory` is the only entry point; every write takes the lock, writes the whole
@@ -229,6 +237,28 @@ the limit are refused (`E_BAD_HANDOFF`, `E_HANDOFF_TOO_LARGE`, exit 2) and write
 nothing. `audit` reports `handoff_over_budget` and `multiple_active_handoffs` as
 conflicts, because a hand-edited graph can hold states the CLI would refuse.
 Background and the rules this follows: [`HANDOFF.md`](HANDOFF.md).
+
+### Cold archive (`amg archive`, v0.11.0)
+
+Old change records are moved out of the live file into `archive/changes-*.json`, and a
+one-line pointer takes their place. Only a **prefix** of time-ordered records older
+than the cutoff moves; a record without a parseable `at` stops the prefix, and an old
+record behind a newer one is counted (`deferred_behind_newer`) rather than taken out of
+order.
+
+```bash
+amg archive ./mem --json                     # dry-run: what would move, writes nothing
+amg archive ./mem --older-than-days 7 --apply
+amg archive ./mem --verify                   # recompute digests, require contiguous revs
+```
+
+Every `--apply` snapshots the file first, then proves the move five ways: the archive
+file re-read from disk reproduces the records, the live ledger is exactly remainder +
+one pointer, `state_sha256` is unchanged, `check()` still passes, and rev numbers stay
+contiguous. A failed proof restores the snapshot and exits 1 with `E_ARCHIVE_VERIFY`.
+`Memory.archive(days=..., apply=...)` and `Memory.archive_verify()` are the same
+operations in Python. Measured effect and the full list of what it does **not** do:
+[`ARCHIVE.md`](ARCHIVE.md).
 
 ### `audit()` findings (v0.9.0)
 

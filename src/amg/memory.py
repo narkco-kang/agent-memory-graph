@@ -388,6 +388,21 @@ class Memory:
             report["rev"] = new_rev
             return report
 
+    def archive(self, days: int = None, apply: bool = False, by: str = "amg archive") -> dict:
+        """Move old ledger records into `archive/`, proving the move lost nothing.
+
+        Dry-run by default. The proof (snapshot digest, archive payload digest,
+        unchanged state digest, contiguous rev numbers) lives in `amg archive`;
+        `docs/ARCHIVE.md` states what it does and does not establish.
+        """
+        from . import archive as archive_mod
+        return archive_mod.apply(self, days=days, do_apply=apply, by=by)
+
+    def archive_verify(self) -> dict:
+        """Audit archive files against the live ledger. Reads only; writes nothing."""
+        from . import archive as archive_mod
+        return archive_mod.verify(self.store.dir)
+
     # ---------- reads ----------
     def search(self, query: str, layer: str = "L3", k: int = 10, strict: bool = False,
                expand: bool = False, audit_read: bool = False, by: str = "cli"):

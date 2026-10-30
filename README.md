@@ -318,6 +318,29 @@ discipline is adapted from a field-tested public workbench and credited in
 [docs/PRIOR-ART.md](docs/PRIOR-ART.md); the rules and when to write one are in
 [docs/HANDOFF.md](docs/HANDOFF.md).
 
+## Cold archive: moving history out without losing it
+
+Every write rewrites the file, so a growing ledger taxes every write. On the largest
+real graph we measure, **79% of the 15.7 MB file is change records**, and one write
+costs ~226 ms. `amg archive` moves a cold prefix of that ledger into
+`archive/changes-*.json` and leaves a pointer behind:
+
+```bash
+amg archive ./mem --json                  # dry-run: what would move (writes nothing)
+amg archive ./mem --older-than-days 7 --apply
+amg archive ./mem --verify                # recompute digests, require contiguous revs
+```
+
+The rule is **snapshot first, move second, prove nothing was lost third** (adapted
+from the same public workbench, credited in [docs/PRIOR-ART.md](docs/PRIOR-ART.md)).
+Every `--apply` snapshots the file, then proves the move five ways; a failed proof
+restores the snapshot and exits 1 (`E_ARCHIVE_VERIFY`). Measured on the 15.7 MB graph:
+2275 records moved, file 15.7 MB → 5.9 MB, single write 226.1 → 72.7 ms; on this
+project's own graph 265 records, 498 KB → 337 KB, 7.7 → 5.5 ms. At the default
+30-day cutoff **nothing qualifies today** — both graphs are 8 days old, and we say so
+instead of quoting a hypothetical. What it does not do (no node archiving, `L2` sees
+live history only, snapshots cost a full copy): [docs/ARCHIVE.md](docs/ARCHIVE.md).
+
 ## Read-side audit (opt-in)
 
 Writes are always logged in `changes[]`; reads are not, unless you ask for it.
@@ -350,8 +373,9 @@ the rollback story.
 Not only synthetic benchmarks: a live 1,249-node / 15.3 MB graph is adopted and
 measured end to end in [docs/REAL-WORLD.md](docs/REAL-WORLD.md) — 140 ms to adopt,
 0 structural errors, `audit --pin` to 3 genuine conflicts, reads in single-digit
-milliseconds, and one write at 147 ms (the reason the cold-archive trigger exists; the cost is
-broken down in [docs/WRITE-COST.md](docs/WRITE-COST.md)).
+milliseconds, and one write at 147–226 ms (the reason `amg archive` exists; the cost
+is broken down in [docs/WRITE-COST.md](docs/WRITE-COST.md), and what archiving reclaims
+in [docs/ARCHIVE.md](docs/ARCHIVE.md)).
 
 ## Concurrent writers
 

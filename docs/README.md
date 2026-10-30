@@ -8,7 +8,7 @@ important — **which ones are contracts and which are proposals**.
 
 | Status | What it means | Documents |
 |---|---|---|
-| **Measured** | A script in this repo produces the numbers; CI runs the safety-critical ones. | `BENCHMARKS.md`, `REAL-WORLD.md`, `WRITE-COST.md`, `CONCURRENCY.md` |
+| **Measured** | A script in this repo produces the numbers; CI runs the safety-critical ones. | `BENCHMARKS.md`, `REAL-WORLD.md`, `WRITE-COST.md`, `CONCURRENCY.md`, `ARCHIVE.md` |
 | **Contract** | Enforced by code; the doc gate or a test fails when they disagree. | `API.md`, `THREAT-MODEL.md` |
 | **Proposal — not built** | Design work only. Nothing behind it ships. Do not quote it as a feature. | `DESIGN-HISTORY.md` |
 | **Decision record** | Why something is the way it is, including what it costs and when to revisit. | `DECISIONS.md`, `PRIOR-ART.md` |
@@ -41,6 +41,9 @@ important — **which ones are contracts and which are proposals**.
    protocol rather than read about it.
 5. **[`HANDOFF.md`](HANDOFF.md)** — what a new session should read first: the
    bounded handover card, and the three rules it follows.
+6. **[`ARCHIVE.md`](ARCHIVE.md)** — when the ledger outgrows the write budget:
+   `amg archive` moves cold history out and proves the move on every run, with
+   before/after numbers on two real graphs and an explicit list of what it does not do.
 
 ## If you are changing the storage layer
 

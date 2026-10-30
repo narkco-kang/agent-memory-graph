@@ -11,7 +11,7 @@ from .memory import Memory
 from . import security as security_mod
 
 COMMANDS = ["init", "add", "import", "status", "supersede", "link", "related", "search", "digest", "check", "audit", "mcp",
-            "export", "doctor", "migrate", "adopt", "expire", "fingerprint", "verify", "handoff", "version"]
+            "export", "doctor", "migrate", "adopt", "expire", "archive", "fingerprint", "verify", "handoff", "version"]
 
 
 def _evidence_args(values):
@@ -363,6 +363,10 @@ ERROR_EXIT_CODES = frozenset({
     "E_FINGERPRINT_MISMATCH",
     # the graph sits outside the only boundary this project has (see THREAT-MODEL)
     "E_INSECURE_GRAPH",
+    # archive: the move could not be proven lossless, so it was rolled back.
+    # Classified as content (1), not caller error: the records are fine, the
+    # proof is what failed, and a caller has nothing to fix by retyping.
+    "E_ARCHIVE_VERIFY",
 })
 EXIT_CODES_BY_ERROR = {code: 2 for code in USAGE_EXIT_CODES}
 EXIT_CODES_BY_ERROR.update({code: 1 for code in ERROR_EXIT_CODES})
@@ -425,6 +429,65 @@ def cmd_expire(a):
               f"{rep['already_superseded']} | rev {rep['rev']}")
         if not a.apply:
             print("  dry-run: nothing written (use --apply to expire)")
+    return EXIT_OK
+
+
+def cmd_archive(a):
+    if a.verify:
+        m = Memory.open(a.dir, read_only=True)
+        rep = m.archive_verify()
+        if a.json:
+            print(json.dumps(rep, ensure_ascii=False, indent=2))
+        else:
+            print(f"archive verify {os.path.abspath(a.dir)}")
+            for item in rep["files"]:
+                mark = "✓" if item.get("ok") else "✗"
+                print(f"  {mark} {item['file']}: {item.get('count')} record(s) "
+                      f"rev {item.get('revFrom')}..{item.get('revTo')}")
+            span = (f", rev {rep['rev_range'][0]}..{rep['rev_range'][1]}"
+                    if rep["rev_range"] else "")
+            print(f"  archived {rep['archived_records']} + live {rep['live_records']} "
+                  f"= {rep['archived_records'] + rep['live_records']} record(s){span}")
+            print(f"  rev continuity: {rep['rev_continuity']}")
+            for reason in rep["reasons"]:
+                print(f"  ✗ {reason}")
+            print("✓ archive verified" if rep["ok"] else "✗ archive verification failed")
+        return EXIT_OK if rep["ok"] else EXIT_ERROR
+
+    m = Memory.open(a.dir)
+    rep = m.archive(days=a.days, apply=a.apply, by=a.by)
+    if a.json:
+        print(json.dumps(rep, ensure_ascii=False, indent=2))
+    else:
+        mode = "apply" if a.apply else "dry-run"
+        print(f"archive ({mode}) {os.path.abspath(a.dir)}")
+        print(f"  cutoff {rep['cutoff']} ({rep['days']} d)")
+        span = (f" rev {rep['rev_from']}..{rep['rev_to']}"
+                if rep.get("rev_from") is not None else "")
+        print(f"  eligible {rep['eligible']} of {rep['changes_total']} change record(s){span}")
+        print(f"  deferred behind a newer record {rep['deferred_behind_newer']} | "
+              f"undated after the prefix {rep['unknown_time_after_prefix']}")
+        if rep["eligible"] == 0:
+            print("  nothing is old enough; nothing written")
+        elif not a.apply:
+            print("  dry-run: nothing written (use --apply)")
+        else:
+            v = rep["verify"]
+            print(f"  archived -> {rep['archive']['file']} "
+                  f"({rep['archive']['count']} record(s), {rep['archive']['bytes']} B)")
+            print(f"  snapshot -> {rep['snapshot']['file']} "
+                  f"(sha256 {rep['snapshot']['sha256'][:16]}…)")
+            print(f"  bytes {rep['bytes_before']} -> {rep['bytes_after']}")
+            flag = lambda ok: "✓" if ok else ("—" if ok is None else "✗")
+            print(f"  proof: payload {flag(v['archive_payload_match'])} | "
+                  f"live ledger {flag(v['live_ledger_match'])} | "
+                  f"state unchanged {flag(v['state_unchanged'])} | "
+                  f"check {flag(v['check_ok'])} | "
+                  f"rev contiguous {flag(v['rev_contiguous'])}")
+            for reason in v["reasons"]:
+                print(f"  ✗ {reason}")
+            print("✓ archive written and verified" if v["ok"]
+                  else "✗ verification failed (graph restored)")
     return EXIT_OK
 
 
@@ -553,6 +616,17 @@ def build_parser():
     s.add_argument("--apply", action="store_true",
                    help="write the expiry (default is a dry-run that writes nothing)")
     s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_expire)
+
+    s = sub.add_parser("archive", help="move old ledger records into a provable cold archive")
+    s.add_argument("dir")
+    s.add_argument("--older-than-days", type=int, dest="days", default=None,
+                   help="archive change records older than N days (default 30; env AMG_ARCHIVE_DAYS)")
+    s.add_argument("--apply", action="store_true",
+                   help="write the archive (default is a dry-run that writes nothing)")
+    s.add_argument("--verify", action="store_true",
+                   help="audit existing archive files against the live ledger; writes nothing")
+    s.add_argument("--by", default="amg archive")
+    s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_archive)
 
     s = sub.add_parser("version"); s.set_defaults(func=cmd_version)
     return p

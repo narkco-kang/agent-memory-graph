@@ -232,3 +232,20 @@ Each entry states the decision, the evidence behind it, and what it costs.
     `multiple_active_handoffs` as a conflict rather than a convention. Registrations,
     including handoff nodes, are exempt from staleness (#20).
     *Signed 2026-10-31; `tests/test_handoff.py`.*
+
+24. **Archive the ledger, not the nodes — and prove the move on every run.**
+    The write-cost work (`docs/WRITE-COST.md`) priced four ways to reclaim bytes; this
+    is the one that ships, and the choice is measured, not aesthetic: on the 15.7 MB
+    real graph **79% of the file is change records**, they have no referential
+    integrity (nothing points at a change), and moving a cold prefix of them cut a
+    single write from 226.1 ms to 72.7 ms. Archiving *nodes* is the tempting
+    alternative and is deliberately not done: edges cross the boundary, so a partial
+    implementation would leave dangling references or a second store to keep
+    consistent — the failure this project already ranks lowest. The proof is the
+    borrowed shrink protocol ("snapshot first, move second, prove nothing was lost",
+    credited in `docs/PRIOR-ART.md`) turned into five independent checks that run on
+    every `--apply`, with the snapshot written back when they fail
+    (`E_ARCHIVE_VERIFY`). Unknown times never move: an undated record stops the
+    prefix, the same conservative direction as TTL expiry. `L2` search sees live
+    history only, which is stated in `docs/ARCHIVE.md` rather than left to be found.
+    *Signed 2026-10-31; `tests/test_archive.py`.*
