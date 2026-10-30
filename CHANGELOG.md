@@ -3,6 +3,23 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.19.1] — 2026-10-31
+
+Patch: the documentation size gate measures content, not the checkout's line endings.
+
+### Fixed
+
+- `tools/check_doc_sizes.py` folds CRLF to LF before counting. v0.19.0's
+  `windows-latest` job failed on `docs/DECISIONS.md` (24,450 B of content, ~300 B larger
+  in a CRLF checkout) while the same tree passed on Linux and macOS — a red CI caused by
+  `core.autocrlf`, not by length. Regression test: a CRLF document whose LF content is
+  inside budget now passes on every platform (`tests/test_doc_sizes.py`).
+- No document was trimmed to work around it, and the budgets are unchanged.
+
+### Not shipped in 0.19.1 (do not assume)
+
+- No product change; no document content change; identical behaviour to v0.19.0.
+
 ## [0.19.0] — 2026-10-31
 
 Defect round for the two retrieval issues the attack brief registered (`R1`, `R2`):

@@ -66,6 +66,20 @@ class DocSizeGateTests(unittest.TestCase):
             os.unlink(over)
         self.assertEqual(res.returncode, 1)
 
+    def test_crlf_checkout_does_not_change_the_measured_size(self):
+        # v0.19.0 failed on windows-latest for exactly this: the same document, one
+        # byte per line larger in a CRLF checkout. The budget is about content.
+        directory = tempfile.mkdtemp(prefix="amg-docsize-")
+        path = os.path.join(directory, "README.md")
+        lines = [b"x" * 99 for _ in range(122)]        # 12288 bytes as LF content
+        try:
+            with open(path, "wb") as fh:
+                fh.write(b"\r\n".join(lines))
+            self.assertGreater(os.path.getsize(path), 12288)
+            self.assertEqual(run(path).returncode, 0, run(path).stdout)
+        finally:
+            os.unlink(path)
+
     def test_budgets_match_the_documentation(self):
         with open(os.path.join(ROOT, "docs", "README.md"), encoding="utf-8") as fh:
             index = fh.read()

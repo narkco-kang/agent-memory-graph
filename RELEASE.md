@@ -19,6 +19,25 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.19.1 — 2026-10-31
+
+Status: **released**. Patch for a red CI that v0.19.0 shipped with on one platform.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | The failure is diagnosed, not retried | ✅ CRLF: content 24,450 B, Windows checkout ~+300 B, budget 24,576 B |
+| 2 | The fix is in the gate, not in the document | ✅ LF normalization in `check_doc_sizes.py`; no doc trimmed |
+| 3 | The failure has a test | ✅ CRLF fixture whose LF content is inside budget passes |
+| 4 | CI green on nine jobs (including `windows-latest`) | ✅ 269 tests ×4 + `package` ×5 |
+| 5 | Documentation↔code gates unchanged in meaning | ✅ budgets untouched (12 KiB / 24 KiB) |
+| 6 | No product behaviour change | ✅ `src/amg/` unchanged from v0.19.0 |
+| 7 | The story is in the log | ✅ CHANGELOG 0.19.1 |
+| 8 | Clean install from the tag | ✅ `git+...@v0.19.1` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | Reproducible | ✅ the failing size is reproduced by the new test on any platform |
+
+---
+
 ## v0.19.0 — 2026-10-31
 
 Status: **released**. Defect round with a behaviour-preserving bar: bounded scores and

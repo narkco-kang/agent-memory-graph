@@ -16,6 +16,11 @@ Scope is deliberately narrow: `CHANGELOG.md` and `RELEASE.md` are append-only lo
 read top-to-bottom-never, so a size cap there would force deleting history. They are
 out of scope in words, not silently exempted by a pattern.
 
+The budget is measured in **bytes of content**, with CRLF folded to LF first: a Windows
+checkout with `core.autocrlf` writes a `\r` per line, which would count the same document
+larger there than on Linux/macOS and fail CI for a checkout setting rather than for
+length (v0.19.1 — v0.19.0's Windows job failed exactly that way).
+
 Usage:
     python3 tools/check_doc_sizes.py                 # README.md + every docs/*.md
     python3 tools/check_doc_sizes.py path [...]      # explicit (tests use this)
@@ -49,6 +54,12 @@ def default_targets():
     return targets
 
 
+def document_size(full):
+    """Content bytes with line endings normalized to LF (see the module docstring)."""
+    with open(full, "rb") as fh:
+        return len(fh.read().replace(b"\r\n", b"\n"))
+
+
 def check(paths):
     rows = []
     for path in paths:
@@ -59,7 +70,7 @@ def check(paths):
         if not os.path.isfile(full):
             rows.append({"path": path, "error": "missing"})
             continue
-        size = os.path.getsize(full)
+        size = document_size(full)
         budget = budget_for(path)
         rows.append({"path": path.replace(os.sep, "/"), "bytes": size, "budget": budget,
                      "pct": round(100.0 * size / budget, 1), "over": max(0, size - budget)})
