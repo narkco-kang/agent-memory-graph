@@ -9,7 +9,7 @@ from .const import EXIT_ERROR, EXIT_IO, EXIT_OK, EXIT_USAGE
 from .errors import LockTimeout, ProtocolError
 from .memory import Memory
 
-COMMANDS = ["init", "add", "import", "status", "supersede", "link", "related", "search", "digest", "check", "audit",
+COMMANDS = ["init", "add", "import", "status", "supersede", "link", "related", "search", "digest", "check", "audit", "mcp",
             "export", "doctor", "migrate", "adopt", "expire", "version"]
 
 
@@ -183,6 +183,16 @@ def cmd_audit(a):
             print(f"pin match: {rep['pin']['match']}")
         print("✓ audit clean" if rep["ok"] else f"✗ {len(rep['conflicts'])} conflict(s)")
     return EXIT_OK if rep["ok"] else EXIT_ERROR
+
+
+def cmd_mcp(a):
+    """Serve the graph over stdio as an MCP server. No socket, no auth."""
+    from . import mcp as mcp_mod
+    m = Memory.open(a.dir)
+    sys.stderr.write(f"amg mcp: serving {os.path.abspath(a.dir)} over stdio "
+                     f"(no network, no auth)\n")
+    sys.stderr.flush()
+    return mcp_mod.serve(m)
 
 
 def cmd_export(a):
@@ -374,6 +384,8 @@ def build_parser():
 
     s = sub.add_parser("audit"); s.add_argument("dir"); s.add_argument("--pin")
     s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_audit)
+
+    s = sub.add_parser("mcp"); s.add_argument("dir"); s.set_defaults(func=cmd_mcp)
 
     s = sub.add_parser("export"); s.add_argument("dir"); s.add_argument("--format", default="json",
                                                                         choices=["json", "jsonl"])

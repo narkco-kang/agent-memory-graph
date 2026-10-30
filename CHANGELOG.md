@@ -3,6 +3,26 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [Unreleased] — 0.3.0
+
+### Added
+
+- **MCP server over stdio** (`amg mcp <dir>`): eight tools over newline-delimited
+  JSON-RPC 2.0, no network listener, no authentication (stated plainly). Every
+  tool reuses the library entry points, so the evidence gate applies unchanged.
+- **Opt-in read-side audit**: `--audit-read` records high-risk reads (L4 rules,
+  strict queries, results touching superseded nodes) to a bounded, rotated
+  `reads.jsonl` — deliberately not in `changes[]`.
+- **Windows and macOS are tested, not assumed**: CI runs the suite on
+  `ubuntu-latest`, `macos-latest` and `windows-latest`; the lock has a `msvcrt`
+  implementation with a cross-process exclusivity test.
+- `docs/SCHEDULING.md`: cron/systemd usage, rollback, and why there is no daemon.
+
+### Fixed
+
+- Windows: cp1252 console crashed on status glyphs; directory `fsync` raised
+  `PermissionError` on non-POSIX filesystems.
+
 ## [0.2.0] — 2026-10-30
 
 Adds explicit fact time, opt-in expiry, batch ingest, a CLI for `supersede`, and

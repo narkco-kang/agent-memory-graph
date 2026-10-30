@@ -245,6 +245,15 @@ the five projects checked, but "no precedent" is not a shipped capability.
 `expanded_from`). `depends_on` / `supersedes` must stay acyclic (`check` errors on
 a cycle); other kinds may cycle and are only counted.
 
+## MCP server (stdio)
+
+`amg mcp <dir>` exposes the graph to any MCP client over stdin/stdout — no port,
+no network: `memory_search`, `memory_add`, `memory_status`, `memory_supersede`,
+`memory_related`, `memory_check`, `memory_audit`, `memory_digest`. Every tool goes
+through the same library entry points, so the evidence gate applies unchanged.
+**There is no authentication**: whoever can start the process can read and write
+the graph. Do not put a network transport in front of it without authorization.
+
 ## Read-side audit (opt-in)
 
 Writes are always logged in `changes[]`; reads are not, unless you ask for it.

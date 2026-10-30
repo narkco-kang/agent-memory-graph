@@ -19,6 +19,7 @@ amg digest <dir> [--max-bytes 65536] [--out PATH]
 amg check  <dir> [--strict] [--json]
 amg audit  <dir> [--pin baseline.json] [--json]
 amg export <dir> [--format json|jsonl]
+amg mcp   <dir>                                     # MCP server over stdio (no network)
 amg doctor <dir>                                     # cleans stale tmp files
 amg migrate <dir>                                    # normalizes legacy changes[]
 amg adopt  <src> <dst> [--group NAME] [--drop-dangling] [--pin-out PATH] [--dry-run]
@@ -72,6 +73,21 @@ hit, marked `expanded_from`.
 
 Cycle policy: `depends_on` and `supersedes` must form a DAG — a cycle there is a
 `check` error. Other kinds may legitimately cycle and are only counted as a hint.
+
+## MCP server (stdio, v0.3)
+
+`amg mcp <dir>` speaks newline-delimited JSON-RPC 2.0 on stdin/stdout and exposes
+eight tools: `memory_search`, `memory_add`, `memory_status`, `memory_supersede`,
+`memory_related`, `memory_check`, `memory_audit`, `memory_digest`.
+
+- **stdio only** — it opens no socket and listens on no port.
+- **no new write paths** — every tool calls the same `Memory` methods, so the
+  evidence gate, IR-2 and IR-4 apply unchanged. A rejected write is returned as
+  `isError: true` with the protocol error code in the text.
+- **no authentication.** Whoever can start the process can read and write the
+  graph. It is a local, trusted, single-user tool; do not wrap it in a network
+  transport without adding an authorization layer first.
+- stdout carries protocol frames only; diagnostics go to stderr.
 
 ## Read-side audit (opt-in, v0.3)
 
