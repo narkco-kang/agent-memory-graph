@@ -12,7 +12,7 @@ important — **which ones are contracts and which are proposals**.
 | **Contract** | Enforced by code; the doc gate or a test fails when they disagree. | `API.md`, `THREAT-MODEL.md`, and the size budget below |
 | **Proposal — not built** | Design work only. Nothing behind it ships. Do not quote it as a feature. | `DESIGN-HISTORY.md` |
 | **Decision record** | Why something is the way it is, including what it costs and when to revisit. | `DECISIONS.md`, `PRIOR-ART.md` |
-| **Operational guide** | How to run it, not what it does. | `SCHEDULING.md` |
+| **Operational guide** | How to run it, not what it does. | `SCHEDULING.md`, `OPERATIONS.md` |
 
 ## If you are deciding whether to depend on this
 
@@ -101,6 +101,7 @@ Read in this order; each one narrows the next:
 | [`WRITE-COST.md`](WRITE-COST.md) | Where the write time goes, and what could move it | measured, all options rejected or deferred |
 | [`CONCURRENCY.md`](CONCURRENCY.md) | What concurrent writers do; why the tail exists | measured |
 | [`DESIGN-HISTORY.md`](DESIGN-HISTORY.md) | How to make writes cheap without losing atomicity | **proposal, not built** |
+| [`OPERATIONS.md`](OPERATIONS.md) | Runbook: healthcheck, schedule, backups, burst sizing, failure meanings | operational guide |
 | [`THREAT-MODEL.md`](THREAT-MODEL.md) | Who the security boundary is; what read-only cannot do | contract / decision |
 | [`SCHEDULING.md`](SCHEDULING.md) | How to expire on a timer without a daemon | operational |
 | [`HANDOFF.md`](HANDOFF.md) | The bounded handover card: four questions, one 4 KB answer | operational |

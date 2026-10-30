@@ -19,6 +19,26 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.23.0 — 2026-10-31
+
+Status: **released**. Operational-readiness round: one health command, one runbook, and
+a 16-document budget that still fits.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 300 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate + size budget | ✅ 16 documents, both gates green |
+| 3 | The tool answers a real operator question, once | ✅ `healthcheck` replaces four separate commands |
+| 4 | Debt and breakage are separated | ✅ stale work warns; mismatched/outside-root evidence fails |
+| 5 | The runbook cites measured numbers, not estimates | ✅ write costs, lock sizing, retrieval p50, archive effect |
+| 6 | The limits are in the same document | ✅ single user, no auth, cold start unverified, Windows latency unmeasured |
+| 7 | The report is tested, including failure modes | ✅ 7 tests |
+| 8 | Clean install from the tag | ✅ `git+...@v0.23.0` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | No unmeasured claim creeps in | ✅ Not-shipped says the report is not a correctness proof |
+
+---
+
 ## v0.22.0 — 2026-10-31
 
 Status: **released**. Maintenance round: canonical `changes[]`, a truthful `check` hint,

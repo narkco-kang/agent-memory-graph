@@ -144,6 +144,8 @@ frozen baseline 0.808→0.865 and frequent-word noise to 0.865, while uniform
 query-token noise stayed 0.538 — `experiments/retrieval_idf/`). Every claim here is
 repeated in the document that would otherwise imply it.
 
+Runbook and one-page health check for a live store: [docs/OPERATIONS.md](docs/OPERATIONS.md).
+
 ## Measurement, not marketing
 
 `experiments/valid_from_bias/` measures whether transaction time can stand in for fact

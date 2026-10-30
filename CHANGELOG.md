@@ -3,6 +3,34 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.23.0] — 2026-10-31
+
+Operational readiness: a one-page health check and the runbook that says what to run on
+a live store, how often, and what a bad answer means.
+
+### Added
+
+- `tools/healthcheck.py <dir> [--json] [--strict] [--no-evidence]` — read-only report
+  combining `check`, `audit`, real evidence hashing (the gate's `verify_evidence`) and
+  `archive_verify`. Exit `0` healthy / `1` problem / `2` usage. Debt is separated from
+  breakage: stale work items and legacy unanchored nodes are printed, and only
+  `--strict` fails on them. Mismatched evidence and evidence paths outside the graph
+  root are always problems.
+- `docs/OPERATIONS.md` — runbook: schedule (daily/nightly/weekly), backups and restore
+  with a fingerprint, large-graph sizing from measured write costs, upgrade steps, and a
+  table mapping each error to its first action. Excess and limits are stated: single
+  user, no auth, no external cold-start evidence, Windows latency unmeasured, 10k
+  numbers synthetic.
+- 7 tests for the health-check report (healthy, tampered evidence, outside-root path,
+  structural error, debt-vs-problem split, JSON shape, usage error).
+
+### Not shipped in 0.23.0 (do not assume)
+
+- No new CLI subcommand: the report is a repository tool, so the API surface stays as
+  documented.
+- No promise that "healthy" means correct content: it means the invariants it checks
+  hold, and it prints which evidence it could not observe.
+
 ## [0.22.0] — 2026-10-31
 
 One canonical `changes[]` shape after migration, a `check` that stops advising a no-op,
