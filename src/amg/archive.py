@@ -332,6 +332,26 @@ def _archive_files(graph_dir: str) -> list:
     return [os.path.join(directory, n) for n in found]
 
 
+def load_records(graph_dir: str) -> list:
+    """Archived change records with their source file, oldest archive first.
+
+    Read-only and dependency-free: the archive is plain JSON, so "search the
+    history we moved out" needs no index and no second store. Each item is
+    `{"file": "changes-r11-….json", "record": <change dict>}`; a file that does not
+    parse is skipped and reported once by `verify`, not silently merged here.
+    """
+    out = []
+    for path in _archive_files(graph_dir):
+        try:
+            with open(path, "r", encoding="utf-8") as fh:
+                head = json.load(fh)
+        except (OSError, ValueError):
+            continue
+        for record in head.get("changes") or []:
+            out.append({"file": os.path.basename(path), "record": record})
+    return out
+
+
 def verify(graph_dir: str) -> dict:
     """Audit every archive file and its boundary with the live ledger.
 

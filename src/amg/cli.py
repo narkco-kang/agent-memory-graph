@@ -121,14 +121,15 @@ def cmd_link(a):
 def cmd_search(a):
     m = Memory.open(a.dir)
     hits = m.search(a.query, layer=a.layer, k=a.k, strict=a.strict, expand=a.expand,
-                    audit_read=a.audit_read)
+                    audit_read=a.audit_read, include_archive=a.include_archive)
     if a.json:
         print(json.dumps(hits, ensure_ascii=False, indent=2))
     else:
         for h in hits:
             flag = "✓" if h["anchor_state"] == "present" else "~"
+            where = f", archive={h['archive_file']}" if h.get("archived") else ""
             print(f"{flag} {h['score']:>5} {h['id']} [{h['status']}] {h.get('label') or ''}"
-                  f" (anchor={h['anchor_state']}, ev×{h['evidence_count']})")
+                  f" (anchor={h['anchor_state']}, ev×{h['evidence_count']}{where})")
         if not hits:
             print("no hits")
     return EXIT_OK
@@ -353,6 +354,9 @@ USAGE_EXIT_CODES = frozenset({
     # handoff: empty card or over the 4 KB budget — the caller's input is wrong,
     # and the fix is to shorten it, not to change the graph
     "E_BAD_HANDOFF", "E_HANDOFF_TOO_LARGE",
+    # search: --include-archive only applies to L2 history; asking for it on a node
+    # layer is a wrong call, not bad content
+    "E_ARCHIVE_LAYER",
 })
 ERROR_EXIT_CODES = frozenset({
     "E_NO_SOURCE", "E_NOTE_REQUIRED", "E_EVIDENCE_MISSING", "E_EVIDENCE_FORMAT",
@@ -554,6 +558,8 @@ def build_parser():
     s.add_argument("--strict", action="store_true"); s.add_argument("--expand", action="store_true")
     s.add_argument("--audit-read", action="store_true",
                    help="log this read to reads.jsonl if it is high-risk (L4/strict/superseded)")
+    s.add_argument("--include-archive", action="store_true",
+                   help="L2 only: also search cold history in archive/changes-*.json")
     s.add_argument("--json", action="store_true")
     s.set_defaults(func=cmd_search)
 

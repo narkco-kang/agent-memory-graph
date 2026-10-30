@@ -18,6 +18,7 @@ amg status <dir> <id> <new-status> --note TEXT       # note required (IR-4)
 amg link   <dir> --from ID --to ID --kind KIND
 amg supersede <dir> OLD NEW --note TEXT            # keep the old node, stamp its window
 amg search <dir> "query" [--layer L1|L2|L3|L4] [--k 10] [--strict] [--expand] [--json]
+                                     [--include-archive]  # L2 only: also search cold history
 amg related <dir> ID [--depth N] [--kind KIND] [--json]   # walk edges (new in v0.2)
 amg digest <dir> [--max-bytes 65536] [--out PATH]
 amg check  <dir> [--strict] [--json]
@@ -58,6 +59,12 @@ which `audit` calls an `in_progress`/`blocked` work item stale. `amg audit
 cadence, not of the tool (DECISIONS #21); node types that register something
 long-lived (`group`, `env`, `member`) are never reported as stale.
 
+`--include-archive` (search only) extends an **L2** query to the cold archive
+(`archive/changes-*.json`, see `ARCHIVE.md`); every archived hit carries
+`archived: true` and the `archive_file` it came from. It is refused on node layers
+with `E_ARCHIVE_LAYER` (exit 2) rather than silently ignored, because an L3 result set
+cannot contain ledger records.
+
 `AMG_ARCHIVE_DAYS` (days, `0 < x <= 3650`, invalid values fall back to 30) is the
 default cutoff for `amg archive`; `--older-than-days N` overrides it for one run.
 Same ruling as the other thresholds: a typo must not archive everything from today.
@@ -74,7 +81,7 @@ fail loudly instead of guessing, and `tests/test_exit_codes.py` scans
 
 | exit | codes | meaning |
 |---|---|---|
-| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` · `E_NO_EXPECTATION` · `E_BAD_FINGERPRINT` · `E_BAD_HANDOFF` · `E_HANDOFF_TOO_LARGE` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
+| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` · `E_NO_EXPECTATION` · `E_BAD_FINGERPRINT` · `E_BAD_HANDOFF` · `E_HANDOFF_TOO_LARGE` · `E_ARCHIVE_LAYER` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
 | `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` · `E_INSECURE_GRAPH` · `E_ARCHIVE_VERIFY` | the evidence gate rejected the content, or the graph would break an invariant |
 | `0` | — | success / clean `check` / clean `audit` |
 | `3` | — | lock timeout or IO failure (not a `ProtocolError`) |
@@ -208,6 +215,7 @@ m.add_node(id="task.y", type="task", label="do Y", source="plan",
 m.set_status("task.x", "done", note="pytest green (exit 0)")
 m.add_edge("task.x", "artifact.y", kind="produced_by")
 hits = m.search("concurrency", layer="L3", k=10)
+old_hits = m.search("who approved this", layer="L2", include_archive=True)
 report = m.check(); audit = m.audit()
 adoption = Memory.adopt("./legacy-graph", "./mem", pin_out="./pin.json")
 expiry = m.expire(apply=False)   # dry-run; apply=True to supersede expired facts

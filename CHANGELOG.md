@@ -3,6 +3,41 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.13.0] — 2026-10-31
+
+New capability: **the history that was moved out stays searchable**, on request and
+labelled as history.
+
+### Added
+
+- **`amg search <dir> "q" --layer L2 --include-archive`** and
+  `Memory.search(..., include_archive=True)`. The cold archive
+  (`archive/changes-*.json`) is read with no index and no second store — it is plain
+  JSON, and `archive.load_records()` returns the records with the file they came from.
+  Every archived hit carries `archived: true` and `archive_file`, so an old record can
+  never be mistaken for a current one; `k` applies across live and archived records
+  together, newest first; archived hits keep their original `at` and `rev`.
+- **The flag is refused on node layers** (`E_ARCHIVE_LAYER`, exit 2) instead of being
+  silently ignored: an L3 result set cannot contain ledger records, and a success that
+  changed nothing would be a lie about what was searched.
+- Default L2 behaviour is unchanged, and there is a test that asserts it: moving
+  history must not change what a plain search answers.
+
+### Why this closes a documented gap
+
+0.11.0 shipped the archive with "`L2` search sees live history only" written into
+`docs/ARCHIVE.md` and the CHANGELOG. That was honest but inconvenient: the first
+question after "I moved my old history out" is "can I still find it?". Now the answer
+is yes, with the provenance attached. The docs, the example
+(`examples/archive.sh`, in CI) and the not-shipped list are updated together.
+
+### Not shipped in 0.13.0 (do not assume)
+
+- **No index** over the archive: a search reads the archive files. Fine at old-history
+  sizes; unmeasured on a graph with years of history, and said so.
+- No cross-file rank normalisation beyond `(at, rev)`, no archive pruning, no
+  `--include-archive` for node layers.
+
 ## [0.12.0] — 2026-10-31
 
 New contract: **documentation size budgets**, and the README restructured to fit one.

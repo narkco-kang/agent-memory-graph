@@ -96,10 +96,13 @@ direction, and re-run the script for a number you intend to quote.
 - **No deletion.** Records leave the live file; they are not destroyed. Delete
   nothing is the recovery story: restore = copy the archived `changes` back, or take
   the snapshot.
-- **`L2` search sees live history only.** After archiving, a query for "who rejected
-  this in August" searches the archive only if you grep it. That is a real loss of
-  convenience for old history; it is stated here, in the CLI's `--help`-adjacent
-  docs and in the CHANGELOG, not discovered later.
+- **`L2` search sees live history by default.** A plain `amg search --layer L2`
+  answers from the live ledger; moved history is searched only when you ask:
+  `--include-archive` (or `Memory.search(..., include_archive=True)`), and every hit
+  then carries `archived: true` plus the `archive_file` it came from, so old history is
+  never mistaken for current history. There is no index over the archive: the search
+  scans the archive files, which is fine at "old history" sizes and would need
+  measuring on a graph with years of it.
 - **Snapshots cost a full graph copy each run** (15.7 MB in the first table row) and
   are never cleaned up automatically. They are emergency restore points; delete old
   ones once you trust the verification.

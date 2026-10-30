@@ -31,7 +31,7 @@ def _tokens(query: str):
 
 
 def search(doc: dict, query: str, layer: str = "L3", k: int = 10, strict: bool = False,
-           expand: bool = False):
+           expand: bool = False, archived=None):
     if layer not in {"L1", "L2", "L3", "L4"}:
         from .errors import ProtocolError
         raise ProtocolError("E_BAD_LAYER", f"unknown layer: {layer} (use L1/L2/L3/L4)")
@@ -40,7 +40,7 @@ def search(doc: dict, query: str, layer: str = "L3", k: int = 10, strict: bool =
         return []
 
     if layer == "L2":
-        return _search_changes(doc, toks, k)
+        return _search_changes(doc, toks, k, archived=archived)
 
     # Hard filters first: a superseded or not-yet-effective fact is never an
     # answer (L2 keeps history, so neither rule hides the event log).
@@ -126,15 +126,24 @@ def _expand(doc: dict, hits, strict: bool):
     return hits + extra
 
 
-def _search_changes(doc: dict, toks, k: int):
+def _search_changes(doc: dict, toks, k: int, archived=None):
+    """L2 history search over the live ledger, optionally extended by the archive.
+
+    Archived records are history that was moved out to keep writes cheap
+    (`docs/ARCHIVE.md`); they are searched only when the caller asks, and every
+    hit says which archive file it came from, so "this is old" is never a guess.
+    """
     hits = []
     nodes = {n.get("id"): n for n in doc.get("nodes") or []}
-    for c in doc.get("changes") or []:
+    entries = [(None, c) for c in doc.get("changes") or []]
+    for item in archived or []:
+        entries.append((item.get("file"), item.get("record") or {}))
+    for archive_file, c in entries:
         text = f"{c.get('op','')} {c.get('target','')} {c.get('note','')}".lower()
         if any(t in text for t in toks):
             target = c.get("target")
             node = nodes.get(target) or {}
-            hits.append({
+            hit = {
                 "id": target,
                 "label": node.get("label"),
                 "type": "change",
@@ -146,6 +155,10 @@ def _search_changes(doc: dict, toks, k: int):
                 "at": c.get("at"),
                 "op": c.get("op"),
                 "rev": c.get("rev"),
-            })
+            }
+            if archive_file:
+                hit["archived"] = True
+                hit["archive_file"] = archive_file
+            hits.append(hit)
     hits.sort(key=lambda h: (h.get("at") or "", h.get("rev") or 0), reverse=True)
     return hits[:k]

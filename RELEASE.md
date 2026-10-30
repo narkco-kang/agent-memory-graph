@@ -19,6 +19,30 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.13.0 — 2026-10-31
+
+Status: **released**. Closes the gap 0.11.0 documented: cold history stays searchable.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 244 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate + size budget | ✅ 15 documents, both gates green |
+| 3 | Examples run | ✅ `examples/archive.sh` now proves an archived hit is findable and labelled |
+| 4 | Default behaviour did not move | ✅ a test asserts plain L2 returns the same ids before and after archiving |
+| 5 | Old history is labelled, not guessed | ✅ every archived hit carries `archived: true` + `archive_file` |
+| 6 | A wrong call is refused, not ignored | ✅ `E_ARCHIVE_LAYER` on L1/L3/L4 (exit 2), tested at API and CLI level |
+| 7 | Not-shipped list updated | ✅ no index over the archive; unmeasured on years-old history |
+| 8 | Artifacts checked and installed | ✅ `check_dist.py` clean; sdist's own 244 tests pass inside the unpacked archive |
+| 9 | Clean install from the tag | ✅ `git+...@v0.13.0` |
+| 10 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+
+Why this was the next thing: after "I moved my old history out", the first question a
+user asks is "can I still find it?". The previous release answered "no, by design".
+An honest limitation is still a limitation; this release removes it without weakening
+the claim that live and archived history are different things.
+
+---
+
 ## v0.12.0 — 2026-10-31
 
 Status: **released**. New contract: documentation size budgets, plus the README

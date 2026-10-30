@@ -405,9 +405,25 @@ class Memory:
 
     # ---------- reads ----------
     def search(self, query: str, layer: str = "L3", k: int = 10, strict: bool = False,
-               expand: bool = False, audit_read: bool = False, by: str = "cli"):
+               expand: bool = False, audit_read: bool = False, by: str = "cli",
+               include_archive: bool = False):
+        """Search one layer. `include_archive` extends L2 to the cold archive.
+
+        Only L2 is history, so the flag is only meaningful there and is refused
+        elsewhere (`E_ARCHIVE_LAYER`) instead of being quietly ignored: a caller
+        who asked for archived results must not get a success that silently
+        searched nothing different.
+        """
+        if include_archive and layer != "L2":
+            raise ProtocolError(
+                "E_ARCHIVE_LAYER",
+                f"--include-archive applies to L2 history only; layer {layer} searches nodes")
+        archived = None
+        if include_archive:
+            from . import archive as archive_mod
+            archived = archive_mod.load_records(self.store.dir)
         hits = retrieval.search(self._doc, query, layer=layer, k=k, strict=strict,
-                                expand=expand)
+                                expand=expand, archived=archived)
         if audit_read and readaudit.is_high_risk(layer=layer, strict=strict,
                                                  statuses=[h.get("status") for h in hits]):
             readaudit.log_read(self.store.dir, op="search", query=query, layer=layer,

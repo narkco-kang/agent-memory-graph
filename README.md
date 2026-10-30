@@ -180,7 +180,9 @@ Runnable client: `python examples/mcp_client.py`.
   also enforces that on graphs edited by hand: [docs/HANDOFF.md](docs/HANDOFF.md).
 - **Cold archive** — `amg archive` moves old change records out of the live file and
   proves the move five ways on every run (snapshot, payload re-read, remainder +
-  pointer, unchanged state digest, contiguous revs), rolling back if the proof fails:
+  pointer, unchanged state digest, contiguous revs), rolling back if the proof fails.
+  Moved history stays searchable on request — `amg search --layer L2
+  --include-archive` marks which file each old hit came from:
   [docs/ARCHIVE.md](docs/ARCHIVE.md).
 - **Read audit** — opt-in `--audit-read` logs only high-risk reads (L4 access,
   `--strict`, superseded hits) to a bounded rotated `reads.jsonl`. Not claimed as
