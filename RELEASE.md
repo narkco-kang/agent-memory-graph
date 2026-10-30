@@ -19,6 +19,30 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.18.0 — 2026-10-31
+
+Status: **released**. Behaviour-change round: IDF term weights, pre-registered, with a
+missed target published next to the wins.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 261 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate + size budget | ✅ 15 documents, both gates green |
+| 3 | Criteria and predictions existed before the code changed | ✅ `experiments/retrieval_idf/PREREGISTRATION.md` |
+| 4 | The baseline was frozen, not remembered | ✅ v0.17.0 scorer kept as `baseline.py`, run in the same process |
+| 5 | Every outcome published, including a missed target | ✅ N2 r@5 0.538 against target 0.70, with the structural reason |
+| 6 | Predictions that were wrong are recorded as wrong | ✅ small-corpus gain; N3 baseline |
+| 7 | The change is in the product text | ✅ README, `docs/API.md`, `docs/BENCHMARKS.md`, DECISIONS #28 |
+| 8 | Clean install from the tag | ✅ `git+...@v0.18.0` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | Reproducible from the repo | ✅ `run_eval.py` rebuilds all four corpora deterministically and records their digests |
+
+The honest shape of the round: one change lifted the frozen baseline and the realistic
+noise model to the same number (0.865), and left the adversarial model exactly where it
+was — because that model was built to be invariant to precisely this statistic.
+
+---
+
 ## v0.17.0 — 2026-10-31
 
 Status: **released**. Measurement round: retrieval at 10,000 nodes, pre-registered, with

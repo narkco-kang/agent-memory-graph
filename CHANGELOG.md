@@ -3,6 +3,48 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.18.0] — 2026-10-31
+
+The IDF round that 0.17.0 named: **rarity-aware scoring ships, and it is measured to fix
+the realistic noise model but not the adversarial one.**
+
+### Changed
+
+- `src/amg/retrieval.py`: a matched term contributes `WEIGHTS[field] × idf(term)`,
+  `idf = ln(1 + N/(1+df))` over the visible nodes, instead of a constant field weight.
+  Field weights, matchers, hard filters, anchor rule and ordering are unchanged; a query
+  token repeated twice counts once. `_match_fields()` keeps the matches from the existing
+  scan, so this is bookkeeping, not a second pass over the graph.
+
+### Measured (26 frozen queries, both scorers in one process)
+
+| corpus | baseline r@1 / r@5 | shipped r@1 / r@5 |
+|---|---|---|
+| control 27 | 0.654 / 0.808 | **0.731 / 0.865** |
+| N1 unrelated 10k | 0.654 / 0.808 | **0.731 / 0.865** |
+| N2 query-vocabulary 10k | 0.481 / 0.538 | 0.481 / 0.538 (r@10 0.538 → 0.577) |
+| N3 frequent-vocabulary 10k | 0.654 / 0.712 | **0.731 / 0.865** |
+
+- **The N2 `recall@5 ≥ 0.70` target was missed (0.538)** — predicted before the run:
+  N2 samples distractor tokens uniformly from the query vocabulary, so `df` is the same
+  for every query term and IDF has nothing to weight. Deep ranks improve (q05 42→9,
+  q16 99→46); the top-5 does not move.
+- Cost: p50 +3.0 ms at 10k (+4%); +6 tests pin the mechanism (261 total).
+
+### Added
+
+- `experiments/retrieval_idf/` — pre-registration, frozen v0.17.0 baseline, harness, a
+  fourth corpus (N3 frequent-vocabulary noise), `result.json`, and a README that records
+  the two wrong predictions.
+
+### Not shipped in 0.18.0 (do not assume)
+
+- **N2 is not fixed**: the same 11 queries miss at 5, and 3 of them are word-level gaps
+  (q06, q08, q10) that no ranking weight can close.
+- No real-graph 10k retrieval; every noise model here is synthetic.
+- No phrase/proximity matching and no id/type priors — those are the named next
+  candidates, each needing its own pre-registration.
+
 ## [0.17.0] — 2026-10-31
 
 Second half of the 10k gap: **retrieval recall at 10,000 nodes is measured**, and the

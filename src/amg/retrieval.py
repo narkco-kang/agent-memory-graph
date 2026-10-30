@@ -10,7 +10,13 @@ Two hard rules (signed, failures.md:118):
 - Ranking is deliberately two-key: (anchor_present, score). Degraded results are
   returned with anchor_state="none" instead of being silently dropped; `strict`
   is the only path that filters them out.
+- The score is rarity-aware (v0.18.0): each matched term contributes
+  `WEIGHTS[field] * idf(term)`, where the IDF is computed from the document being
+  searched. A word that is everywhere (`the`, `graph`) cannot outvote the term that
+  actually answers, which is what the 10k measurement in
+  `experiments/retrieval_10k/` showed the old constant weights doing.
 """
+import math
 import re
 
 from .const import CONCLUSION_TYPES, not_yet_valid
@@ -106,7 +112,47 @@ def _matcher(token: str):
 
 
 def _matchers(query: str):
-    return [(token, _matcher(token)) for token in _tokens(query)]
+    """Query -> (token, matcher) pairs, distinct terms only.
+
+    A word typed twice is one term: the IDF weight belongs to the term, not to how
+    often it was repeated, so duplicates cannot inflate a score.
+    """
+    seen, out = set(), []
+    for token in _tokens(query):
+        if token in seen:
+            continue
+        seen.add(token)
+        out.append((token, _matcher(token)))
+    return out
+
+
+def _match_fields(nodes, matchers):
+    """One pass: matched (field, term) pairs per node, and each term's document frequency.
+
+    Two passes would read more clearly, but search is the hot path (p50 74 ms on
+    10,000 nodes, `experiments/retrieval_10k/`). Keeping the matches from the first
+    pass costs one short list per matching node; re-running every matcher over every
+    field for the IDF pass would cost the whole scan twice.
+
+    `df` counts each term once per node, so a node repeating a word does not look
+    more common than it is.
+    """
+    matched, df = [], [0] * len(matchers)
+    for n in nodes:
+        pairs, counted = [], set()
+        for field in WEIGHTS:
+            value = str(n.get(field) or "").lower()
+            if not value:
+                continue
+            for index, (_, matches) in enumerate(matchers):
+                if matches(value):
+                    pairs.append((field, index))
+                    if index not in counted:
+                        counted.add(index)
+                        df[index] += 1
+        if pairs:
+            matched.append((n, pairs))
+    return matched, df
 
 
 def search(doc: dict, query: str, layer: str = "L3", k: int = 10, strict: bool = False,
@@ -130,18 +176,20 @@ def search(doc: dict, query: str, layer: str = "L3", k: int = 10, strict: bool =
     elif layer == "L4":
         nodes = [n for n in nodes if n.get("type") == "rule"]
 
+    matched, df = _match_fields(nodes, matchers)
+    total = len(nodes)
+    # BM25-style IDF: a term in every node still contributes (ln(1 + N/(1+N)) > 0),
+    # so "matched but common" never silently becomes "not matched" and a corpus
+    # where every node shares a word still ranks something.
+    idf = [math.log(1.0 + total / (1.0 + count)) for count in df]
+
     hits = []
-    for n in nodes:
+    for n, pairs in matched:
         score, fields = 0.0, []
-        for field, weight in WEIGHTS.items():
-            value = str(n.get(field) or "").lower()
-            if not value:
-                continue
-            for _, matches in matchers:
-                if matches(value):
-                    score += weight
-                    if field not in fields:
-                        fields.append(field)
+        for field, index in pairs:
+            score += WEIGHTS[field] * idf[index]
+            if field not in fields:
+                fields.append(field)
         if score <= 0:
             continue
         ev = n.get("evidence") or []

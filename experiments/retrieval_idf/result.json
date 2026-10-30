@@ -1,0 +1,969 @@
+{
+  "corpora": {
+    "control": {
+      "baseline": {
+        "corpus_sha256": "243b1ad193198f0c5a1a8f426e72fb1af8103dfa48e94425a5e32665d86661d4",
+        "gold_rank_by_query": {
+          "q01": 1,
+          "q02": 3,
+          "q03": 1,
+          "q04": 1,
+          "q05": 1,
+          "q06": null,
+          "q07": 1,
+          "q08": null,
+          "q09": 1,
+          "q10": null,
+          "q11": 1,
+          "q12": 1,
+          "q13": 1,
+          "q14": 1,
+          "q15": 1,
+          "q16": 2,
+          "q17": 1,
+          "q18": 6,
+          "q19": 1,
+          "q20": 1,
+          "q21": 1,
+          "q22": 2,
+          "q23": 1,
+          "q24": 1,
+          "q25": 1,
+          "q26": 3
+        },
+        "groups": {
+          "authored-split-A": {
+            "mrr@10": 0.952,
+            "n": 14,
+            "recall@1": 0.893,
+            "recall@10": 1.0,
+            "recall@5": 1.0
+          },
+          "authored-split-B": {
+            "mrr@10": 0.542,
+            "n": 12,
+            "recall@1": 0.375,
+            "recall@10": 0.708,
+            "recall@5": 0.583
+          },
+          "keyword": {
+            "mrr@10": 0.969,
+            "n": 16,
+            "recall@1": 0.875,
+            "recall@10": 0.969,
+            "recall@5": 0.969
+          },
+          "keyword-H1": {
+            "mrr@10": 0.938,
+            "n": 8,
+            "recall@1": 0.812,
+            "recall@10": 0.938,
+            "recall@5": 0.938
+          },
+          "keyword-H2": {
+            "mrr@10": 1.0,
+            "n": 8,
+            "recall@1": 0.938,
+            "recall@10": 1.0,
+            "recall@5": 1.0
+          },
+          "overall": {
+            "mrr@10": 0.763,
+            "n": 26,
+            "recall@1": 0.654,
+            "recall@10": 0.865,
+            "recall@5": 0.808
+          },
+          "paraphrase": {
+            "mrr@10": 0.433,
+            "n": 10,
+            "recall@1": 0.3,
+            "recall@10": 0.7,
+            "recall@5": 0.55
+          },
+          "paraphrase-H1": {
+            "mrr@10": 0.367,
+            "n": 5,
+            "recall@1": 0.2,
+            "recall@10": 0.6,
+            "recall@5": 0.5
+          },
+          "paraphrase-H2": {
+            "mrr@10": 0.5,
+            "n": 5,
+            "recall@1": 0.4,
+            "recall@10": 0.8,
+            "recall@5": 0.6
+          }
+        },
+        "latency_ms": {
+          "max": 0.71,
+          "p50": 0.28
+        },
+        "misses_at_5": [
+          "q06",
+          "q08",
+          "q10",
+          "q18"
+        ],
+        "nodes": 27
+      },
+      "nodes": 27,
+      "shipped": {
+        "corpus_sha256": "243b1ad193198f0c5a1a8f426e72fb1af8103dfa48e94425a5e32665d86661d4",
+        "gold_rank_by_query": {
+          "q01": 1,
+          "q02": 1,
+          "q03": 1,
+          "q04": 1,
+          "q05": 1,
+          "q06": null,
+          "q07": 1,
+          "q08": null,
+          "q09": 1,
+          "q10": null,
+          "q11": 1,
+          "q12": 1,
+          "q13": 1,
+          "q14": 1,
+          "q15": 1,
+          "q16": 2,
+          "q17": 1,
+          "q18": 3,
+          "q19": 1,
+          "q20": 1,
+          "q21": 1,
+          "q22": 2,
+          "q23": 1,
+          "q24": 1,
+          "q25": 1,
+          "q26": 1
+        },
+        "groups": {
+          "authored-split-A": {
+            "mrr@10": 1.0,
+            "n": 14,
+            "recall@1": 0.964,
+            "recall@10": 1.0,
+            "recall@5": 1.0
+          },
+          "authored-split-B": {
+            "mrr@10": 0.611,
+            "n": 12,
+            "recall@1": 0.458,
+            "recall@10": 0.708,
+            "recall@5": 0.708
+          },
+          "keyword": {
+            "mrr@10": 0.969,
+            "n": 16,
+            "recall@1": 0.875,
+            "recall@10": 0.969,
+            "recall@5": 0.969
+          },
+          "keyword-H1": {
+            "mrr@10": 0.938,
+            "n": 8,
+            "recall@1": 0.812,
+            "recall@10": 0.938,
+            "recall@5": 0.938
+          },
+          "keyword-H2": {
+            "mrr@10": 1.0,
+            "n": 8,
+            "recall@1": 0.938,
+            "recall@10": 1.0,
+            "recall@5": 1.0
+          },
+          "overall": {
+            "mrr@10": 0.821,
+            "n": 26,
+            "recall@1": 0.731,
+            "recall@10": 0.865,
+            "recall@5": 0.865
+          },
+          "paraphrase": {
+            "mrr@10": 0.583,
+            "n": 10,
+            "recall@1": 0.5,
+            "recall@10": 0.7,
+            "recall@5": 0.7
+          },
+          "paraphrase-H1": {
+            "mrr@10": 0.5,
+            "n": 5,
+            "recall@1": 0.4,
+            "recall@10": 0.6,
+            "recall@5": 0.6
+          },
+          "paraphrase-H2": {
+            "mrr@10": 0.667,
+            "n": 5,
+            "recall@1": 0.6,
+            "recall@10": 0.8,
+            "recall@5": 0.8
+          }
+        },
+        "latency_ms": {
+          "max": 0.57,
+          "p50": 0.31
+        },
+        "misses_at_5": [
+          "q06",
+          "q08",
+          "q10"
+        ],
+        "nodes": 27
+      }
+    },
+    "n1": {
+      "baseline": {
+        "corpus_sha256": "e450c26da1038e3c9a48e8f93904621362726a232c6a71763ad186d9ccd47921",
+        "gold_rank_by_query": {
+          "q01": 1,
+          "q02": 3,
+          "q03": 1,
+          "q04": 1,
+          "q05": 1,
+          "q06": null,
+          "q07": 1,
+          "q08": null,
+          "q09": 1,
+          "q10": null,
+          "q11": 1,
+          "q12": 1,
+          "q13": 1,
+          "q14": 1,
+          "q15": 1,
+          "q16": 2,
+          "q17": 1,
+          "q18": 6,
+          "q19": 1,
+          "q20": 1,
+          "q21": 1,
+          "q22": 2,
+          "q23": 1,
+          "q24": 1,
+          "q25": 1,
+          "q26": 3
+        },
+        "groups": {
+          "authored-split-A": {
+            "mrr@10": 0.952,
+            "n": 14,
+            "recall@1": 0.893,
+            "recall@10": 1.0,
+            "recall@5": 1.0
+          },
+          "authored-split-B": {
+            "mrr@10": 0.542,
+            "n": 12,
+            "recall@1": 0.375,
+            "recall@10": 0.708,
+            "recall@5": 0.583
+          },
+          "keyword": {
+            "mrr@10": 0.969,
+            "n": 16,
+            "recall@1": 0.875,
+            "recall@10": 0.969,
+            "recall@5": 0.969
+          },
+          "keyword-H1": {
+            "mrr@10": 0.938,
+            "n": 8,
+            "recall@1": 0.812,
+            "recall@10": 0.938,
+            "recall@5": 0.938
+          },
+          "keyword-H2": {
+            "mrr@10": 1.0,
+            "n": 8,
+            "recall@1": 0.938,
+            "recall@10": 1.0,
+            "recall@5": 1.0
+          },
+          "overall": {
+            "mrr@10": 0.763,
+            "n": 26,
+            "recall@1": 0.654,
+            "recall@10": 0.865,
+            "recall@5": 0.808
+          },
+          "paraphrase": {
+            "mrr@10": 0.433,
+            "n": 10,
+            "recall@1": 0.3,
+            "recall@10": 0.7,
+            "recall@5": 0.55
+          },
+          "paraphrase-H1": {
+            "mrr@10": 0.367,
+            "n": 5,
+            "recall@1": 0.2,
+            "recall@10": 0.6,
+            "recall@5": 0.5
+          },
+          "paraphrase-H2": {
+            "mrr@10": 0.5,
+            "n": 5,
+            "recall@1": 0.4,
+            "recall@10": 0.8,
+            "recall@5": 0.6
+          }
+        },
+        "latency_ms": {
+          "max": 171.19,
+          "p50": 74.24
+        },
+        "misses_at_5": [
+          "q06",
+          "q08",
+          "q10",
+          "q18"
+        ],
+        "nodes": 10000
+      },
+      "nodes": 10000,
+      "shipped": {
+        "corpus_sha256": "e450c26da1038e3c9a48e8f93904621362726a232c6a71763ad186d9ccd47921",
+        "gold_rank_by_query": {
+          "q01": 1,
+          "q02": 1,
+          "q03": 1,
+          "q04": 1,
+          "q05": 1,
+          "q06": null,
+          "q07": 1,
+          "q08": null,
+          "q09": 1,
+          "q10": null,
+          "q11": 1,
+          "q12": 1,
+          "q13": 1,
+          "q14": 1,
+          "q15": 1,
+          "q16": 2,
+          "q17": 1,
+          "q18": 5,
+          "q19": 1,
+          "q20": 1,
+          "q21": 1,
+          "q22": 2,
+          "q23": 1,
+          "q24": 1,
+          "q25": 1,
+          "q26": 1
+        },
+        "groups": {
+          "authored-split-A": {
+            "mrr@10": 1.0,
+            "n": 14,
+            "recall@1": 0.964,
+            "recall@10": 1.0,
+            "recall@5": 1.0
+          },
+          "authored-split-B": {
+            "mrr@10": 0.6,
+            "n": 12,
+            "recall@1": 0.458,
+            "recall@10": 0.708,
+            "recall@5": 0.708
+          },
+          "keyword": {
+            "mrr@10": 0.969,
+            "n": 16,
+            "recall@1": 0.875,
+            "recall@10": 0.969,
+            "recall@5": 0.969
+          },
+          "keyword-H1": {
+            "mrr@10": 0.938,
+            "n": 8,
+            "recall@1": 0.812,
+            "recall@10": 0.938,
+            "recall@5": 0.938
+          },
+          "keyword-H2": {
+            "mrr@10": 1.0,
+            "n": 8,
+            "recall@1": 0.938,
+            "recall@10": 1.0,
+            "recall@5": 1.0
+          },
+          "overall": {
+            "mrr@10": 0.815,
+            "n": 26,
+            "recall@1": 0.731,
+            "recall@10": 0.865,
+            "recall@5": 0.865
+          },
+          "paraphrase": {
+            "mrr@10": 0.57,
+            "n": 10,
+            "recall@1": 0.5,
+            "recall@10": 0.7,
+            "recall@5": 0.7
+          },
+          "paraphrase-H1": {
+            "mrr@10": 0.5,
+            "n": 5,
+            "recall@1": 0.4,
+            "recall@10": 0.6,
+            "recall@5": 0.6
+          },
+          "paraphrase-H2": {
+            "mrr@10": 0.64,
+            "n": 5,
+            "recall@1": 0.6,
+            "recall@10": 0.8,
+            "recall@5": 0.8
+          }
+        },
+        "latency_ms": {
+          "max": 149.6,
+          "p50": 77.25
+        },
+        "misses_at_5": [
+          "q06",
+          "q08",
+          "q10"
+        ],
+        "nodes": 10000
+      }
+    },
+    "n2": {
+      "baseline": {
+        "corpus_sha256": "634c8e84e1516698d388357310d51a80b375d2d23c34d012b4b9e46fe1357a3c",
+        "gold_rank_by_query": {
+          "q01": 1,
+          "q02": 14,
+          "q03": 1,
+          "q04": 1,
+          "q05": 42,
+          "q06": null,
+          "q07": 1,
+          "q08": null,
+          "q09": 1,
+          "q10": null,
+          "q11": 1,
+          "q12": null,
+          "q13": 1,
+          "q14": 1,
+          "q15": 1,
+          "q16": 99,
+          "q17": 5,
+          "q18": null,
+          "q19": 1,
+          "q20": 68,
+          "q21": 1,
+          "q22": 5,
+          "q23": 1,
+          "q24": null,
+          "q25": 1,
+          "q26": null
+        },
+        "groups": {
+          "authored-split-A": {
+            "mrr@10": 0.8,
+            "n": 14,
+            "recall@1": 0.75,
+            "recall@10": 0.821,
+            "recall@5": 0.821
+          },
+          "authored-split-B": {
+            "mrr@10": 0.183,
+            "n": 12,
+            "recall@1": 0.167,
+            "recall@10": 0.208,
+            "recall@5": 0.208
+          },
+          "keyword": {
+            "mrr@10": 0.7,
+            "n": 16,
+            "recall@1": 0.656,
+            "recall@10": 0.719,
+            "recall@5": 0.719
+          },
+          "keyword-H1": {
+            "mrr@10": 0.625,
+            "n": 8,
+            "recall@1": 0.625,
+            "recall@10": 0.625,
+            "recall@5": 0.625
+          },
+          "keyword-H2": {
+            "mrr@10": 0.775,
+            "n": 8,
+            "recall@1": 0.688,
+            "recall@10": 0.812,
+            "recall@5": 0.812
+          },
+          "overall": {
+            "mrr@10": 0.515,
+            "n": 26,
+            "recall@1": 0.481,
+            "recall@10": 0.538,
+            "recall@5": 0.538
+          },
+          "paraphrase": {
+            "mrr@10": 0.22,
+            "n": 10,
+            "recall@1": 0.2,
+            "recall@10": 0.25,
+            "recall@5": 0.25
+          },
+          "paraphrase-H1": {
+            "mrr@10": 0.24,
+            "n": 5,
+            "recall@1": 0.2,
+            "recall@10": 0.3,
+            "recall@5": 0.3
+          },
+          "paraphrase-H2": {
+            "mrr@10": 0.2,
+            "n": 5,
+            "recall@1": 0.2,
+            "recall@10": 0.2,
+            "recall@5": 0.2
+          }
+        },
+        "latency_ms": {
+          "max": 207.69,
+          "p50": 93.23
+        },
+        "misses_at_5": [
+          "q02",
+          "q05",
+          "q06",
+          "q08",
+          "q10",
+          "q12",
+          "q16",
+          "q18",
+          "q20",
+          "q24",
+          "q26"
+        ],
+        "nodes": 10000
+      },
+      "nodes": 10000,
+      "shipped": {
+        "corpus_sha256": "634c8e84e1516698d388357310d51a80b375d2d23c34d012b4b9e46fe1357a3c",
+        "gold_rank_by_query": {
+          "q01": 1,
+          "q02": 25,
+          "q03": 1,
+          "q04": 2,
+          "q05": 9,
+          "q06": null,
+          "q07": 1,
+          "q08": null,
+          "q09": 1,
+          "q10": null,
+          "q11": 1,
+          "q12": 75,
+          "q13": 1,
+          "q14": 1,
+          "q15": 1,
+          "q16": 46,
+          "q17": 1,
+          "q18": null,
+          "q19": 1,
+          "q20": 53,
+          "q21": 1,
+          "q22": 3,
+          "q23": 1,
+          "q24": 83,
+          "q25": 1,
+          "q26": 17
+        },
+        "groups": {
+          "authored-split-A": {
+            "mrr@10": 0.865,
+            "n": 14,
+            "recall@1": 0.821,
+            "recall@10": 0.893,
+            "recall@5": 0.821
+          },
+          "authored-split-B": {
+            "mrr@10": 0.153,
+            "n": 12,
+            "recall@1": 0.083,
+            "recall@10": 0.208,
+            "recall@5": 0.208
+          },
+          "keyword": {
+            "mrr@10": 0.757,
+            "n": 16,
+            "recall@1": 0.719,
+            "recall@10": 0.781,
+            "recall@5": 0.719
+          },
+          "keyword-H1": {
+            "mrr@10": 0.639,
+            "n": 8,
+            "recall@1": 0.625,
+            "recall@10": 0.75,
+            "recall@5": 0.625
+          },
+          "keyword-H2": {
+            "mrr@10": 0.875,
+            "n": 8,
+            "recall@1": 0.812,
+            "recall@10": 0.812,
+            "recall@5": 0.812
+          },
+          "overall": {
+            "mrr@10": 0.536,
+            "n": 26,
+            "recall@1": 0.481,
+            "recall@10": 0.577,
+            "recall@5": 0.538
+          },
+          "paraphrase": {
+            "mrr@10": 0.183,
+            "n": 10,
+            "recall@1": 0.1,
+            "recall@10": 0.25,
+            "recall@5": 0.25
+          },
+          "paraphrase-H1": {
+            "mrr@10": 0.267,
+            "n": 5,
+            "recall@1": 0.2,
+            "recall@10": 0.3,
+            "recall@5": 0.3
+          },
+          "paraphrase-H2": {
+            "mrr@10": 0.1,
+            "n": 5,
+            "recall@1": 0.0,
+            "recall@10": 0.2,
+            "recall@5": 0.2
+          }
+        },
+        "latency_ms": {
+          "max": 183.7,
+          "p50": 97.55
+        },
+        "misses_at_5": [
+          "q02",
+          "q05",
+          "q06",
+          "q08",
+          "q10",
+          "q12",
+          "q16",
+          "q18",
+          "q20",
+          "q24",
+          "q26"
+        ],
+        "nodes": 10000
+      }
+    },
+    "n3": {
+      "baseline": {
+        "corpus_sha256": "3097b1b2ae75a66fbf25cbee958d7354f7f7bd4336ab7cf7dcf570f33c0702f5",
+        "gold_rank_by_query": {
+          "q01": 1,
+          "q02": null,
+          "q03": 1,
+          "q04": 1,
+          "q05": 1,
+          "q06": null,
+          "q07": 1,
+          "q08": null,
+          "q09": 1,
+          "q10": null,
+          "q11": 1,
+          "q12": 1,
+          "q13": 1,
+          "q14": 1,
+          "q15": 1,
+          "q16": 2,
+          "q17": 1,
+          "q18": null,
+          "q19": 1,
+          "q20": 1,
+          "q21": 1,
+          "q22": 2,
+          "q23": 1,
+          "q24": 1,
+          "q25": 1,
+          "q26": null
+        },
+        "groups": {
+          "authored-split-A": {
+            "mrr@10": 0.929,
+            "n": 14,
+            "recall@1": 0.893,
+            "recall@10": 0.929,
+            "recall@5": 0.929
+          },
+          "authored-split-B": {
+            "mrr@10": 0.5,
+            "n": 12,
+            "recall@1": 0.375,
+            "recall@10": 0.458,
+            "recall@5": 0.458
+          },
+          "keyword": {
+            "mrr@10": 0.969,
+            "n": 16,
+            "recall@1": 0.875,
+            "recall@10": 0.938,
+            "recall@5": 0.938
+          },
+          "keyword-H1": {
+            "mrr@10": 0.938,
+            "n": 8,
+            "recall@1": 0.812,
+            "recall@10": 0.875,
+            "recall@5": 0.875
+          },
+          "keyword-H2": {
+            "mrr@10": 1.0,
+            "n": 8,
+            "recall@1": 0.938,
+            "recall@10": 1.0,
+            "recall@5": 1.0
+          },
+          "overall": {
+            "mrr@10": 0.731,
+            "n": 26,
+            "recall@1": 0.654,
+            "recall@10": 0.712,
+            "recall@5": 0.712
+          },
+          "paraphrase": {
+            "mrr@10": 0.35,
+            "n": 10,
+            "recall@1": 0.3,
+            "recall@10": 0.35,
+            "recall@5": 0.35
+          },
+          "paraphrase-H1": {
+            "mrr@10": 0.3,
+            "n": 5,
+            "recall@1": 0.2,
+            "recall@10": 0.3,
+            "recall@5": 0.3
+          },
+          "paraphrase-H2": {
+            "mrr@10": 0.4,
+            "n": 5,
+            "recall@1": 0.4,
+            "recall@10": 0.4,
+            "recall@5": 0.4
+          }
+        },
+        "latency_ms": {
+          "max": 212.78,
+          "p50": 85.49
+        },
+        "misses_at_5": [
+          "q02",
+          "q06",
+          "q08",
+          "q10",
+          "q18",
+          "q26"
+        ],
+        "nodes": 10000
+      },
+      "nodes": 10000,
+      "shipped": {
+        "corpus_sha256": "3097b1b2ae75a66fbf25cbee958d7354f7f7bd4336ab7cf7dcf570f33c0702f5",
+        "gold_rank_by_query": {
+          "q01": 1,
+          "q02": 1,
+          "q03": 1,
+          "q04": 1,
+          "q05": 1,
+          "q06": null,
+          "q07": 1,
+          "q08": null,
+          "q09": 1,
+          "q10": null,
+          "q11": 1,
+          "q12": 1,
+          "q13": 1,
+          "q14": 1,
+          "q15": 1,
+          "q16": 2,
+          "q17": 1,
+          "q18": 3,
+          "q19": 1,
+          "q20": 1,
+          "q21": 1,
+          "q22": 2,
+          "q23": 1,
+          "q24": 1,
+          "q25": 1,
+          "q26": 1
+        },
+        "groups": {
+          "authored-split-A": {
+            "mrr@10": 1.0,
+            "n": 14,
+            "recall@1": 0.964,
+            "recall@10": 1.0,
+            "recall@5": 1.0
+          },
+          "authored-split-B": {
+            "mrr@10": 0.611,
+            "n": 12,
+            "recall@1": 0.458,
+            "recall@10": 0.708,
+            "recall@5": 0.708
+          },
+          "keyword": {
+            "mrr@10": 0.969,
+            "n": 16,
+            "recall@1": 0.875,
+            "recall@10": 0.969,
+            "recall@5": 0.969
+          },
+          "keyword-H1": {
+            "mrr@10": 0.938,
+            "n": 8,
+            "recall@1": 0.812,
+            "recall@10": 0.938,
+            "recall@5": 0.938
+          },
+          "keyword-H2": {
+            "mrr@10": 1.0,
+            "n": 8,
+            "recall@1": 0.938,
+            "recall@10": 1.0,
+            "recall@5": 1.0
+          },
+          "overall": {
+            "mrr@10": 0.821,
+            "n": 26,
+            "recall@1": 0.731,
+            "recall@10": 0.865,
+            "recall@5": 0.865
+          },
+          "paraphrase": {
+            "mrr@10": 0.583,
+            "n": 10,
+            "recall@1": 0.5,
+            "recall@10": 0.7,
+            "recall@5": 0.7
+          },
+          "paraphrase-H1": {
+            "mrr@10": 0.5,
+            "n": 5,
+            "recall@1": 0.4,
+            "recall@10": 0.6,
+            "recall@5": 0.6
+          },
+          "paraphrase-H2": {
+            "mrr@10": 0.667,
+            "n": 5,
+            "recall@1": 0.6,
+            "recall@10": 0.8,
+            "recall@5": 0.8
+          }
+        },
+        "latency_ms": {
+          "max": 182.77,
+          "p50": 89.14
+        },
+        "misses_at_5": [
+          "q06",
+          "q08",
+          "q10"
+        ],
+        "nodes": 10000
+      }
+    }
+  },
+  "criteria": {
+    "frozen_min_r1": 0.654,
+    "frozen_min_r5": 0.808,
+    "n1_min": {
+      "mrr@10": 0.763,
+      "recall@1": 0.654,
+      "recall@10": 0.865,
+      "recall@5": 0.808
+    },
+    "n2_min": {
+      "recall@1": 0.481,
+      "recall@5": 0.538
+    },
+    "n2_target_r5": 0.7,
+    "n3_min_gain": 0.05
+  },
+  "inputs": {
+    "corpus_sha256": "a183dc443ee4a1e75a08139860f77d3a120636fc0ef534ad34ea6f1b6ea24be8",
+    "frozen_result_sha256": "ff572ab552eff11a43d72d952cc0733844c440dfe762e13d4373f7b0affea896",
+    "queries_sha256": "3dced7bb2fcfa1c0a5ce2a9659cf576a57a043a651dd126dc17d706c09ab86ed",
+    "scorers": {
+      "baseline": "v0.17.0 constant weights (baseline.py)",
+      "shipped": "v0.18.0 IDF weights (src/amg/retrieval.py)"
+    }
+  },
+  "n3_vocabulary": [
+    {
+      "df": 14,
+      "token": "the"
+    },
+    {
+      "df": 7,
+      "token": "decision"
+    },
+    {
+      "df": 7,
+      "token": "task"
+    },
+    {
+      "df": 6,
+      "token": "and"
+    },
+    {
+      "df": 5,
+      "token": "are"
+    },
+    {
+      "df": 5,
+      "token": "before"
+    },
+    {
+      "df": 5,
+      "token": "never"
+    },
+    {
+      "df": 5,
+      "token": "write"
+    },
+    {
+      "df": 4,
+      "token": "file"
+    },
+    {
+      "df": 4,
+      "token": "issue"
+    },
+    {
+      "df": 4,
+      "token": "lock"
+    },
+    {
+      "df": 4,
+      "token": "nodes"
+    }
+  ],
+  "verdicts": {
+    "C1_frozen_no_regression": true,
+    "C2_n1_no_regression": true,
+    "C3_n2_no_regression": true,
+    "C4_n3_gain": 0.153,
+    "C4_pass": true,
+    "N2_target_met": false,
+    "ship": true
+  }
+}

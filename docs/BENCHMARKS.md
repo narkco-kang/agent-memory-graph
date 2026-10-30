@@ -81,9 +81,13 @@ render 50 ms / `fsync` 23 ms) and prices the options against it.
 ## Retrieval quality (not latency)
 
 Latency is measured above; quality is measured separately and pre-registered in
-[`experiments/retrieval_eval/`](../experiments/retrieval_eval/README.md). Baseline
-on a 27-node corpus with 26 labelled queries: overall `recall@5` **0.865**,
-keyword bucket 0.938, paraphrase bucket **0.750**. The acceptance bar for a
+[`experiments/retrieval_eval/`](../experiments/retrieval_eval/README.md). On the frozen
+27-node corpus with 26 labelled queries the shipped v0.18.0 scorer measures overall
+`recall@5` **0.865**, `recall@1` 0.731, keyword bucket 0.969, paraphrase bucket 0.700,
+and 0.865 under frequent-word noise at 10,000 nodes
+([`retrieval_idf/`](../experiments/retrieval_idf/README.md)). Uniform query-vocabulary
+noise still holds it to **0.538**
+([`retrieval_10k/`](../experiments/retrieval_10k/README.md)). The acceptance bar for a
 semantic retriever (C1/C2/C3) is written there before any candidate existed.
 
 ## Not measured
@@ -95,6 +99,8 @@ semantic retriever (C1/C2/C3) is written there before any candidate existed.
   [`CONCURRENCY.md`](CONCURRENCY.md) (8 writers × 25 writes).
 - Windows: latency is not benchmarked on Windows. Correctness is — the suite runs
   on `windows-latest` in CI, including the cross-process lock test.
-- Vector retrieval: no candidate has been measured yet; only the baseline exists.
-- Retrieval quality at scale: the eval corpus has 27 nodes. Nothing here says how
-  `recall@5` behaves on a 10k-node graph.
+- Vector retrieval: measured candidates (bm25, hashed-vec, and a local embedding model
+  when one is reachable) lost to the lexical baseline on its pre-registered bar; no
+  vector path ships (`experiments/retrieval_eval/`).
+- A real 10k graph: retrieval quality at scale is measured on synthetic noise models
+  only (`experiments/retrieval_10k/`, `experiments/retrieval_idf/`).

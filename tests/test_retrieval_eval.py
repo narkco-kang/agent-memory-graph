@@ -33,19 +33,19 @@ def usable_candidates(doc):
         out[name] = cand
     return out
 
-# v0.14.0 moved these on purpose (word-boundary + inflection matching, identifier
-# lookups; DECISIONS #25). Previous values, kept for audit rather than overwritten:
-#   overall  r@1 0.654  r@5 0.865  r@10 0.904  mrr 0.744
-#   keyword  r@1 0.812  r@5 0.938  r@10 1.000
-#   paraphrase r@1 0.400 r@5 0.750 r@10 0.750
-# The per-query analysis of what moved and why is in
-# experiments/retrieval_precision/PREREGISTRATION.md.
+# v0.18.0 moved these on purpose: BM25-style IDF term weights (DECISIONS #28,
+# experiments/retrieval_idf/). Previous v0.14.0 values, kept for audit rather than
+# overwritten: overall r@1 0.654 r@5 0.808 r@10 0.865 mrr 0.763; keyword r@1 0.875
+# r@5 0.969 r@10 0.969; paraphrase r@1 0.300 r@5 0.550 r@10 0.700; paraphrase-H1
+# r@5 0.500; paraphrase-H2 r@5 0.600; keyword-H1 0.938; keyword-H2 1.000.
+# The round before that (v0.14.0, word-boundary + inflection matching, DECISIONS #25)
+# is analysed in experiments/retrieval_precision/PREREGISTRATION.md.
 BASELINE = {
-    "overall": {"recall@1": 0.654, "recall@5": 0.808, "recall@10": 0.865, "mrr@10": 0.763},
+    "overall": {"recall@1": 0.731, "recall@5": 0.865, "recall@10": 0.865, "mrr@10": 0.821},
     "keyword": {"recall@1": 0.875, "recall@5": 0.969, "recall@10": 0.969},
-    "paraphrase": {"recall@1": 0.3, "recall@5": 0.55, "recall@10": 0.7},
-    "paraphrase-H1": {"recall@5": 0.5},
-    "paraphrase-H2": {"recall@5": 0.6},
+    "paraphrase": {"recall@1": 0.5, "recall@5": 0.7, "recall@10": 0.7},
+    "paraphrase-H1": {"recall@5": 0.6},
+    "paraphrase-H2": {"recall@5": 0.8},
     "keyword-H1": {"recall@5": 0.938},
     "keyword-H2": {"recall@5": 1.0},
 }

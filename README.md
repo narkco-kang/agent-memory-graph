@@ -135,9 +135,10 @@ latency tail is unmeasured), and synthetic benchmarks *do* reach 10k nodes
 (`docs/BENCHMARKS.md`). Both 10k numbers now exist: concurrency (v0.16.0 — 200 writes,
 0 lost, and a default timeout that does *not* survive the burst,
 `docs/CONCURRENCY.md`) and retrieval (v0.17.0 — size alone costs nothing, but
-query-vocabulary noise costs 0.27 recall@5 because the scorer has no IDF,
-`experiments/retrieval_10k/`). Every claim here is repeated in the document that would
-otherwise imply it.
+query-vocabulary noise costs 0.27 recall@5; v0.18.0's IDF term weights then lifted the
+frozen baseline 0.808→0.865 and frequent-word noise to 0.865, while uniform
+query-token noise stayed 0.538 — `experiments/retrieval_idf/`). Every claim here is
+repeated in the document that would otherwise imply it.
 
 ## Measurement, not marketing
 

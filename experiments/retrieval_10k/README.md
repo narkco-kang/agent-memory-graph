@@ -40,7 +40,9 @@ Two findings:
 ## What this does not establish
 
 - Not a real graph: synthetic English noise on a frozen corpus, one host.
-- Not semantic recall; not an IDF result. IDF weighting is the *next* candidate and
-  needs its own pre-registration (the current round touched no code, per criterion C4).
+- Not semantic recall; not an IDF result. The current round touched no code (criterion
+  C4). **Follow-up, v0.18.0:** `../retrieval_idf/` measured IDF with its own
+  pre-registration — frozen baseline 0.808 → 0.865, N2 r@5 unchanged at 0.538 as
+  predicted there.
 - Not a ranking guarantee: recall@10 collapses to recall@5 under N2, i.e. the gold
   answers pushed out are pushed far out, not just to rank 6.

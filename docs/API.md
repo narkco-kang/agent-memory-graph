@@ -368,11 +368,14 @@ Matching is lexical and, as of v0.14.0, word-aware:
 - The ASCII inflection table is English; other languages get word-boundary matching
   only. `experiments/retrieval_precision/` measures this behaviour and
   `docs/DECISIONS.md` #25 records the recall that changing it costs.
-- **Scoring has no IDF**: matching is weighted by field (`id` 3.0, `label` 2.0,
-  `note` 1.0, `source`/`owner` 0.5), not by how rare a term is. At 10,000 nodes with
-  query-vocabulary noise this costs recall@5 0.808 → 0.538, with 7 of 11 misses pushed
-  beyond rank 100 (`experiments/retrieval_10k/`). Treat long, wordy graphs as a known
-  weakness, not a measured strength.
+- **Scoring is rarity-aware (v0.18.0, DECISIONS #28)**: a matched term contributes
+  `WEIGHTS[field] × idf(term)` with `idf = ln(1 + N/(1+df))` over the visible nodes, so
+  fields still order (`id` 3.0, `label` 2.0, `note` 1.0, `source`/`owner` 0.5) but a
+  word that is everywhere cannot outvote the answering term. Measured on the frozen 26
+  queries: overall recall@5 **0.808 → 0.865**, recall@1 0.654 → 0.731; frequent-word
+  noise at 10k 0.712 → 0.865. Uniform query-vocabulary noise stays **0.538** (r@10
+  0.538 → 0.577) because every token in it is equally common, so IDF has no signal
+  (`experiments/retrieval_idf/`).
 
 
 - L1/L3/L4 **hard-filter `superseded` nodes** (`failures.md:118`, non-negotiable):
