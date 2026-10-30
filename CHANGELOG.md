@@ -3,7 +3,11 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
-## [Unreleased] — 0.5.0
+## [0.5.0] — 2026-10-30
+
+**A measurement release: no behaviour changes.** Every claim below is a number
+taken on a live graph or a priced option, and nothing in `src/amg/` changed except
+the version string. If you are upgrading for features, there are none.
 
 ### Added
 
@@ -25,6 +29,18 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
   single write at **147 ms** — the number behind the cold-archive trigger, now
   measured on real data instead of projected from a synthetic benchmark.
   Aggregates only: no node ids, labels or notes are reproduced.
+
+### Not shipped in 0.5.0 (do not assume)
+
+Unchanged from 0.4.0 — this release added no capability:
+
+- Authentication / authorization / multi-tenancy (out of scope by decision).
+- Vector retrieval in the default path (measured and rejected; optional extra only).
+- Tamper *proof* (`fingerprint`/`verify` detect; the losing cases are tabulated).
+- TTL scheduler (`amg expire` is a command; no daemon).
+- Encryption at rest (`graph.json` is plain text by design).
+- Write-path speed work: priced in `docs/WRITE-COST.md`, deliberately not built —
+  the trigger (p95 > 250 ms / 20 MB / 10k nodes) is still ahead of the live graph.
 
 ## [0.4.0] — 2026-10-30
 

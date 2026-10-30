@@ -1,5 +1,28 @@
 # Release checklists
 
+## v0.5.0 — 2026-10-30
+
+Status: **released**. A measurement release: two documents of numbers, no code
+changes beyond the version string.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on four jobs | ✅ 176 tests (1 environment-skipped) |
+| 2 | Documentation↔code symbol gate | ✅ six documents |
+| 3 | Examples run | ✅ quickstart + lifecycle |
+| 4 | Every claim is a measurement, not an estimate | ✅ real-graph numbers with the reproducible script; the one projection (history sidecar ≈ 30 ms) is labelled as a projection |
+| 5 | No behaviour change claimed or implied | ✅ CHANGELOG opens by saying so; "Not shipped in 0.5.0" repeats the five gaps |
+| 6 | Version, changelog, tag and notes agree | ✅ 0.5.0 everywhere |
+
+### What this release is for
+
+It makes two decisions auditable instead of memorable: what a live graph costs
+(`docs/REAL-WORLD.md`) and why the obvious optimisations are not being done
+(`docs/WRITE-COST.md`, DECISIONS #14). The value is in being able to disagree with
+the numbers.
+
+---
+
 ## v0.4.0 — 2026-10-30
 
 Status: **released**. Scope: tamper detection, filesystem hygiene, an
