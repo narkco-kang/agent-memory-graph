@@ -50,9 +50,11 @@ class DocCoverageTests(unittest.TestCase):
             import check_doc_symbols
         finally:
             sys.path.pop(0)
-        targets = set(check_doc_symbols.default_targets())
+        targets = {path.replace(os.sep, "/") for path in check_doc_symbols.default_targets()}
+        # Forward slashes: the gate emits POSIX-style relative paths so its output is
+        # identical on every platform (see the Windows fix on 4e0daa6).
         docs = {
-            os.path.join("docs", name)
+            "docs/" + name
             for name in os.listdir(os.path.join(ROOT, "docs"))
             if name.endswith(".md")
         }
