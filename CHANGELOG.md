@@ -3,6 +3,35 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.7.6] — 2026-10-30
+
+**No library change**; `src/amg/` differs only in the version string. Two numbers
+that were quoted without context now have it: the stale-conflict count, and the
+conditions the timings were taken under.
+
+### Added
+
+- **`docs/REAL-WORLD.md` breaks down the pinned conflicts.** On the first live graph
+  all four are staleness, but not one kind: three are work items (`task`/`issue`/
+  `decision`) untouched 3–7 days with owners and notes — real debt, left visible on
+  purpose — and **one is a `group` node**, which is long-lived by nature and flagged
+  by a rule that assumes a short-lived work item. That false-positive class is
+  recorded as a finding; changing which types the rule covers changes `audit` output
+  for existing users, so it needs a decision and a test, not a quiet patch.
+- **`benchmarks/real_graph.py` prints the load average** and flags runs above 2.0 as
+  inflated, because the effect is large: the same `adopt` of the same 15.4 MB file is
+  **140–142 ms idle and 1,055 ms at load 24.8**, and CLI startup goes **48 ms → 552
+  ms**. `docs/REAL-WORLD.md` records this as a measurement-condition table, so its
+  numbers are not compared across conditions.
+
+### Not shipped in 0.7.6 (do not assume)
+
+Unchanged from 0.7.5 — the library gained nothing: no authentication /
+authorization / multi-tenancy (out of scope by decision), no vector retrieval in the
+default path (measured, rejected), no tamper *proof*, no TTL scheduler, no
+encryption at rest, no lock fairness, no change to the audit rules, and history
+compression remains a design (`docs/DESIGN-HISTORY.md`), not a capability.
+
 ## [0.7.5] — 2026-10-30
 
 **No library change**; `src/amg/` differs only in the version string. It turns the

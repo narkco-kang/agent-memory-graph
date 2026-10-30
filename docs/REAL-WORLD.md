@@ -140,6 +140,53 @@ reporting the wrong thing.
   Same honest state on 187 nodes and on 1,282.
 - **Adoption cost is linear in bytes**: 6 ms for 0.44 MB, 142 ms for 15.4 MB.
 
+## What the 4 pinned conflicts actually are
+
+"3–4 stale conflicts" has been quoted often enough that it deserves a breakdown. On
+the first live graph at rev 2,604, with the adoption pin applied, all four conflicts
+are staleness, and they are not all the same kind:
+
+| node type | status | untouched | has note | has owner |
+|---|---|---|---|---|
+| `group` | in_progress | 7 d | yes | no |
+| `decision` | in_progress | 7 d | yes | no |
+| `issue` | in_progress | 5 d | yes | yes |
+| `task` | blocked | 3 d | yes | yes |
+
+Two conclusions, the second less comfortable:
+
+1. **Three of the four are real debt**: work items untouched for 3–7 days, owned,
+   with notes. Nothing is wrong with the tool; the team has not closed them. Fixing
+   them by editing status would make `audit` green without the work being done, which
+   is why they stay visible.
+2. **One of the four is arguably a false positive**: `group` nodes are long-lived by
+   nature — a group node marked `in_progress` stays that way for the life of the
+   group, and its `updatedAt` does not move when its children change. The staleness
+   rule ("`in_progress`/`blocked` untouched for 3 days") assumes a short-lived work
+   item. This is recorded as a finding, not fixed here: changing which node types the
+   rule covers changes audit output for existing users, so it goes through a decision
+   and a test rather than a quiet patch.
+
+The unpinned `audit` on the same graph reports about 1,060 conflicts, which is also
+worth reading precisely: they are almost all "`done` without structured evidence",
+the legacy-format artefact — not 1,060 broken facts.
+
+## Measurement conditions: the same file, up to 25× slower
+
+Every timing on this page was taken on an otherwise idle machine, and that is part of
+the measurement, not a footnote. The same `adopt` of the same 15.4 MB file:
+
+| when | load average (1 min) | `adopt` |
+|---|---|---|
+| published run | < 1 | 140 ms |
+| re-run a few hours later | < 1 | 142 ms |
+| while the host was busy | 24.8 | **1,055 ms** |
+
+CLI startup shows the same effect: 48 ms idle, **552 ms at load 24**. So the numbers
+here are only comparable against runs at similar load, which is why
+`benchmarks/real_graph.py` now prints the load average and flags runs above 2.0 as
+inflated. Comparing a loaded run against an idle one says nothing about the code.
+
 ## Reproduce on your own graph
 
 ```bash

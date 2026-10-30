@@ -19,6 +19,33 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.7.6 — 2026-10-30
+
+Status: **released**. No library change. Two quoted numbers get their context: the
+stale-conflict count, and the load the timings were measured at.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 191 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` |
+| 3 | Examples run | ✅ quickstart, lifecycle, `examples/mcp_client.py` |
+| 4 | Every "not implemented" claim re-run against code | ✅ unchanged set; no library code touched |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.7.6" — identical to 0.7.5 |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.7.6 everywhere |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; sdist's own 191 tests pass inside the archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.7.6` |
+| 9 | `python3 tools/verify.py` green | ✅ including the artifact step |
+
+### A false positive, kept rather than papered over
+
+One of the four pinned conflicts is a `group` node: long-lived by nature, flagged by a
+rule that assumes a short-lived work item. Fixing it would mean changing what `audit`
+reports for every user, so it is recorded as a finding for a decision, and the three
+genuine work items stay visible. Making the number go to zero by editing statuses
+would be the failure mode this page exists to prevent.
+
+---
+
 ## v0.7.5 — 2026-10-30
 
 Status: **released**. No library change. A measurement release: the real-world run

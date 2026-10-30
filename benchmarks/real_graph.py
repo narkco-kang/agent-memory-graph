@@ -54,6 +54,14 @@ def timed(call, repeats=1):
     return result, statistics.median(values)
 
 
+def load_average():
+    """1-minute load average where the platform has one (POSIX; not Windows)."""
+    try:
+        return os.getloadavg()[0]
+    except (AttributeError, OSError):
+        return None
+
+
 def cli_startup_ms():
     """What a CLI invocation costs before it does any work (for honest labelling)."""
     values = []
@@ -132,8 +140,17 @@ def main(argv):
           f"{len(source_doc['nodes'])} nodes / {len(source_doc['edges'])} edges / "
           f"{len(source_doc['changes'])} changes")
     print(f"adopted: {nodes} nodes / {edges} edges / {changes} changes")
+    load = load_average()
+    load_note = ""
+    if load is not None:
+        load_note = f"load average {load:.1f}"
+        if load > 2.0:
+            load_note += " — **inflated: compare only against runs at similar load**"
+    else:
+        load_note = "load average unavailable on this platform"
     print(f"timings: in-process, median of {args.repeat}; "
-          f"a CLI invocation costs {startup_ms:.0f} ms of startup before any work\n")
+          f"a CLI invocation costs {startup_ms:.0f} ms of startup before any work; "
+          f"{load_note}\n")
     print("| step | result | time |")
     print("|---|---|---|")
     print(f"| `adopt` | {len(source_doc['nodes'])} → {nodes} nodes, "
