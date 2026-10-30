@@ -245,6 +245,13 @@ the five projects checked, but "no precedent" is not a shipped capability.
 `expanded_from`). `depends_on` / `supersedes` must stay acyclic (`check` errors on
 a cycle); other kinds may cycle and are only counted.
 
+## Expiry scheduling
+
+Expiry is a command, not a daemon: `amg expire ./mem --apply` is safe to run from
+cron or a systemd timer (dry-run by default, idempotent, never deletes, refuses
+unknown validity). See [docs/SCHEDULING.md](docs/SCHEDULING.md) for examples and
+the rollback story.
+
 ## Roadmap, contributing, security
 
 The backlog is public as GitHub issues (batch ingest, vector retrieval, MCP
