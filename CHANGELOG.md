@@ -5,6 +5,17 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
 
 ## [Unreleased] — 0.4.0
 
+### Changed
+
+- **Prior art verified in full text** (`docs/PRIOR-ART.md`): MAP-Graph
+  (arXiv:2608.10509) already implements and ablates the two ideas this project
+  had listed as its own direction, so both are conceded as prior art rather than
+  presented as design commitments. The check also established the boundary we may
+  cite: the paper states it has "no generic supersession or conflict-resolution
+  state machine", and an expiry keyword scan returns nothing. README's "task
+  scope" wording was wrong for that paper and is corrected to "scoped access and
+  an action-level risk gate".
+
 ### Added
 
 - **`amg fingerprint` / `amg verify`**: canonical `state_sha256` (nodes+edges,

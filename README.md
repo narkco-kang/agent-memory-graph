@@ -208,8 +208,12 @@ tools/check_doc_symbols.py  CI gate: every documented capability needs a symbol
 
 ## Prior art (we are not first, and we say so)
 
-- **MAP-Graph** (arXiv:2608.10509) — multi-agent shared memory with provenance,
-  task scope, and risk gating. Closest prior work.
+- **MAP-Graph** (arXiv:2608.10509) — a provenance-aware memory layer over a typed
+  execution graph (agents, sources, memories, claims, actions): permission
+  filtering, semantic re-ranking weighted by path trust, and a risk-sensitive gate
+  *before action execution*. Closest prior work, and it already does two things
+  people might mistake for ours (see below). Full-text check with quotes:
+  [docs/PRIOR-ART.md](docs/PRIOR-ART.md).
 - **Letta MemFS** — memory as a git repository of Markdown, shared via
   commit/push/pull; version history and content hashes.
 - **Graphiti** — bi-temporal invalidation (supersede, never delete) and
@@ -226,9 +230,10 @@ the authority face, expiry as a first-class citizen, and write-back discipline a
 a hard gate. Each of the three exists as code with tests. None of the three is
 new on its own — Letta MemFS, Graphiti and CrewAI cover parts of it.
 
-Two further ideas are **design only, and neither is implemented**: hard
+Two ideas that shape this project are **not ours and not implemented here**: hard
 authorization kept separate from graded trust, and evidence requirements scaling
-with action risk. Do not read them as features:
+with action risk. MAP-Graph implements and ablates both (arXiv:2608.10509); we do
+neither. Do not read them as features:
 
 ```bash
 grep -rniE "authoriz|permission" --include=*.py src/amg/   # no matches
@@ -236,6 +241,11 @@ grep -rn "risk" --include=*.py src/amg/
 # only readaudit.is_high_risk and its two call sites: that classifies *reads*,
 # it does not scale write requirements by the risk of the action
 ```
+
+What is left is a set of **positions**, not inventions, and they are stated with
+their costs in [docs/PRIOR-ART.md](docs/PRIOR-ART.md): the graph is the state of
+record rather than a retrieval layer; expiry/supersession are first-class with
+caller-supplied fact time; evidence is required at *write* time for conclusions.
 
 Read-only mode *is* implemented (`--read-only`), but it is a blast-radius limit
 for one session, not the authorization idea above: it does not authenticate a

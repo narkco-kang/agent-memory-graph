@@ -48,7 +48,7 @@ Status: **released** (kept for the record; superseded by 0.2.0 and 0.3.0).
 | 4 | Unimplemented capabilities explicitly marked | ✅ README + CHANGELOG "Not yet" |
 | 5 | Real-graph migration succeeds (6 criteria below) | ✅ measured, see below |
 | 6 | LICENSE + CHANGELOG + release note | ✅ MIT, CHANGELOG.md, this file |
-| 7 | Positioning reviewed independently | ✅ review complete; two claims downgraded to "design only, not implemented" in README |
+| 7 | Positioning reviewed independently | ✅ review complete; two claims downgraded to "design only, not implemented" in README (later superseded: both are prior art in MAP-Graph — see `docs/PRIOR-ART.md`, 0.4.0) |
 
 ## Known debt after adopting the real graph
 

@@ -76,3 +76,18 @@ Each entry states the decision, the evidence behind it, and what it costs.
     the bytes. The limits are tabulated in `docs/THREAT-MODEL.md` §7a rather than
     left to the reader's optimism.
     *Signed 2026-10-30.*
+
+12. **Prior art is verified in full text, and our two "design commitments" are
+    conceded.** MAP-Graph (arXiv:2608.10509) was cited from a second-hand summary
+    for months. A full-text check (14 pages, quoted in `docs/PRIOR-ART.md`) found
+    that it already implements and ablates both ideas this project listed as its
+    own direction — hard authorization separated from graded trust, and evidence
+    requirements scaling with action risk. So they move from "design only, ours"
+    to "prior art, not implemented here". It also confirmed the useful boundary:
+    the paper states it has "no generic supersession or conflict-resolution state
+    machine", and a keyword scan finds no expiry mechanism at all. That is what we
+    are allowed to point at — a scope difference, not a superiority claim.
+    Consequence: no document may say or imply "no precedent" for the
+    task/evidence/authorization combination; the README's "closest prior work"
+    line now names what that work does.
+    *Signed 2026-10-30.*
