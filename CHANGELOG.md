@@ -7,7 +7,20 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
 
 CLI surface changes, so the next release is 0.2.0.
 
-### Added
+### Added (0.2.0)
+
+- **Explicit fact time**: `--valid-from` / `add_node(valid_from=…)`. Absent means
+  *unknown*, never the write time — the proxy bias was measured at 100% on lagged
+  records and 0% on the control group (`experiments/valid_from_bias/`).
+- **`amg expire`**: opt-in, dry-run by default, supersedes instead of deleting,
+  idempotent, and it refuses nodes whose validity time is unknown.
+- **Batch ingest**: `amg import` / `add_many` — all-or-nothing, one atomic write;
+  10,000 nodes in 0.10 s.
+- **`amg supersede`**: the core protocol operation is reachable from the CLI.
+- **Edge traversal**: `amg related`, `search --expand`, and DAG checks for
+  `depends_on` / `supersedes`.
+- `docs/BENCHMARKS.md`: read paths to 10k nodes, write scaling, batch, traversal.
+
 
 - Edge traversal: `amg related <id> [--depth N] [--kind K]` and `search --expand`
   (1-hop neighbors marked `expanded_from`). `depends_on` / `supersedes` cycles
@@ -53,10 +66,11 @@ CLI surface changes, so the next release is 0.2.0.
   an unknown window is a hint, never an automatic expiry.
 - `amg adopt` keeps refusing to infer validity time.
 
-## [0.1.0] — unreleased (private review)
+## [0.2.0] — 2026-10-30
 
-First working version. Everything below is verified by the test suite on disk;
-capabilities that are absent are listed under **Not yet**.
+Adds explicit fact time, opt-in expiry, batch ingest and edge traversal. All claims
+below are measured or covered by the test suite; absent capabilities stay under
+**Not yet**.
 
 ### Added
 
