@@ -28,6 +28,13 @@ bash examples/quickstart.sh
 python benchmarks/bench.py          # optional, a few minutes
 ```
 
+### Examples must run on Windows
+
+CI runs every example on Windows. Bash redirects UTF-8 fine under Git Bash, but a
+**Python child process** inherits the console encoding (cp1252) and dies on `✓`
+(`UnicodeEncodeError`). Keep non-ASCII glyphs in the shell, and print ASCII from
+Python — that failure was caught once, after the fix had already been called done.
+
 ## Adding a protocol rule
 
 Protocol changes need three things in one PR: the rule in `docs/DECISIONS.md`

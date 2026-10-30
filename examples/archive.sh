@@ -27,7 +27,7 @@ amg archive "$DIR" --older-than-days 30 --apply
 
 echo "--- moved history stays searchable, and says it is old history ---"
 amg search "$DIR" "rule.a" --layer L2 --include-archive --json \
-  | python3 -c 'import json,sys; hits=json.load(sys.stdin); old=[h for h in hits if h.get("archived")]; assert old, hits; print("✓ %d archived hit(s), each naming its archive file: %s" % (len(old), ", ".join(sorted({h["archive_file"] for h in old}))))' 
+  | python3 -c 'import json,sys; hits=json.load(sys.stdin); old=[h for h in hits if h.get("archived")]; assert old, hits; print("OK %d archived hit(s), each naming its archive file: %s" % (len(old), ", ".join(sorted({h["archive_file"] for h in old}))))' 
 
 echo "--- the proof can be re-run later, from disk only ---"
 amg archive "$DIR" --verify
