@@ -315,6 +315,13 @@ cron or a systemd timer (dry-run by default, idempotent, never deletes, refuses
 unknown validity). See [docs/SCHEDULING.md](docs/SCHEDULING.md) for examples and
 the rollback story.
 
+## Measured on a real graph
+
+Not only synthetic benchmarks: a live 1,249-node / 15.3 MB graph is adopted and
+measured end to end in [docs/REAL-WORLD.md](docs/REAL-WORLD.md) — 140 ms to adopt,
+0 structural errors, `audit --pin` to 3 genuine conflicts, reads in single-digit
+milliseconds, and one write at 147 ms (the reason the cold-archive trigger exists).
+
 ## Roadmap, contributing, security
 
 The backlog is public as GitHub issues (batch ingest, vector retrieval, MCP

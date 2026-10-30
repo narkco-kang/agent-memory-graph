@@ -3,6 +3,19 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [Unreleased] — 0.5.0
+
+### Added
+
+- **Real-graph measurements** (`docs/REAL-WORLD.md`): a live 1,249-node / 15.3 MB
+  graph adopted in 140 ms with the source `sha256` unchanged, `check` clean in
+  4.4 ms, `audit` 1,029 conflicts before the exemption pin and **3 after** (all
+  genuine staleness), `audit --pin` report `match: true`, `expire` correctly inert
+  (no node carries `valid_until`), reads in single-digit milliseconds, and a
+  single write at **147 ms** — the number behind the cold-archive trigger, now
+  measured on real data instead of projected from a synthetic benchmark.
+  Aggregates only: no node ids, labels or notes are reproduced.
+
 ## [0.4.0] — 2026-10-30
 
 ### Notes

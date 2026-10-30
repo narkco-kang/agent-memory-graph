@@ -67,6 +67,14 @@ on a 10,000-node / 10,000-edge graph:
 Traversal builds the adjacency once per call, so its cost is bounded by the graph
 rather than the depth; expanding ten hits costs about 11 ms on top of the search.
 
+## Real graph
+
+A live 1,249-node / 15.3 MB graph (written daily by a multi-agent team for a week)
+is measured end to end in [`REAL-WORLD.md`](REAL-WORLD.md): adoption 140 ms, `check`
+0 errors in 4.4 ms, `audit --pin` down to 3 genuine conflicts, reads single-digit
+milliseconds, and **one write 147 ms** — the number behind the cold-archive
+trigger.
+
 ## Retrieval quality (not latency)
 
 Latency is measured above; quality is measured separately and pre-registered in
@@ -77,7 +85,8 @@ semantic retriever (C1/C2/C3) is written there before any candidate existed.
 
 ## Not measured
 
-- Edges: the latency dataset has none, so edge traversal cost is untested.
+- Edges: the *synthetic* latency dataset has none, so edge traversal cost is not
+  measured there; the real-graph run measures `related` at depth 1 only.
 - Concurrency: single process only; the advisory lock is not stress-tested.
 - Windows: latency is not benchmarked on Windows. Correctness is — the suite runs
   on `windows-latest` in CI, including the cross-process lock test.
