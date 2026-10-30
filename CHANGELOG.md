@@ -3,6 +3,39 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.16.0] — 2026-10-31
+
+Removed a documented gap: **concurrency at 10,000 nodes is measured**, and the naive
+configuration fails there — which is the useful part.
+
+### Added
+
+- `experiments/concurrency/PREREGISTRATION-10k.md` — criteria and predictions written
+  before the run, plus an outcome section that records two **wrong** predictions.
+- `experiments/concurrency/build_10k.py` and two artifacts: `result-10k.json` (the run
+  that completed) and `result-10k-run1-timeout.txt` (the run that died). Both are in
+  the repository, including the failing one.
+- `docs/CONCURRENCY.md` §"At 10,000 nodes": 86.2 ms per write at 10k (the extrapolation
+  held), 200 writes = ~17.2 s of work, burst window 17.95 s, worst lock wait 13.52 s,
+  p50 85.8 ms / p95 112.3 ms contended against 86.2 ms serial — **throughput is
+  write-cost bound, not lock-bound** (11.1/s vs 11.3/s).
+
+### Fixed
+
+- **A false confidence, not a bug**: the default 5 s lock timeout *does not* survive
+  8 × 25 writes at 10k (run 1 died with `LockTimeout`). The default is kept on purpose
+  (DECISIONS #26); what changed is that the limit is now measured and the sizing rule
+  is written down (`timeout ≥ writers × writes × per-write cost`, here ≥ 18 s).
+- `docs/BENCHMARKS.md` now carries the measured 10k write cost next to the 5k
+  extrapolation, instead of leaving the 10k number as a projection.
+
+### Not shipped in 0.16.0 (do not assume)
+
+- No 10k **retrieval** recall numbers, no 10k Windows run, no multi-host or network
+  filesystem numbers.
+- No fairer lock: the 13.5 s wait with 821 polls is a starvation *symptom*; attributing
+  it to unfairness needs the counter experiment that DECISIONS #15 keeps unbuilt.
+
 ## [0.15.0] — 2026-10-31
 
 New: the archive is reachable over MCP. Fixed: two "not implemented" claims that were

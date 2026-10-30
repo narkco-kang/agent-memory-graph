@@ -19,6 +19,30 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.16.0 — 2026-10-31
+
+Status: **released**. Measurement round: 10k-node concurrency, pre-registered, with a
+failing configuration shipped alongside the passing one.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 255 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate + size budget | ✅ 15 documents, both gates green |
+| 3 | Criteria existed before the run | ✅ `PREREGISTRATION-10k.md`, with predictions |
+| 4 | Every outcome recorded, including failures | ✅ run 1 (`LockTimeout`) and run 2 (pass) both in the repository |
+| 5 | Predictions that were wrong are recorded as wrong | ✅ p50 did not inflate; worst wait was not < 5 s |
+| 6 | The finding changes a decision, not a claim | ✅ DECISIONS #26 keeps the 5 s default and writes the sizing rule |
+| 7 | The other claim (10k recall) was **not** quietly upgraded | ✅ it stays in "not shipped" |
+| 8 | Clean install from the tag | ✅ `git+...@v0.16.0` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | Reproduce instructions run as written | ✅ `build_10k.py` + `run_stress.py --graph` (documented commands, executed) |
+
+No `src/amg/` change. The deliverable is a measured limit and a rule for sizing the
+timeout — because the honest answer to "does it work at 10k?" was "yes, and not with
+the default settings".
+
+---
+
 ## v0.15.0 — 2026-10-31
 
 Status: **released**. The archive is reachable over MCP; two false "not implemented"

@@ -1,0 +1,49 @@
+{
+  "changes_for_stress_writes": 200,
+  "check_errors": 0,
+  "check_ok": true,
+  "contended": {
+    "burst_window_ms": 17951.6,
+    "max_ms": 4790.41,
+    "p50_ms": 85.8,
+    "p95_ms": 112.33,
+    "total_writes": 200,
+    "wall_ms": 18078.0,
+    "writes_per_s": 11.1
+  },
+  "duplicate_ids": 0,
+  "environment": {
+    "amg_version": "0.15.0",
+    "filesystem": "APFS",
+    "host": "macOS (this machine)",
+    "loadavg_1m_at_build": 4.4,
+    "lock_timeout_s": 180,
+    "note": "run 2 of 2: run 1 used the default 5 s timeout and failed with LockTimeout"
+  },
+  "errors": [],
+  "expected_writes": 200,
+  "lock": {
+    "acquisitions": 208,
+    "polls_total": 4326,
+    "timeouts": 0,
+    "waits_over_100ms": 8,
+    "worst_wait_ms": 13522.09,
+    "worst_wait_polls": 821
+  },
+  "missing_writes": 0,
+  "nodes_present": 200,
+  "passed": true,
+  "rev": 20225,
+  "serial": {
+    "burst_window_ms": 2214.7,
+    "max_ms": 110.56,
+    "p50_ms": 86.18,
+    "p95_ms": 106.19,
+    "total_writes": 25,
+    "wall_ms": 2335.5,
+    "writes_per_s": 11.3
+  },
+  "targets_with_wrong_change_count": 0,
+  "writers": 8,
+  "writes_per_writer": 25
+}

@@ -32,7 +32,9 @@ graph size.
 | 5,000 | 39.1 ms | 39.8 ms |
 
 Every write reloads, re-serializes and atomically replaces the whole file, so a
-single write costs O(n): roughly 8 µs per existing node at 5k.
+single write costs O(n): roughly 8 µs per existing node at 5k. **Measured at 10k
+since v0.16.0** (serial p50 inside the concurrency burst, `docs/CONCURRENCY.md` §"At
+10,000 nodes"): **86.2 ms**, inside the 70–110 ms this table extrapolated.
 
 **Bulk ingest was therefore quadratic.** Summing the measured per-write cost gave
 about **6–7 minutes** to ingest 10,000 nodes one `add_node` at a time (a computed

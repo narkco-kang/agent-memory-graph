@@ -172,6 +172,34 @@ than patched over:
 Both are consistent with DECISIONS #15/#16: build the expensive thing when a real
 workflow needs it, and say so with these numbers instead of "locks are slow".
 
+## At 10,000 nodes: same arithmetic, bigger queue
+
+The previous section predicted the shape; this one measures it at the size where the
+answer matters for a long-lived team. Graph built on disk with
+`experiments/concurrency/build_10k.py` (10,000 nodes, 10,000 edges, 9.35 MB), then the
+same 8 × 25 burst. Pre-registration and predictions: `experiments/concurrency/PREREGISTRATION-10k.md`.
+
+| run | timeout | outcome | worst lock wait | p50 | p95 | max |
+|---|---|---|---|---|---|---|
+| 1 | default **5 s** | **`LockTimeout`** — a writer died, no report produced | — | — | — | — |
+| 2 | `AMG_LOCK_TIMEOUT=180` | 200/200 nodes, 0 duplicates, 0 missing, 200 change records, `check` clean | **13.52 s** | 85.8 ms | 112.3 ms | 4.79 s |
+
+Arithmetic check: per-write cost at 10k is **86.2 ms** (serial p50, measured here —
+the extrapolation in `BENCHMARKS.md` said 70–110 ms, so it holds), so 200 writes are
+**~17.2 s** of work, and the measured burst window was **17.95 s**. The last writer
+waits behind most of that queue, which is why its wait was 13.5 s and why the default
+5 s could not survive. Throughput was 11.1 writes/s contended against 11.3/s serial:
+at this size the **write cost**, not the lock, is the limit.
+
+Two predictions from the pre-registration were wrong, and are recorded as wrong:
+contended p50 did **not** inflate (85.8 ms ≈ 1.0× serial), because queueing shows up
+in the tail; and the worst wait was 13.5 s, not < 5 s.
+
+Operationally: size the timeout to the burst, not to a feeling.
+`AMG_LOCK_TIMEOUT ≥ writers × writes × per_write_cost` is the safe form; for the
+200-write, 10k-node case that is ≥ 18 s, so 30–60 s is a sane setting. The default
+stays 5 s for interactive use (DECISIONS #26), and the error already names the knob.
+
 ## A real bug the Windows burst test found
 
 The CI version of this burst (3 writers × 3 writes) failed on Windows with:
