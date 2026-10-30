@@ -1,5 +1,28 @@
 # Release checklists
 
+## v0.6.0 — 2026-10-30
+
+Status: **released**. A concurrency-hardening release: one real Windows bug fixed,
+one measured performance change, and the lock tail diagnosed rather than guessed.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on four jobs | ✅ 182 tests, ubuntu 3.12/3.10, macos, windows |
+| 2 | Documentation↔code symbol gate | ✅ seven documents |
+| 3 | Examples run | ✅ quickstart + lifecycle |
+| 4 | Every change has a measurement behind it | ✅ backoff: throughput 700 → 870 writes/s, p50/p95 unchanged, tail unchanged; Windows fix: reproduced on CI before the fix |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.6.0", including lock fairness |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.6.0 everywhere |
+
+### What to know before upgrading
+
+The Windows fix changes read behaviour: `Memory.open` now takes the lock while
+reading, so an open can wait behind an in-flight write (milliseconds). In exchange,
+a concurrent reader can no longer make a writer fail with `PermissionError
+[WinError 5]`. On POSIX nothing observable changes.
+
+---
+
 ## v0.5.0 — 2026-10-30
 
 Status: **released**. A measurement release: two documents of numbers, no code

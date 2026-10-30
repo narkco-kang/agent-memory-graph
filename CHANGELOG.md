@@ -3,7 +3,7 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
-## [Unreleased] — 0.6.0
+## [0.6.0] — 2026-10-30
 
 ### Fixed
 
@@ -40,6 +40,14 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
   the counters needed to prove it do not exist yet.
 - `tests/test_concurrency.py`: a 3×3 version of the same four properties runs on
   every commit, including Windows.
+
+### Not shipped in 0.6.0 (do not assume)
+
+Unchanged: authentication/authorization/multi-tenancy (out of scope by decision),
+vector retrieval in the default path (measured, rejected), tamper *proof*, TTL
+scheduler, encryption at rest, and write-path speed work (priced, deferred).
+Lock **fairness** is also not implemented — the starvation tail is diagnosed and
+documented, not fixed (DECISIONS #15).
 
 ## [0.5.0] — 2026-10-30
 
