@@ -29,6 +29,14 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
   paraphrase bucket 0.750) and a written acceptance bar a vector retriever must
   clear before it may ship. Buckets are computed from measured token overlap, not
   from declared intent; `tests/test_retrieval_eval.py` locks the baseline numbers.
+- **Two zero-dependency retrievers measured and rejected** (`bm25`, `hashed-vec`).
+  Both lose to the shipped substring scorer on paraphrase `recall@5`
+  (0.750 baseline vs 0.450 / 0.550) and `bm25` also trips the keyword-regression
+  guard, so neither ships. The purpose of the experiment was to make that
+  rejection possible; the shipped retriever is unchanged and still lexical only.
+  A semantic candidate could not be measured here: the available embedding API
+  answers `429 {"code":"1113"}` (no covered resource) and no local model is
+  installed.
 - `docs/SCHEDULING.md`: cron/systemd usage, rollback, and why there is no daemon.
 
 ### Fixed

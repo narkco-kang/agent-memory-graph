@@ -15,6 +15,10 @@ EVAL_DIR = os.path.join(ROOT, "experiments", "retrieval_eval")
 spec = importlib.util.spec_from_file_location("run_eval", os.path.join(EVAL_DIR, "run_eval.py"))
 run_eval = importlib.util.module_from_spec(spec)
 spec.loader.exec_module(run_eval)
+candidates = run_eval.candidate_mod
+
+REQUIRED_KEYS = {"id", "label", "type", "status", "score", "matched_fields",
+                 "anchor_state", "evidence_count", "conclusion"}
 
 BASELINE = {
     "overall": {"recall@1": 0.654, "recall@5": 0.865, "recall@10": 0.904, "mrr@10": 0.744},
@@ -97,3 +101,70 @@ class BaselineTests(unittest.TestCase):
 
 if __name__ == "__main__":
     unittest.main()
+
+
+class CandidateTests(unittest.TestCase):
+    def setUp(self):
+        with open(os.path.join(EVAL_DIR, "corpus.json"), encoding="utf-8") as fh:
+            self.doc = json.load(fh)
+
+    def test_every_candidate_returns_the_shared_shape(self):
+        for name, cand in candidates.CANDIDATES.items():
+            hits = cand.search(self.doc, "atomic replace", k=3)
+            self.assertTrue(hits, f"{name} returned nothing for a keyword query")
+            self.assertLessEqual(len(hits), 3)
+            for hit in hits:
+                self.assertTrue(REQUIRED_KEYS <= set(hit), f"{name} shape drifted")
+                self.assertIn(hit["anchor_state"], {"present", "none"})
+
+    def test_every_candidate_applies_the_hard_filters(self):
+        doc = {"nodes": [
+            {"id": "task.live", "type": "task", "status": "open", "label": "zebra",
+             "note": "zebra stripes", "source": "test"},
+            {"id": "task.dead", "type": "task", "status": "superseded", "label": "zebra",
+             "note": "zebra stripes", "source": "test"},
+            {"id": "task.future", "type": "task", "status": "open", "label": "zebra",
+             "note": "zebra stripes", "source": "test",
+             "valid_from": "2999-01-01T00:00:00+00:00"},
+        ], "edges": [], "changes": []}
+        for name, cand in candidates.CANDIDATES.items():
+            ids = [h["id"] for h in cand.search(doc, "zebra", k=10)]
+            self.assertIn("task.live", ids, name)
+            self.assertNotIn("task.dead", ids, f"{name} returned a superseded node")
+            self.assertNotIn("task.future", ids, f"{name} returned a not-yet-valid node")
+
+    def test_verdict_rejects_a_regression_and_accepts_a_clean_gain(self):
+        baseline = {"paraphrase-H1": {"recall@5": 0.7}, "paraphrase-H2": {"recall@5": 0.8},
+                    "keyword-H1": {"recall@5": 0.875}, "keyword-H2": {"recall@5": 1.0}}
+        worse = {"paraphrase-H1": {"recall@5": 0.3}, "paraphrase-H2": {"recall@5": 0.6},
+                 "keyword-H1": {"recall@5": 0.875}, "keyword-H2": {"recall@5": 0.9}}
+        decision = run_eval.verdict(baseline, worse, cost="none")
+        self.assertFalse(decision["adopted"])
+        self.assertIn("C1 paraphrase-H1", decision["failed"])
+        self.assertIn("C2 keyword-H2", decision["failed"])
+
+        better = {"paraphrase-H1": {"recall@5": 0.9}, "paraphrase-H2": {"recall@5": 1.0},
+                  "keyword-H1": {"recall@5": 0.875}, "keyword-H2": {"recall@5": 1.0}}
+        self.assertTrue(run_eval.verdict(baseline, better, cost="none")["adopted"])
+        # A model download may not become the default path.
+        self.assertFalse(run_eval.verdict(baseline, better, cost="optional-model")["adopted"])
+
+    def test_measured_candidates_are_not_adopted(self):
+        # Both candidates lost to the baseline. If this ever flips, the experiment
+        # README must be updated with the new numbers in the same commit.
+        with open(os.path.join(EVAL_DIR, "corpus.json"), encoding="utf-8") as fh:
+            doc = json.load(fh)
+        with open(os.path.join(EVAL_DIR, "queries.json"), encoding="utf-8") as fh:
+            queries = json.load(fh)["queries"]
+        nodes_by_id = {n["id"]: n for n in doc["nodes"]}
+        base = run_eval.stratified_halves(
+            run_eval.evaluate(run_eval.retrieval.search, doc, queries, nodes_by_id))
+        base_groups = {k: run_eval.aggregate(v) for k, v in run_eval.group_rows(base).items()}
+        for name in ("bm25", "hashed-vec"):
+            rows = run_eval.stratified_halves(
+                run_eval.evaluate(candidates.CANDIDATES[name].search, doc, queries, nodes_by_id))
+            groups = {k: run_eval.aggregate(v) for k, v in run_eval.group_rows(rows).items()}
+            decision = run_eval.verdict(base_groups, groups,
+                                        cost=candidates.CANDIDATES[name].COST)
+            self.assertFalse(decision["adopted"], f"{name} now passes; update the README")
+            self.assertIn("C1 paraphrase-H1", decision["failed"])

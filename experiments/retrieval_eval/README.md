@@ -45,6 +45,60 @@ What this says, plainly:
    is often not first. A vector retriever would have to fix ordering, not just
    recall.
 
+## Candidates measured (zero-dependency only)
+
+`run_eval.py bm25 hashed-vec` — both are implemented in `candidates.py`, both
+pass the same hard filters (superseded / not-yet-valid) as the shipped scorer.
+
+| retriever | overall r@5 | keyword r@5 | paraphrase r@5 | paraphrase r@1 | verdict |
+|---|---|---|---|---|---|
+| lexical baseline (shipped) | **0.865** | 0.938 | **0.750** | 0.400 | — |
+| `bm25` (tokens + IDF, per-field) | 0.731 (−0.134) | 0.906 (−0.032) | 0.450 (−0.300) | 0.350 | **not adopted** |
+| `hashed-vec` (word + char-trigram, 512 dims hashed, IDF cosine) | 0.808 (−0.057) | 0.969 (+0.031) | 0.550 (−0.200) | 0.400 | **not adopted** |
+
+Failed checks, per the pre-registered criteria:
+
+- `bm25`: C1 paraphrase-H1 −0.400 (needs +0.20), C1 paraphrase-H2 −0.200,
+  **and** C2 keyword-H2 −0.062 (limit 0.05).
+- `hashed-vec`: C1 paraphrase-H1 −0.400, C1 paraphrase-H2 +0.000.
+
+### What the numbers actually say
+
+1. **The shipped scorer wins, and that is not a compliment to it.** `bm25` is the
+   textbook upgrade and loses 13 points overall: the baseline matches *substrings*
+   with no minimum token length, so "searched" matches "search" and "encoder"
+   matches "encode" for free — a crude stemmer nobody designed. Removing that
+   accident costs recall, which is a real (if unglamorous) property worth keeping.
+2. **Keyword queries are not the problem.** `hashed-vec` even improves them
+   (+0.031) — character trigrams tolerate morphology. The whole gap is paraphrase.
+3. **No dependency-free representation closes the paraphrase gap.** Both
+   candidates miss the same three queries, and each of those shares *zero* content
+   tokens with its gold node: "do I need to pip install anything" → a node that
+   says "standard library". Trigrams cannot invent that link, only meaning can.
+4. **Part of the baseline's 0.750 paraphrase recall is accidental** (see the
+   worked `q06` example in `PREREGISTRATION.md`, amendment v3): a query
+   containing "I" matches almost every node, so the hit arrives by ordering luck.
+   Paraphrase `recall@1` (0.400) is the honest number, which is why amendment v3
+   adds a recall@1 requirement and a precision guard before anything else is
+   measured.
+
+## The semantic arm was not measurable here
+
+The obvious next candidate is a real embedding model, and filing a number for it
+would have been easy to fake. It was not measurable in this environment:
+
+- GLM `embedding-3` and `embedding-2` both return HTTP 429
+  `{"code":"1113","message":"余额不足或无可用资源包"}` with the local key — the
+  subscription does not cover embeddings;
+- no local sentence-transformer model is installed, and shipping one would add a
+  dependency plus a download (C3).
+
+So the question "would a semantic retriever clear the bar?" is **open**, with a
+concrete blocker rather than a guess. What we do know: the three paraphrase
+queries that both candidates miss share no content tokens with their gold nodes,
+so the gap is not lexical. That is evidence for the direction, not a measurement
+of it.
+
 ## The bar a candidate must clear
 
 C1 `paraphrase recall@5` ≥ **+0.20 absolute in both halves** (baseline 0.700 /
@@ -65,5 +119,17 @@ result gets written down here rather than the experiment being quietly dropped.
 ## Status
 
 - [x] Pre-registration, corpus, queries, harness, baseline numbers.
-- [ ] Candidate retriever measured against the bar (next).
-- [ ] Decision recorded: adopted / not adopted, with the numbers that decided it.
+- [x] Two zero-dependency candidates measured: **both not adopted** (numbers above).
+- [x] Amendment v3: precision guard + paraphrase `recall@1` requirement, because
+  the 0.750 paraphrase `recall@5` is partly accidental inclusion.
+- [ ] Semantic candidate measured — **blocked**: no embedding resource
+  (`1113`), no local model. Nothing shipped in its place.
+- [ ] Decision on issue #2: stays open with this blocker written down; the README
+  keeps saying "lexical only".
+
+## Reproduce
+
+```bash
+PYTHONPATH=src python3 experiments/retrieval_eval/run_eval.py              # baseline
+PYTHONPATH=src python3 experiments/retrieval_eval/run_eval.py bm25 hashed-vec   # candidates + verdicts
+```

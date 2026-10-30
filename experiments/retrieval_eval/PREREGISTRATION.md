@@ -102,3 +102,44 @@ The baseline numbers (overall `recall@5` 0.865, paraphrase 0.75, keyword 0.938)
 were seen before this amendment. They are recorded in `result.json`; the
 criterion compares a future candidate against them, so knowing them does not move
 the threshold — only the *split* rule was repaired, and it is mechanical.
+
+---
+
+## Amendment v3 (written after the first candidates were measured — reads as an increase in strictness, not a rescue)
+
+Two zero-dependency candidates were measured (bm25, hashed-vec) and both failed
+C1 by a wide margin, so nothing here is needed to reject them. The amendment
+exists because inspecting *why* the baseline scores 0.750 paraphrase recall
+exposed a hole in the metric that would let a worse retriever pass by luck.
+
+**Finding.** The shipped scorer tokenises to `[a-z0-9_-]+` with no minimum length
+and matches substrings. A query containing "I" or "a" therefore matches nearly
+every node, and the ranking becomes a sort on how often that letter appears.
+Worked example, query `q06` "who can see what I searched":
+
+```
+model.embedding      score=8  fields=[id, label, note]   <- ranked first
+task.batch-write     score=7
+decision.atomic-replace score=7
+(task.read-audit, the gold node, arrives at rank 5 and scores as a hit)
+```
+
+So part of paraphrase `recall@5 = 0.750` is **accidental inclusion**, not recall.
+Rank-1 is far less forgiving: paraphrase `recall@1` is 0.400 and MRR 0.498.
+
+**Amendment (effective for the next candidate measured).**
+
+- **C4 — precision@5.** A candidate may not exceed the baseline's precision@5 by
+  more than 0.05 *below* it. "Return everything" cannot pass.
+- **C1b — paraphrase recall@1 must also improve by ≥ +0.10 in both stratified
+  halves**, in addition to recall@5. Rank-1 barely benefits from incidental
+  inclusion, so this is the luck-resistant half of the same claim.
+- **Query hygiene**: queries whose token set is ≥ 50% stopwords are flagged in
+  `result.json` and reported separately; they remain in the score (removing them
+  after seeing results would be tuning) but a candidate's win may not come from
+  that subset alone — that must be stated explicitly in any adoption note.
+
+Both candidates measured so far fail under v2 and would fail under v3 as well
+(paraphrase `recall@1`: bm25 0.35, hashed-vec 0.40, baseline 0.40 — no gain). The
+amendment is therefore a constraint on the *next* measurement, and it can only
+make adoption harder.
