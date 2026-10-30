@@ -1,4 +1,5 @@
-"""L3 lexical retrieval. Vector search is NOT implemented in v0.1.
+"""L3 lexical retrieval. Vector search is not implemented; a semantic candidate
+was measured and rejected for the default path (experiments/retrieval_eval/).
 
 Two hard rules (signed, failures.md:118):
 - `superseded` nodes are filtered out for L1/L3/L4. Expiry is a first-class

@@ -3,7 +3,28 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
-## [Unreleased] — 0.4.0
+## [0.4.0] — 2026-10-30
+
+### Notes
+
+- Every "not implemented" claim in the docs was re-run against the code before
+  this release (the rule from 0.3.0): no authentication code, no scheduler or
+  thread, no socket, no encryption, no embedding in `src/amg/`. The only matches
+  for `auth`/`token`/`socket` are the sentences asserting their absence and a
+  tokeniser named `_TOKEN`.
+
+### Not shipped in 0.4.0 (do not assume)
+
+- **Authentication / authorization / multi-tenancy.** Decided out of scope with
+  reasoning and alternatives (THREAT-MODEL §8, DECISIONS #13), not deferred.
+- **Vector retrieval in the default path.** Measured: a local `nomic-embed-text`
+  candidate lifts paraphrase `recall@5` 0.750 → 0.950, but misses the
+  pre-registered bar in one stratified half and cannot ship as a dependency-free
+  default. Optional extra only, and nothing is shipped.
+- **Tamper *proof*.** `fingerprint`/`verify` detect edits; a determined attacker
+  who can write the file and your stored digest wins (§7a, last two rows).
+- **TTL scheduler.** `amg expire` is a command; no daemon.
+- **Encryption at rest.** `graph.json` is plain text by design.
 
 ### Added
 

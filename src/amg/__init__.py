@@ -1,14 +1,15 @@
-"""amg — append-only, evidence-gated semantic memory graph.
+"""amg — append-only, evidence-gated memory graph.
 
-v0.1 scope (verified on disk, not aspirational):
+What this library is today (measured, not aspirational):
 - L1 structured state (nodes/status/owner) + L2 event log (changes[])
-- L3 retrieval: LEXICAL ONLY. Vector search is not implemented (see README).
+- L3 retrieval: LEXICAL ONLY. A semantic candidate was measured and rejected for
+  the default path (experiments/retrieval_eval/).
 - L4 procedural rules: stored, not executed.
-- No auth, no network, no vector store, no delete API.
+- No auth (decided out of scope, docs/DECISIONS.md #13), no network, no delete API.
 """
 
 from .errors import LockTimeout, ProtocolError
 from .memory import Memory
 
-__version__ = "0.3.0"
+__version__ = "0.4.0"
 __all__ = ["Memory", "ProtocolError", "LockTimeout", "__version__"]

@@ -1,5 +1,29 @@
 # Release checklists
 
+## v0.4.0 — 2026-10-30
+
+Status: **released**. Scope: tamper detection, filesystem hygiene, an
+authorization decision, and a prior-art check that took two claims away.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on four jobs | ✅ 176 tests, ubuntu 3.12/3.10, macos, windows |
+| 2 | Documentation↔code symbol gate | ✅ four documents |
+| 3 | Examples run | ✅ quickstart + lifecycle |
+| 4 | Every "not implemented" claim re-run against code | ✅ commands re-executed; only matches are the sentences asserting absence |
+| 5 | Unimplemented capabilities named | ✅ CHANGELOG "Not shipped in 0.4.0"; THREAT-MODEL §7a/§8 |
+| 6 | New guarantees verified, not documented only | ✅ fingerprint: silent edit detected on a real adopted graph; hygiene: `doctor --strict` exits 1 on a world-writable graph, mcp warns without corrupting the protocol stream |
+| 7 | Version, changelog, tag and release notes agree | ✅ 0.4.0 everywhere |
+
+### What this release gives up
+
+- Two "design commitments" are conceded to prior art: MAP-Graph implements and
+  ablates both (docs/PRIOR-ART.md, DECISIONS #12). What remains claimed are three
+  positions with their costs, not mechanisms.
+- Authorization is dropped, with reasoning, rather than half-built (DECISIONS #13).
+
+---
+
 ## v0.3.0 — 2026-10-30
 
 Status: **released**. Scope: MCP server, read-only mode, threat model, Windows in
