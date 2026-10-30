@@ -6,6 +6,13 @@ from .const import is_conclusion, not_yet_valid, parse_ts
 
 STALE_DAYS = 3
 
+# Types that register something long-lived rather than a work item. A group marked
+# `in_progress` is active, not abandoned, and its `updatedAt` does not move when its
+# children change — so the staleness rule, which assumes short-lived work, reported
+# noise (docs/REAL-WORLD.md). Exemptions are explicit on purpose: an unknown type is
+# still checked, so abandoning a new kind of work cannot become invisible by omission.
+LONG_LIVED_TYPES = frozenset({"group", "env", "member"})
+
 
 def _parse(value):
     return parse_ts(value)
@@ -76,7 +83,8 @@ def audit(doc: dict, pin: dict = None, now: datetime.datetime = None) -> dict:
         nid = n.get("id")
         if n.get("status") == "done" and not (n.get("evidence") or []) and nid not in pinned:
             conflicts.append(f"{nid}: done without evidence (IR-4)")
-        if n.get("status") in {"in_progress", "blocked"}:
+        if (n.get("status") in {"in_progress", "blocked"}
+                and n.get("type") not in LONG_LIVED_TYPES):
             ts = _parse(n.get("updatedAt"))
             if ts and (now - ts).days >= STALE_DAYS:
                 conflicts.append(f"{nid}: {n.get('status')} untouched for {(now - ts).days}d (limit {STALE_DAYS}d)")

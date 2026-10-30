@@ -19,6 +19,32 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.7.7 — 2026-10-30
+
+Status: **released**. First library change since 0.6.0: `audit` stops reporting
+long-lived registration nodes as stale. Behaviour change, with a decision and tests.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 194 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` |
+| 3 | Examples run | ✅ quickstart, lifecycle, `examples/mcp_client.py` |
+| 4 | Every "not implemented" claim re-run against code | ✅ unchanged set |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.7.7" |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.7.7 everywhere |
+| 7 | Artifacts checked and installed | ✅ `check_dist.py` clean; sdist's own 194 tests pass inside the archive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.7.7` |
+| 9 | `python3 tools/verify.py` green | ✅ including the artifact step |
+| 10 | Behaviour change has a decision and a red test first | ✅ DECISIONS #20; `test_registry_types_are_not_reported_stale` failed before the fix, and the companion test keeps unknown types checked |
+
+### Why this is a patch, not a feature
+
+It removes a false positive from an existing check; no new capability, no schema
+change, no migration. But it *is* an output change, so the release notes say so
+explicitly and the doc that quoted "4 conflicts" now says 3 with the breakdown.
+
+---
+
 ## v0.7.6 — 2026-10-30
 
 Status: **released**. No library change. Two quoted numbers get their context: the

@@ -3,6 +3,32 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.7.7] — 2026-10-30
+
+**A behaviour change, and the first library change since 0.6.0**: `audit` no longer
+reports long-lived registration nodes as stale.
+
+### Fixed
+
+- **Staleness now applies to work, not to registrations.** The rule "an `in_progress`
+  or `blocked` node untouched for 3 days is stale" assumed every node is a
+  short-lived work item. On the first live graph it flagged a `group` node
+  `in_progress` for 7 days — correct by the letter, noise in practice: a group
+  registration is long-lived, and its `updatedAt` does not move when its children
+  change. `group`, `env` and `member` are exempt (`LONG_LIVED_TYPES`); **an unknown
+  type is still checked**, so a new kind of work cannot become invisible by omission.
+  Measured on that graph at rev 2,610: `audit --pin` **4 → 3 conflicts**, pin still
+  matches. The three remaining are real work items (`task`/`issue`/`decision`
+  untouched 3–7 days) and stay reported. DECISIONS #20; four tests in
+  `tests/test_audit.py`, including one that a `question` node is still checked.
+
+### Not shipped in 0.7.7 (do not assume)
+
+Unchanged from 0.7.6 — no authentication / authorization / multi-tenancy (out of
+scope by decision), no vector retrieval in the default path (measured, rejected), no
+tamper *proof*, no TTL scheduler, no encryption at rest, no lock fairness, and
+history compression remains a design (`docs/DESIGN-HISTORY.md`), not a capability.
+
 ## [0.7.6] — 2026-10-30
 
 **No library change**; `src/amg/` differs only in the version string. Two numbers

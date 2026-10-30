@@ -1,4 +1,5 @@
 import copy
+import datetime
 import unittest
 
 from amg.audit import expiry_eligible, legacy_stats
@@ -42,6 +43,42 @@ class AuditTests(unittest.TestCase):
         node["valid_time_known"] = True  # v0.2: expiry needs a known validity window
         rep = self.m.audit()
         self.assertTrue(any("valid_until passed" in c for c in rep["conflicts"]))
+
+    def _backdate(self, node_id, days):
+        """Age a node without sleeping: staleness is about updatedAt, not the clock."""
+        node = next(n for n in self.m.doc["nodes"] if n["id"] == node_id)
+        node["updatedAt"] = (datetime.datetime.now(datetime.timezone.utc)
+                             - datetime.timedelta(days=days)).isoformat()
+
+    def test_work_item_untouched_is_still_a_conflict(self):
+        self.m.add_node("task.old", "task", "old work", source="s",
+                        status="in_progress", owner="someone")
+        self._backdate("task.old", 10)
+        rep = self.m.audit()
+        self.assertTrue(any("task.old" in c and "untouched" in c for c in rep["conflicts"]),
+                        rep["conflicts"])
+
+    def test_unknown_type_defaults_to_the_staleness_check(self):
+        """Exemptions are explicit: a new node type is still checked, so abandoning a
+        thing of that type cannot become invisible."""
+        self.m.add_node("question.old", "question", "something else", source="s",
+                        status="in_progress")
+        self._backdate("question.old", 10)
+        rep = self.m.audit()
+        self.assertTrue(any("question.old" in c and "untouched" in c for c in rep["conflicts"]),
+                        rep["conflicts"])
+
+    def test_registry_types_are_not_reported_stale(self):
+        """`group`, `env` and `member` register something long-lived; a group marked
+        in_progress is active, not abandoned, and its updatedAt does not move when its
+        children change. Flagging them was noise, not a finding (REAL-WORLD.md)."""
+        for node_type in ("group", "env", "member"):
+            node_id = f"{node_type}.self"
+            self.m.add_node(node_id, node_type, node_type, source="s", status="in_progress")
+            self._backdate(node_id, 30)
+        rep = self.m.audit()
+        flagged = [c for c in rep["conflicts"] if "untouched" in c]
+        self.assertEqual(flagged, [], f"registry types reported stale: {flagged}")
 
     def test_changes_key_shapes_reported(self):
         self.m.add_node("task.a", "task", "A", source="s")

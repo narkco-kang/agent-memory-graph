@@ -159,13 +159,18 @@ Two conclusions, the second less comfortable:
    with notes. Nothing is wrong with the tool; the team has not closed them. Fixing
    them by editing status would make `audit` green without the work being done, which
    is why they stay visible.
-2. **One of the four is arguably a false positive**: `group` nodes are long-lived by
-   nature — a group node marked `in_progress` stays that way for the life of the
-   group, and its `updatedAt` does not move when its children change. The staleness
-   rule ("`in_progress`/`blocked` untouched for 3 days") assumes a short-lived work
-   item. This is recorded as a finding, not fixed here: changing which node types the
-   rule covers changes audit output for existing users, so it goes through a decision
-   and a test rather than a quiet patch.
+2. **One of the four was a false positive**, and 0.7.7 fixed it: `group` nodes are
+   long-lived by nature — a group marked `in_progress` stays that way for the life of
+   the group, and its `updatedAt` does not move when its children change. The rule
+   assumes a short-lived work item, so `group`, `env` and `member` (registrations, not
+   work) are now exempt (DECISIONS #20). The refusal to change it quietly is the
+   point: audit output is a contract, so the change came with a decision, four tests
+   and this note.
+
+Measured after the fix, on the same graph at rev 2,610 (1,288 nodes):
+`audit --pin` reports **3 conflicts**, `pin match: true` — the three work items above,
+and no registry node. The unpinned count is 1,064, i.e. the legacy-evidence class
+grew with the graph.
 
 The unpinned `audit` on the same graph reports about 1,060 conflicts, which is also
 worth reading precisely: they are almost all "`done` without structured evidence",

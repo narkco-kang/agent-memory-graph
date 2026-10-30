@@ -90,9 +90,11 @@ Measured on our own 1063-node graph (source snapshot 2026-10-29, adopted copy in
 | evidence | 658 strings, 0 valid objects | 658 in `legacy_evidence`, 0 claimed |
 | `superseded` without timestamp | 29 | 0 (inferred from `updatedAt`, flagged) |
 
-`audit --pin` then leaves **4 conflicts**: stale `in_progress`/`blocked` nodes
-untouched for 4–5 days. Those are real hygiene debt of that graph, not artifacts
-of adoption, and they are reported rather than silenced.
+`audit --pin` then leaves **3 conflicts**: work items (`task`, `issue`, `decision`)
+left `in_progress`/`blocked` for 3–7 days. Those are real hygiene debt of that graph,
+not artifacts of adoption, and they are reported rather than silenced. A fourth one
+used to appear for a `group` node — a registration that is long-lived by nature, not
+a work item — which 0.7.7 stopped counting; `docs/REAL-WORLD.md` has the breakdown.
 
 ## Validity: supersede, never delete
 
