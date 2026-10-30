@@ -29,13 +29,30 @@ def scan(path):
         return fh.read()
 
 
+def default_targets():
+    """README plus every document in docs/ — so a new document cannot escape the gate.
+
+    Passing an explicit list stays supported (CI did that until v0.7.0); the list
+    itself was the staleness risk: docs were added and the gate kept checking two.
+    """
+    targets = ["README.md"]
+    docs_dir = os.path.join(ROOT, "docs")
+    if os.path.isdir(docs_dir):
+        targets += sorted(
+            os.path.join("docs", name)
+            for name in os.listdir(docs_dir)
+            if name.endswith(".md")
+        )
+    return targets
+
+
 def main(argv):
     for stream in (sys.stdout, sys.stderr):
         try:
             stream.reconfigure(encoding="utf-8", errors="replace")
         except (AttributeError, ValueError):  # pragma: no cover
             pass
-    files = argv[1:] or ["README.md"]
+    files = argv[1:] or default_targets()
     missing = []
     for path in files:
         if not os.path.isfile(path):
@@ -72,7 +89,7 @@ def main(argv):
             print(f"✗ {m}")
         print(f"\n{len(missing)} doc/code gap(s)")
         return 1
-    print(f"✓ no doc/code symbol gaps across {len(files)} file(s)")
+    print(f"✓ no doc/code symbol gaps across {len(files)} file(s): {', '.join(files)}")
     return 0
 
 

@@ -1,0 +1,104 @@
+# Where to start reading
+
+This repository ships a lot of prose, because it ships a lot of measurements. This
+page is the index: which document answers which question, in what order, and —
+important — **which ones are contracts and which are proposals**.
+
+## Read the status, not just the numbers
+
+| Status | What it means | Documents |
+|---|---|---|
+| **Measured** | A script in this repo produces the numbers; CI runs the safety-critical ones. | `BENCHMARKS.md`, `REAL-WORLD.md`, `WRITE-COST.md`, `CONCURRENCY.md` |
+| **Contract** | Enforced by code; the doc gate or a test fails when they disagree. | `API.md`, `THREAT-MODEL.md` |
+| **Proposal — not built** | Design work only. Nothing behind it ships. Do not quote it as a feature. | `DESIGN-HISTORY.md` |
+| **Decision record** | Why something is the way it is, including what it costs and when to revisit. | `DECISIONS.md`, `PRIOR-ART.md` |
+| **Operational guide** | How to run it, not what it does. | `SCHEDULING.md` |
+
+## If you are deciding whether to depend on this
+
+1. **`../README.md`** — what it is, the four invariants, and an explicit list of
+   what it does **not** do.
+2. **[`SECURITY.md`](../SECURITY.md)** — local single-user file store, no auth, no
+   socket. Read this before putting it near anything untrusted.
+3. **[`THREAT-MODEL.md`](THREAT-MODEL.md)** — the only real boundary is the OS user;
+   what read-only mode does and does not stop; why authorization is out of scope
+   rather than unfinished.
+4. **[`REAL-WORLD.md`](REAL-WORLD.md)** — one live 1,249-node graph, so you can see
+   what adopt, check, audit, expiry and a single write actually cost on non-synthetic
+   data. Its limits are written down: one team, one week, macOS latencies only.
+
+## If you are going to use it
+
+1. `../README.md` quickstart, then **`bash examples/quickstart.sh`** (runnable, and
+   CI keeps it runnable).
+2. **[`API.md`](API.md)** — the CLI, the `Memory` methods and every error code. This
+   is the contract that the symbol gate and the exit-code test enforce.
+3. **[`SCHEDULING.md`](SCHEDULING.md)** — expiry is an explicit command by design;
+   this page has copy-paste cron and systemd timer entries, plus when a daemon
+   would actually be justified.
+
+## If you are changing the storage layer
+
+Read in this order; each one narrows the next:
+
+1. **[`BENCHMARKS.md`](BENCHMARKS.md)** — synthetic 1k / 5k / 10k latency and size
+   tables, plus how to reproduce them.
+2. **[`REAL-WORLD.md`](REAL-WORLD.md)** — the same operations on a 15.6 MB live
+   graph, where the write cost stops being negligible.
+3. **[`WRITE-COST.md`](WRITE-COST.md)** — where the 147 ms goes (`changes[]` is
+   79.1% of the bytes) and what each candidate optimisation buys, before any code
+   is written.
+4. **[`CONCURRENCY.md`](CONCURRENCY.md)** — 200 concurrent writes, throughput, and
+   the tail-latency evidence that turned a guess into "starvation", plus the
+   arithmetic showing why the default 5 s lock timeout is load-dependent.
+5. **[`DESIGN-HISTORY.md`](DESIGN-HISTORY.md)** — the design for cheaper writes,
+   and the reason the obvious version (history sidecar) is rejected. **Proposal:
+   not implemented.**
+6. **[`DECISIONS.md`](DECISIONS.md)** — the signed record, including decisions later
+   reversed and the trigger conditions for revisiting each one.
+
+## If you want to audit the claims
+
+- **[`PRIOR-ART.md`](PRIOR-ART.md)** — five systems, what was verified in full text,
+  what we take credit for and what we gave back. Quotes with page numbers; hit
+  counts are used as index, not as proof.
+- **[`DECISIONS.md`](DECISIONS.md)** — every entry states evidence and cost, and
+  several record the author being wrong.
+- **`../RELEASE.md`** — each release's checklist, so "we verified it" has a shape.
+
+## Every document, one line each
+
+| Document | Answers | Status |
+|---|---|---|
+| [`API.md`](API.md) | Commands, methods, error codes — the on-disk `amg/v1` contract | contract, CI-enforced |
+| [`BENCHMARKS.md`](BENCHMARKS.md) | How fast on 1k/5k/10k synthetic nodes | measured |
+| [`REAL-WORLD.md`](REAL-WORLD.md) | The same, on a live 1,249-node graph | measured |
+| [`WRITE-COST.md`](WRITE-COST.md) | Where the write time goes, and what could move it | measured, all options rejected or deferred |
+| [`CONCURRENCY.md`](CONCURRENCY.md) | What concurrent writers do; why the tail exists | measured |
+| [`DESIGN-HISTORY.md`](DESIGN-HISTORY.md) | How to make writes cheap without losing atomicity | **proposal, not built** |
+| [`THREAT-MODEL.md`](THREAT-MODEL.md) | Who the security boundary is; what read-only cannot do | contract / decision |
+| [`SCHEDULING.md`](SCHEDULING.md) | How to expire on a timer without a daemon | operational |
+| [`PRIOR-ART.md`](PRIOR-ART.md) | What others did first, verified in full text | verified reference |
+| [`DECISIONS.md`](DECISIONS.md) | Decisions, their evidence, their cost — including reversals | decision record |
+
+Root-level documents: **[`../CHANGELOG.md`](../CHANGELOG.md)**, **`../RELEASE.md`**,
+**[`../CONTRIBUTING.md`](../CONTRIBUTING.md)**, **[`../SECURITY.md`](../SECURITY.md)**.
+
+## Check a claim yourself
+
+```bash
+PYTHONPATH=src python3 -m unittest discover -s tests -v   # correctness
+PYTHONPATH=src python3 benchmarks/bench.py                # synthetic numbers
+bash examples/quickstart.sh && bash examples/lifecycle.sh # end-to-end
+python3 tools/check_doc_symbols.py README.md docs/API.md docs/THREAT-MODEL.md \
+  docs/PRIOR-ART.md docs/REAL-WORLD.md docs/WRITE-COST.md docs/CONCURRENCY.md \
+  docs/DESIGN-HISTORY.md docs/README.md                   # documentation == code
+```
+
+Two deliberate habits, visible throughout:
+
+- **No estimate passes as a measurement.** Where a number is extrapolated it is
+  labelled a projection, in the same sentence.
+- **Every "not implemented" claim is re-run against the code before a release.**
+  The symbol gate catches "documented but missing"; it cannot catch "claimed absent
+  but actually shipped", so that check is a manual step in `RELEASE.md`.

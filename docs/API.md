@@ -1,4 +1,8 @@
-# amg v0.1 API contract
+# amg API contract (on-disk format `amg/v1`)
+
+The contract version tracks the file format, not the package version: the
+`amg/v1` schema has only been added to since it was written, and that is why
+entries below are marked "new in vX.Y" rather than renumbered.
 
 The contract is also a CI fixture: `tools/check_doc_symbols.py` fails the build if a
 capability named here has no code symbol.

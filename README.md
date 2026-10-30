@@ -8,6 +8,10 @@ A single-file memory layer for agent teams: what was decided, who is doing what,
 on what evidence, and what has expired. No server, no database, no dependencies
 (Python ≥ 3.10 standard library only).
 
+A folder of documents comes with it, and most of them are measurements rather than
+claims. **Start with [docs/README.md](docs/README.md)**: it says which document
+answers which question, and which ones are proposals rather than shipped behaviour.
+
 ```bash
 pip install -e .
 amg init ./mem --group my-team --goal "ship the thing"
@@ -191,7 +195,7 @@ src/amg/
   audit.py     legacy coverage, staleness, expiry, integrity
   migrate.py   normalize legacy `changes[]` shapes
   adopt.py     legacy graph -> amg/v1, never fabricating evidence
-  cli.py       16 commands, exit codes 0/1/2/3
+  cli.py       the CLI (see docs/API.md for every command), exit codes 0/1/2/3
 tests/         unittest, run with `python -m unittest discover -s tests -v`
 experiments/   reproducible measurements behind the design decisions
 tools/check_doc_symbols.py  CI gate: every documented capability needs a symbol

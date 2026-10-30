@@ -3,7 +3,10 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
-## [Unreleased] — 0.7.0
+## [0.7.0] — 2026-10-30
+
+A small release: one operational knob, one design note, and a reading index. The
+on-disk format is unchanged (`amg/v1`); nothing here needs a migration.
 
 ### Added
 
@@ -23,6 +26,37 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
   writes and 8 writers × 5 writes times out (measured; the run aborted). The
   timeout error names the variable. Fairness would not fix it — the queue still has
   to drain — which is now stated with arithmetic in `docs/CONCURRENCY.md`.
+
+- **`docs/README.md`**: a reading index, because a folder of measurements is worse
+  than useless if the document describing a *proposal* is read as a feature.
+  Every document is tagged measured / contract / proposal / decision / operational,
+  and there is a reading order per intent (deciding, using, changing storage,
+  auditing claims). A test fails if a document is added without being indexed.
+
+- **The documentation↔code gate now scans every document by default**
+  (`tools/check_doc_symbols.py` with no arguments reads `README.md` and every
+  `docs/*.md`). CI used to pass a fixed list of two files; documents were added and
+  the gate kept checking the same two, so the gate was green about a shrinking
+  share of the docs. The list is now derived, and a test asserts the default covers
+  every document. The success line also names the files it checked, so "12 files"
+  is auditable rather than a number to trust.
+
+### Fixed
+
+- **A stale command count in the README.** It said `cli.py` has "16 commands";
+  `COMMANDS` has had 20 since `fingerprint`, `verify` and `doctor` landed — a
+  number nobody re-checked. Replaced with a pointer to `docs/API.md`, and a new
+  test asserts that every command in `COMMANDS` appears in `docs/API.md`, so an
+  undocumented command now fails the build. (The same class of error as the 0.3.0
+  false-absence claims: green tests cannot catch a number that is merely old.)
+
+### Not shipped in 0.7.0 (do not assume)
+
+Unchanged: authentication/authorization/multi-tenancy (out of scope by decision),
+vector retrieval in the default path (measured, rejected), tamper *proof*, TTL
+scheduler, encryption at rest, lock fairness. **History compression — the subject
+of `docs/DESIGN-HISTORY.md` — is not built**: it is a design with a trigger, not a
+capability, and the document says so in its first line.
 
 ## [0.6.0] — 2026-10-30
 

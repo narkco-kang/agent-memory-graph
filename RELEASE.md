@@ -1,5 +1,44 @@
 # Release checklists
 
+One note on the document counts below, because they were **not coverage** before
+v0.7.0: the gate took a hand-written file list, so a checklist saying "six
+documents" meant six files were passed to it — the repository held eight at
+v0.5.0 and nine at v0.6.0. The gate now derives its list (`README.md` plus every
+`docs/*.md`), so from v0.7.0 on the count is whatever is in `docs/`, and a new
+document cannot silently escape it. Checked against the tags on 2026-10-30.
+
+## v0.7.0 — 2026-10-30
+
+Status: **released**. A small release: one operational knob, one design note that
+says "not built", and a reading index — plus a stale number in the README caught by
+building the index.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on four jobs | ✅ 190 tests (1 environment-skipped), ubuntu 3.12/3.10, macos, windows |
+| 2 | Documentation↔code symbol gate | ✅ README + every `docs/*.md` (12 at release time); the gate now derives its list instead of taking one |
+| 3 | Examples run | ✅ quickstart + lifecycle |
+| 4 | Every "not implemented" claim re-run against code | ✅ `socket`/`threading`/`encrypt`/`embedding`/`zlib`/fairness: no implementation (only prose asserting absence); designed-only history compression confirmed absent from `src/amg/` |
+| 5 | Not-shipped list updated | ✅ CHANGELOG "Not shipped in 0.7.0", naming history compression explicitly |
+| 6 | Version, changelog, tag, notes agree | ✅ 0.7.0 everywhere |
+
+### What to know before upgrading
+
+`AMG_LOCK_TIMEOUT` is the only behaviour change: the lock timeout can now be
+raised for bursty multi-writer use (on the live 15.6 MB graph, 8 × 5 writes exceeds
+the 5 s default). The default is unchanged. No format change; no migration.
+
+### What this release is honest about
+
+- `docs/DESIGN-HISTORY.md` is a **proposal**: cheaper writes via zlib-sealed
+  history segments, not implemented, with a trigger and six build items.
+- The README's command count was wrong (16 vs 20). It is now a pointer to
+  `docs/API.md`, and a test keeps it from rotting again.
+- `docs/README.md` exists because a proposal can otherwise be read as a feature;
+  every document is tagged with its status.
+
+---
+
 ## v0.6.0 — 2026-10-30
 
 Status: **released**. A concurrency-hardening release: one real Windows bug fixed,
