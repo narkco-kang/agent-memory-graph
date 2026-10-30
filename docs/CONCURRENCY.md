@@ -132,6 +132,26 @@ is no evidence yet that 240 ms once per 200 writes hurts anyone, and the fix is 
 change to the one component that must never be wrong. Whoever builds it should
 first add the counters this experiment says are missing.
 
+## A real bug the Windows burst test found
+
+The CI version of this burst (3 writers × 3 writes) failed on Windows with:
+
+```
+PermissionError: [WinError 5] Access is denied: '.graph.<x>.tmp' -> 'graph.json'
+```
+
+Windows cannot `os.replace` a file that another process has open, and `Memory.open`
+used to read the graph **without** the lock. So one writer's startup read could make
+a different writer's atomic replace fail — a real failure mode for any Windows user
+with two agents, not a flake.
+
+Fix: `Store.read_locked()` reads under the lock, and `Memory.open` uses it. Cost: an
+open now waits behind an in-flight write (milliseconds on this store). A missing
+graph still raises `E_NO_GRAPH` **before** locking, so opening a non-existent
+directory creates nothing — the read-only promise that opening leaves no trace
+still holds, and both properties are tested in `tests/test_lock.py`
+(`LockedReadTests`).
+
 ## CI coverage
 
 `tests/test_concurrency.py` runs a smaller version (3 writers × 3 writes) on every

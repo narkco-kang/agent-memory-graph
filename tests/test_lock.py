@@ -4,7 +4,7 @@ import sys
 import time
 import unittest
 
-from amg.errors import LockTimeout
+from amg.errors import LockTimeout, ProtocolError
 from amg.store import Store
 from helpers import TempGraph
 
@@ -111,3 +111,39 @@ class LockStatsTests(unittest.TestCase):
         import amg.store as store_mod
         self.assertLessEqual(store_mod.LOCK_POLL_START_S, store_mod.LOCK_POLL_MAX_S)
         self.assertLess(store_mod.LOCK_POLL_MAX_S, 0.05, "a long poll ceiling recreates the old tail")
+
+
+class LockedReadTests(unittest.TestCase):
+    """A reader must not race a writer: on Windows that makes the *writer* fail."""
+
+    def setUp(self):
+        self.g = TempGraph()
+        self.store = Store(self.g.dir)
+
+    def tearDown(self):
+        self.g.close()
+
+    def test_open_waits_for_a_held_lock_then_succeeds(self):
+        env = dict(os.environ)
+        env["PYTHONPATH"] = os.path.join(ROOT, "src")
+        proc = subprocess.Popen([sys.executable, "-c", HOLDER, os.path.join(ROOT, "src"), self.g.dir],
+                                stdout=subprocess.PIPE, stderr=subprocess.PIPE, text=True,
+                                encoding="utf-8", env=env)
+        try:
+            if proc.stdout.readline().strip() != "ready":
+                self.fail(f"holder failed: {proc.stderr.read()[:400]}")
+            t0 = time.perf_counter()
+            doc = self.store.read_locked()
+            waited = time.perf_counter() - t0
+            self.assertIn("nodes", doc)
+            self.assertGreater(waited, 0.3, "read_locked should have waited for the holder")
+        finally:
+            proc.kill()
+            proc.wait(timeout=5)
+
+    def test_missing_graph_raises_without_creating_the_directory(self):
+        import tempfile
+        missing = os.path.join(tempfile.mkdtemp(prefix="amg-noread-"), "absent")
+        with self.assertRaises(ProtocolError):
+            Store(missing).read_locked()
+        self.assertFalse(os.path.isdir(missing))

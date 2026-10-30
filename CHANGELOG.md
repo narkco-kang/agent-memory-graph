@@ -5,6 +5,16 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
 
 ## [Unreleased] — 0.6.0
 
+### Fixed
+
+- **Windows: a reader could make a concurrent writer fail.** `os.replace` cannot
+  replace a file another process has open, and `Memory.open` read the graph without
+  the lock, so one agent's startup read could turn another agent's atomic write into
+  `PermissionError [WinError 5]`. `Store.read_locked()` now reads under the lock and
+  `Memory.open` uses it; opening a missing graph still creates nothing
+  (`LockedReadTests`). Found by the new concurrency test on Windows CI, not by a
+  user.
+
 ### Changed
 
 - **Lock retry now backs off with jitter** (`LOCK_POLL_START_S` 1 ms doubling to a

@@ -67,7 +67,7 @@ class Memory:
         read-only open of a missing graph is `E_NO_GRAPH` and leaves no trace.
         """
         store = Store(path)
-        return cls(store, store.read(), read_only=read_only)
+        return cls(store, store.read_locked(), read_only=read_only)
 
     @classmethod
     def adopt(cls, src: str, dst: str, group: str = None, drop_dangling: bool = False,

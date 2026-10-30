@@ -47,10 +47,27 @@ class Store:
         return os.path.isfile(self.file)
 
     def read(self) -> dict:
+        """Read the graph file. Callers inside a transaction already hold the lock."""
         if not self.exists():
             raise ProtocolError("E_NO_GRAPH", f"no graph at {self.file}")
         with open(self.file, "r", encoding="utf-8") as fh:
             return json.load(fh)
+
+    def read_locked(self) -> dict:
+        """Read under the lock, for callers that do not already hold it.
+
+        Windows cannot `os.replace` a file another process has open, so a lock-free
+        reader racing a writer makes the *writer* fail with `PermissionError`
+        (observed in the concurrency test on Windows CI). Coordinating reads with
+        writes removes that failure mode; the cost is that an open waits behind an
+        in-flight write, which on this store is milliseconds.
+        """
+        # Check before locking: `locked()` creates the directory, and opening a
+        # missing graph must leave no trace (read-only mode promises that).
+        if not self.exists():
+            raise ProtocolError("E_NO_GRAPH", f"no graph at {self.file}")
+        with self.locked():
+            return self.read()
 
     def _atomic_write(self, doc: dict) -> None:
         payload = dumps(doc)
