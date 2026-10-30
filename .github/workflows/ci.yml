@@ -31,24 +31,48 @@ jobs:
     # The artifact is a claim too. v0.7.0's first sdist shipped tests that could
     # not run (docs/, tools/ and experiments/ were missing), and an install-only
     # check would not have caught it because the wheel was fine.
-    runs-on: ubuntu-latest
+    #
+    # Matrix over the minimum supported Python and Windows: the `test` jobs install
+    # editable, so until this job was matrixed the *wheel* had never been installed
+    # on Python 3.10 or on Windows at all.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, windows-latest]
+        python: ["3.10", "3.12"]
     steps:
       - uses: actions/checkout@v4
       - uses: actions/setup-python@v5
         with:
-          python-version: "3.12"
+          python-version: ${{ matrix.python }}
       - name: build sdist and wheel
+        shell: bash
         run: |
           python -m pip install --quiet build
           python -m build --outdir dist .
       - name: artifact contents
+        shell: bash
         run: python tools/check_dist.py dist
-      - name: install the built wheel into a clean environment
+      - name: install the built wheel and exercise the console script
+        shell: bash
         run: |
-          python -m venv /tmp/wheel-venv
-          /tmp/wheel-venv/bin/python -m pip install --quiet dist/*.whl
-          /tmp/wheel-venv/bin/amg version
+          python -m pip install --quiet --force-reinstall --no-deps dist/*.whl
+          python - <<'EOF'
+          import shutil, subprocess
+          import amg
+
+          assert "site-packages" in amg.__file__, f"imported from {amg.__file__}"
+          exe = shutil.which("amg")
+          assert exe, "console script `amg` is not on PATH after installing the wheel"
+          out = subprocess.run([exe, "version"], capture_output=True, text=True, check=True)
+          print("imported", amg.__version__, "from", amg.__file__)
+          print("console script:", out.stdout.strip())
+          assert amg.__version__ in out.stdout, out.stdout
+          EOF
       - name: run the test suite shipped inside the sdist
+        shell: bash
+        if: matrix.os == 'ubuntu-latest' && matrix.python == '3.12'
         run: |
           mkdir -p /tmp/sdist
           tar xzf dist/*.tar.gz -C /tmp/sdist
