@@ -323,6 +323,13 @@ measured end to end in [docs/REAL-WORLD.md](docs/REAL-WORLD.md) — 140 ms to ad
 milliseconds, and one write at 147 ms (the reason the cold-archive trigger exists; the cost is
 broken down in [docs/WRITE-COST.md](docs/WRITE-COST.md)).
 
+## Concurrent writers
+
+Eight processes writing 200 nodes at once to one graph: **200 present, 0 lost,
+0 duplicated, 200 change records, `check` clean** — and the cost is a latency tail,
+not throughput (~700 writes/s either way; p50 ~1 ms, but one write in each run
+waited ~240 ms). Numbers, method and limits: [docs/CONCURRENCY.md](docs/CONCURRENCY.md).
+
 ## Roadmap, contributing, security
 
 The backlog is public as GitHub issues (batch ingest, vector retrieval, MCP

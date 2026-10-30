@@ -3,6 +3,21 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [Unreleased] — 0.6.0
+
+### Added
+
+- **Concurrency burst test** (`experiments/concurrency/run_stress.py`,
+  `docs/CONCURRENCY.md`): 8 processes × 25 writes against one graph, three runs —
+  **200/200 nodes present, 0 duplicates, 0 lost, exactly one change record per
+  write, `check` clean, no lock timeouts**. Throughput is unchanged by contention
+  (~700 vs ~640 writes/s) because the lock serialises the critical section, but the
+  latency tail is ~240 ms against a ~1 ms median. The cause of that tail is stated
+  as a hypothesis (unfair `flock` wakeups plus 20 ms polling), not a finding, and
+  the counters needed to prove it do not exist yet.
+- `tests/test_concurrency.py`: a 3×3 version of the same four properties runs on
+  every commit, including Windows.
+
 ## [0.5.0] — 2026-10-30
 
 **A measurement release: no behaviour changes.** Every claim below is a number

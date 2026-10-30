@@ -88,7 +88,9 @@ semantic retriever (C1/C2/C3) is written there before any candidate existed.
 
 - Edges: the *synthetic* latency dataset has none, so edge traversal cost is not
   measured there; the real-graph run measures `related` at depth 1 only.
-- Concurrency: single process only; the advisory lock is not stress-tested.
+- Concurrency throughput at 10k nodes: the burst test runs on a small graph only.
+  Correctness under concurrent writers and the latency tail are measured in
+  [`CONCURRENCY.md`](CONCURRENCY.md) (8 writers × 25 writes).
 - Windows: latency is not benchmarked on Windows. Correctness is — the suite runs
   on `windows-latest` in CI, including the cross-process lock test.
 - Vector retrieval: no candidate has been measured yet; only the baseline exists.

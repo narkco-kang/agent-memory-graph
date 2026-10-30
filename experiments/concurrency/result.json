@@ -1,0 +1,33 @@
+{
+  "writers": 8,
+  "writes_per_writer": 25,
+  "expected_writes": 200,
+  "nodes_present": 200,
+  "duplicate_ids": 0,
+  "missing_writes": 0,
+  "errors": [],
+  "check_ok": true,
+  "check_errors": 0,
+  "changes_for_stress_writes": 200,
+  "targets_with_wrong_change_count": 0,
+  "rev": 226,
+  "contended": {
+    "wall_ms": 337.7,
+    "burst_window_ms": 282.3,
+    "writes_per_s": 708.5,
+    "p50_ms": 0.99,
+    "p95_ms": 1.69,
+    "max_ms": 242.09,
+    "total_writes": 200
+  },
+  "serial": {
+    "wall_ms": 82.9,
+    "burst_window_ms": 38.6,
+    "writes_per_s": 647.7,
+    "p50_ms": 1.56,
+    "p95_ms": 1.67,
+    "max_ms": 2.11,
+    "total_writes": 25
+  },
+  "passed": true
+}
