@@ -7,11 +7,13 @@ import sys
 from . import __version__
 from .const import EXIT_ERROR, EXIT_IO, EXIT_OK, EXIT_USAGE
 from .errors import LockTimeout, ProtocolError
+from .gate import verify_evidence
 from .memory import Memory
 from . import security as security_mod
 
 COMMANDS = ["init", "add", "import", "status", "supersede", "link", "related", "search", "digest", "check", "audit", "mcp",
-            "export", "doctor", "migrate", "adopt", "expire", "archive", "fingerprint", "verify", "handoff", "version"]
+            "export", "doctor", "migrate", "adopt", "expire", "archive", "fingerprint", "verify",
+            "verify-evidence", "handoff", "version"]
 
 
 def _evidence_args(values):
@@ -288,6 +290,51 @@ def cmd_verify(a):
     return EXIT_OK
 
 
+def cmd_verify_evidence(a):
+    """Hash `path:` evidence and compare it with the declared content_sha256.
+
+    Exit 1 on a mismatch (the claim and the bytes disagree); `--strict` also fails on a
+    missing target. `cmd:`/`url:`/`sha256:` locators are reported `unverifiable` and
+    never counted as passes: the tool refuses to call unobservable evidence verified.
+    """
+    m = Memory.open(a.dir)
+    nodes = m.doc.get("nodes") or []
+    if a.id:
+        nodes = [n for n in nodes if n.get("id") == a.id]
+        if not nodes:
+            raise ProtocolError("E_NO_NODE", f"no node with id {a.id!r}")
+    rows = []
+    for n in nodes:
+        rows.extend(verify_evidence(n.get("evidence") or [], os.path.abspath(a.dir),
+                                    node_id=n.get("id")))
+    counts = {}
+    for row in rows:
+        counts[row["status"]] = counts.get(row["status"], 0) + 1
+    mismatched = [r for r in rows if r["status"] == "mismatch"]
+    missing = [r for r in rows if r["status"] == "missing"]
+    report = {"ok": not mismatched, "root": os.path.abspath(a.dir), "checked": len(rows),
+              "counts": counts, "mismatched": mismatched, "missing": missing,
+              "rows": rows}
+    if a.json:
+        print(json.dumps(report, ensure_ascii=False, indent=2))
+    else:
+        for row in rows:
+            mark = {"ok": "✓", "mismatch": "✗", "missing": "?", "unverifiable": "~"}[row["status"]]
+            print(f"{mark} {row['node']} {row['locator']} [{row['status']}]")
+        print(f"checked {report['checked']}: " + ", ".join(
+            f"{name} {count}" for name, count in sorted(counts.items())))
+        if counts.get("unverifiable"):
+            print("  ~ = no observed bytes (cmd:/url:/sha256:); not a pass")
+    if mismatched:
+        raise ProtocolError("E_EVIDENCE_MISMATCH",
+                            f"{len(mismatched)} evidence item(s) do not match the file bytes; "
+                            "the declared content_sha256 is not what the locator contains")
+    if a.strict and missing:
+        raise ProtocolError("E_EVIDENCE_MISSING",
+                            f"{len(missing)} evidence path(s) are missing (--strict)")
+    return EXIT_OK
+
+
 def cmd_export(a):
     m = Memory.open(a.dir)
     sys.stdout.write(m.export(fmt=a.format))
@@ -360,6 +407,8 @@ USAGE_EXIT_CODES = frozenset({
 })
 ERROR_EXIT_CODES = frozenset({
     "E_NO_SOURCE", "E_NOTE_REQUIRED", "E_EVIDENCE_MISSING", "E_EVIDENCE_FORMAT",
+    # verify-evidence: the declared hash is not the hash of the bytes at the locator
+    "E_EVIDENCE_MISMATCH",
     "E_DUP_ID", "E_DUP_EDGE", "E_NO_NODE", "E_IMMUTABLE",
     # adopt-specific: the legacy source itself violates the protocol
     "E_ADOPT_UNSUPPORTED", "E_ADOPT_DANGLING",
@@ -595,6 +644,13 @@ def build_parser():
     s.add_argument("--expect"); s.add_argument("--expect-state"); s.add_argument("--expect-history")
     s.add_argument("--json", action="store_true")
     s.set_defaults(func=cmd_verify)
+
+    s = sub.add_parser("verify-evidence",
+                       help="hash path: evidence and compare with its declared sha256")
+    s.add_argument("dir"); s.add_argument("--id", help="check one node only")
+    s.add_argument("--strict", action="store_true",
+                   help="also exit 1 when a path: target is missing")
+    s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_verify_evidence)
 
     s = sub.add_parser("export"); s.add_argument("dir"); s.add_argument("--format", default="json",
                                                                         choices=["json", "jsonl"])

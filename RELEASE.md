@@ -19,6 +19,30 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.20.0 — 2026-10-31
+
+Status: **released**. Closes R3 from the retrieval attack brief with an observation
+mechanism plus disclosure — not with a promise the library cannot keep.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | CI green on nine jobs | ✅ 280 tests ×4 + `package` ×5 |
+| 2 | Documentation↔code symbol gate + size budget | ✅ 15 documents; DECISIONS trimmed by moving detail to the docs that own it |
+| 3 | The finding is reproduced before it is fixed | ✅ the attack is a test: fake hash passes the gate, shows `present`, is caught by `verify-evidence` |
+| 4 | Only what can be observed is called verified | ✅ `cmd:`/`url:`/`sha256:` = `unverifiable`, never `ok` |
+| 5 | The limitation is in the product text | ✅ `docs/API.md`, `docs/THREAT-MODEL.md`, README |
+| 6 | Not-shipped boundary is explicit | ✅ no per-read verification, no anchor split, `--strict` ≠ verified |
+| 7 | Dead code is now used or removed | ✅ `sha256_of_file` is the verifier's hashing primitive |
+| 8 | Clean install from the tag | ✅ `git+...@v0.20.0` |
+| 9 | `python3 tools/verify.py` green | ✅ nine steps, 0 skipped |
+| 10 | Reproducible | ✅ `amg verify-evidence` on a two-node graph, both outcomes in the tests |
+
+The shape of the round: an unverifiable claim cannot be fixed by labelling it verified;
+it can be fixed by making the observable part observable, and by saying plainly which
+part is not.
+
+---
+
 ## v0.19.1 — 2026-10-31
 
 Status: **released**. Patch for a red CI that v0.19.0 shipped with on one platform.

@@ -3,6 +3,33 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.20.0] — 2026-10-31
+
+Closes the evidence-authenticity finding from the retrieval attack brief (E1 / `R3`):
+declared evidence hashes become observable, and the limitation that stays is written down.
+
+### Added
+
+- `amg verify-evidence <dir> [--id ID] [--strict] [--json]` — hashes `path:` evidence
+  locators (resolved against the graph directory unless absolute) and compares them with
+  the declared `content_sha256`. Exit 1 on `E_EVIDENCE_MISMATCH`; `--strict` also fails
+  on missing paths; `cmd:` / `url:` / `sha256:` locators are reported `unverifiable` and
+  never count as passes. This is the first caller of `gate.sha256_of_file`, which existed
+  unused since v0.1.
+- `tests/test_evidence_verify.py` — 11 cases, including the original attack as an
+  executable record: a fabricated hash is accepted by the write gate, still shows
+  `anchor_state: "present"`, and is caught by `verify-evidence`.
+
+### Disclosed, not fixed
+
+- `content_sha256` is still **caller-declared**: the write gate validates shape, not
+  bytes, so a fabricated hash still wins the retrieval sort key. `docs/API.md` and
+  `docs/THREAT-MODEL.md` now state that `present` means *declared*.
+- Not shipped: per-read verification (I/O on the hot path; referenced files move), an
+  `anchor_state` `verified`/`claimed` split (a label without persisted verification), and
+  any claim that `--strict` means verified.
+- `cmd:` / `url:` evidence remains unverifiable offline — reported as such, never a pass.
+
 ## [0.19.1] — 2026-10-31
 
 Patch: the documentation size gate measures content, not the checkout's line endings.

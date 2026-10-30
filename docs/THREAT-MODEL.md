@@ -68,6 +68,20 @@ and this document no longer applies.
 | T7 | Crash during write leaves a half-written graph | **Mitigated**: full write to a temp file + `fsync` + `os.replace`, so a reader sees old or new, never a mix | `store.py::_atomic_write` |
 | T8 | Dangling/duplicate writes corrupt structure | **Mitigated**: `check` (IR-1..IR-4) and the write gates reject them before commit | `protocol.py`, `gate.py` |
 
+### Evidence authenticity is declared, not proven (v0.20.0)
+
+`content_sha256` is supplied by the caller; the write gate checks its shape (64 lowercase
+hex) and nothing else. A fabricated hash is accepted, yields `anchor_state: "present"`,
+and that is the first retrieval sort key — reproduced in the public package
+(`issue.mem-arch-evidence-sha-forgeable`, severity high). Two-part response, both
+shipped: **disclosure** here and in `docs/API.md` (`present` = *declared*), and an
+**observation mechanism**, `amg verify-evidence`, which re-hashes `path:` locators and
+exits 1 on mismatch. Deliberately not fixed: no per-read verification (I/O on the hot
+path, and referenced files legitimately move); no `anchor_state` split into
+`verified`/`claimed` (without a persisted verification result that would be a label, not
+a measurement); `cmd:`/`url:`/`sha256:` evidence cannot be checked offline and is
+reported `unverifiable`, never a pass. Treat `--strict` as "anchored as declared".
+
 ## 5. Read-only mode: what it guarantees
 
 `amg mcp <dir> --read-only` (and `Memory.open(dir, read_only=True)`) provides:

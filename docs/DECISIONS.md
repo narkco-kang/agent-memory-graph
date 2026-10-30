@@ -221,34 +221,23 @@ Each entry states the decision, the evidence behind it, and what it costs.
     *Signed 2026-10-31.*
 
 23. **Handover discipline is borrowed, credited, and adapted — not reinvented.**
-    A public workbench (luanyujia-workbench, MIT) documents the same problem — a
-    long-lived team whose sessions are all temporary — with three rules that survived
-    real use: overwrite the handover rather than appending, keep it under a fixed size
-    (4 KB), and write pointers rather than transcripts. We adopt the rules and say
-    where they came from (`docs/PRIOR-ART.md`), because re-deriving them badly would
-    be a worse use of the measurement budget. The adaptation is a `handoff` node:
-    exactly one active, supersede-on-write so the previous card lands in the same
-    audited ledger, the budget refused by the writer and re-checked by `audit`, and
-    `multiple_active_handoffs` as a conflict rather than a convention. Registrations,
-    including handoff nodes, are exempt from staleness (#20).
-    *Signed 2026-10-31; `tests/test_handoff.py`.*
+    A public workbench (MIT) documents the same problem with three rules that survived
+    real use: overwrite rather than append, a fixed size (4 KB), pointers not
+    transcripts. We adopt them, credit them (`docs/PRIOR-ART.md`) and adapt them into a
+    `handoff` node: one active, supersede-on-write into the same audited ledger, budget
+    refused by the writer and re-checked by `audit` (`multiple_active_handoffs` is a
+    conflict, not a convention). Registrations are exempt from staleness (#20). Details:
+    `docs/HANDOFF.md`. *Signed 2026-10-31; `tests/test_handoff.py`.*
 
-24. **Archive the ledger, not the nodes — and prove the move on every run.**
-    The write-cost work (`docs/WRITE-COST.md`) priced four ways to reclaim bytes; this
-    is the one that ships, and the choice is measured, not aesthetic: on the 15.7 MB
-    real graph **79% of the file is change records**, they have no referential
-    integrity (nothing points at a change), and moving a cold prefix of them cut a
-    single write from 226.1 ms to 72.7 ms. Archiving *nodes* is the tempting
-    alternative and is deliberately not done: edges cross the boundary, so a partial
-    implementation would leave dangling references or a second store to keep
-    consistent — the failure this project already ranks lowest. The proof is the
-    borrowed shrink protocol ("snapshot first, move second, prove nothing was lost",
-    credited in `docs/PRIOR-ART.md`) turned into five independent checks that run on
-    every `--apply`, with the snapshot written back when they fail
-    (`E_ARCHIVE_VERIFY`). Unknown times never move: an undated record stops the
-    prefix, the same conservative direction as TTL expiry. `L2` search sees live
-    history only, which is stated in `docs/ARCHIVE.md` rather than left to be found.
-    *Signed 2026-10-31; `tests/test_archive.py`.*
+24. **Archive the ledger, not the nodes — and prove the move on every run.** Of the four
+    byte-reclaim options priced in `docs/WRITE-COST.md`, this is the one that ships: on
+    the 15.7 MB real graph **79% of the file is change records**, nothing points at them,
+    and moving a cold prefix cut a write 226.1 → 72.7 ms. Archiving *nodes* is
+    deliberately not done: edges cross the boundary. The borrowed shrink protocol
+    ("snapshot first, move second, prove nothing was lost") becomes five checks on every
+    `--apply`, with a snapshot written back on failure (`E_ARCHIVE_VERIFY`); an undated
+    record stops the prefix. Details: `docs/ARCHIVE.md`. *Signed 2026-10-31;
+    `tests/test_archive.py`.*
 
 25. **Lexical matching is word-aware; the recall it costs is recorded, not hidden.**
     The substring matcher answered queries that cannot distinguish anything: on the
@@ -287,17 +276,10 @@ Each entry states the decision, the evidence behind it, and what it costs.
     timeout ≥ writers × writes × per-write cost.
     *Signed 2026-10-31; `docs/CONCURRENCY.md` §"At 10,000 nodes", `result-10k*.{json,txt}`.*
 
-27. **Scale does not dilute lexical recall; vocabulary overlap does — and the scorer,
-    not the matcher, is why.** Pre-registered at 10,000 nodes
-    (`experiments/retrieval_10k/`), same frozen 26 queries and gold set, two noise
-    models. Unrelated distractors left every metric identical (0.654/0.808/0.865/0.763),
-    retiring the naive "big memory dilutes search" worry. Distractors built from the
-    queries' own vocabulary cost **recall@5 0.808 → 0.538** (r@1 0.654 → 0.481); of the
-    11 misses, **7 sit beyond rank 100**. The scorer weighted fields (`id` 3.0,
-    `label` 2.0, `note` 1.0) with **no IDF**, so repetition of common words was as good
-    as an answer. Two predictions wrong, recorded; no code touched on purpose (C4).
-    IDF became the named next candidate with its own pre-registration.
-    *Signed 2026-10-31; `experiments/retrieval_10k/`, `result.json`.*
+27. **Scale does not dilute lexical recall; vocabulary overlap does, and the scorer is
+    why.** At 10k, unrelated noise changed nothing (0.654/0.808/0.865/0.763);
+    query-vocabulary noise cost **r@5 0.808 → 0.538** (no IDF). Measurement, reasoning
+    and wrong predictions: `experiments/retrieval_10k/README.md`. *Signed 2026-10-31.*
 
 28. **IDF term weights ship — and they do not fix query-vocabulary noise.** Pre-registered
     (`experiments/retrieval_idf/PREREGISTRATION.md`) with four corpora and the v0.17.0
@@ -345,3 +327,12 @@ Each entry states the decision, the evidence behind it, and what it costs.
     where five fields can match (7.0), and I predicted ≤5% drift where measurement is
     +37%; both recorded as wrong, not rescued in code. No cache: 100 ms p50 at 10k is a
     documented limit. *Signed 2026-10-31; `experiments/score_scale/`; v0.19.0.*
+31. **Evidence hashes are declared, not proven — disclose and make them observable.**
+    `content_sha256` is caller-supplied; the gate checks shape only, so a fabricated hash
+    is accepted and wins the `anchor_state == "present"` sort key
+    (`issue.mem-arch-evidence-sha-forgeable`). v0.20.0 ships disclosure (`docs/API.md`,
+    `docs/THREAT-MODEL.md`: `present` means *declared*) and `amg verify-evidence`:
+    re-hashes `path:` locators, exit 1 on mismatch, `cmd:`/`url:`/`sha256:` reported
+    `unverifiable`, never a pass. Not shipped: per-read verification, an
+    `anchor_state` verified/claimed split, any claim `--strict` means verified.
+    *Signed 2026-10-31; `tests/test_evidence_verify.py`; v0.20.0.*

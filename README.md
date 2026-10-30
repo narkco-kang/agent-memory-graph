@@ -120,7 +120,9 @@ is bounded and carries a `score_kind` (idf / recency / expansion) so layers are 
 merged by number; results without
 evidence are returned by default with `anchor_state: "none"` instead of being dropped,
 because on a real graph only 22–36% of lexical hits had anchors and hard-filtering by
-default would hide most of the memory (`--strict` is the only anchor filter).
+default would hide most of the memory (`--strict` is the only anchor filter). Anchors are
+**declared**: a hash is not re-checked on read, so `amg verify-evidence` hashes `path:`
+evidence and exits 1 on a mismatch (v0.20.0).
 
 Matching is word-aware: ASCII matches whole words and their regular inflections (a
 single letter matches nothing), and a query containing `.` `:` `/` `_` is treated as one

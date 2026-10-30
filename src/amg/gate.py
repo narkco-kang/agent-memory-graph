@@ -7,6 +7,7 @@ Rules (see docs/DECISIONS.md):
 - semantic near-duplicate detection may NEVER reject (it flags only).
 """
 import hashlib
+import os
 import re
 
 from .const import LOCATOR_PREFIXES, is_conclusion
@@ -79,6 +80,46 @@ def enforce_conclusion(node: dict, evidence: list) -> None:
             f"{node['id']}: conclusion-typed node cannot be done without evidence "
             "(write the evidence object or leave it in_progress)",
         )
+
+
+def verify_evidence(items, root: str, node_id: str = None) -> list:
+    """Check evidence locators against what can actually be observed offline.
+
+    Until v0.20.0 the gate validated only the *shape* of `content_sha256` (64 lowercase
+    hex), so a caller could declare any hash and still get `anchor_state: "present"` —
+    a sorting hard key on a fabricated claim (`issue.mem-arch-evidence-sha-forgeable`).
+    This function is the observation mechanism: `sha256_of_file` is finally called, for
+    `path:` locators, resolved against `root` unless absolute.
+
+    Honest by construction: a locator that cannot be checked offline (`cmd:`, `url:`,
+    `sha256:` — the last carries no bytes) is reported `unverifiable`, never `ok`.
+    `captured_at` is not re-verified: a timestamp is a claim about the past, not a
+    fingerprint of bytes.
+
+    Verification is explicit (`amg verify-evidence`), never implied by `check`, `audit`
+    or `search`: hashing every evidence target on every read would cost I/O on the hot
+    path and fail whenever a referenced file has legitimately moved.
+    """
+    rows = []
+    for index, item in enumerate(items or []):
+        item = item if isinstance(item, dict) else {}
+        locator = str(item.get("locator") or "")
+        expected = str(item.get("content_sha256") or "")
+        row = {"node": node_id, "index": index, "locator": locator,
+               "expected": expected, "actual": None}
+        if locator.startswith("path:"):
+            raw = locator[len("path:"):]
+            path = raw if os.path.isabs(raw) else os.path.join(root, raw)
+            if not os.path.isfile(path):
+                row["status"] = "missing"
+            else:
+                actual = sha256_of_file(path)
+                row["actual"] = actual
+                row["status"] = "ok" if actual == expected else "mismatch"
+        else:
+            row["status"] = "unverifiable"
+        rows.append(row)
+    return rows
 
 
 def sha256_of_file(path: str) -> str:
