@@ -7,6 +7,16 @@ The format follows Keep a Changelog, and this project adheres to SemVer.
 
 ### Added
 
+- **`docs/DESIGN-HISTORY.md`**: the write-cost fix, designed before it is built —
+  and the obvious version of it rejected with measurements. A history sidecar would
+  cut writes 147 ms → ~27 ms, but `changes[]` records are descriptions rather than
+  replayable operations, so a split store gains a crash window that can only be
+  detected, never repaired. The sanctioned direction is zlib-sealed history segments
+  inside the single atomic file: −54% size (15.6 MB → 7.2 MB), write ~60 ms,
+  11 ms to decompress on read, atomicity intact, at the cost of text-greppable
+  history and an `amg/v2` format bump. Not built; DECISIONS #17 records why and the
+  trigger.
+
 - **`AMG_LOCK_TIMEOUT`** (seconds, clamped to `(0, 3600]`, nonsense falls back to
   5 s) — because the default is now known to be load-dependent rather than safe:
   on the real 15.6 MB graph a write costs ~147 ms, so 5 s covers about 34 queued

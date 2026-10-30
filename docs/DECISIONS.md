@@ -144,3 +144,20 @@ Each entry states the decision, the evidence behind it, and what it costs.
     queue. The lever that does help is a cheaper write (history sidecar, priced in
     `WRITE-COST.md`: ~150 ms → ~30 ms, i.e. 34 → ~170 queued writes per 5 s).
     *Signed 2026-10-30.*
+
+17. **History sidecar: rejected. Segmented compression: the sanctioned direction, not
+    yet built.** The sidecar (state in `graph.json`, history appended to a second
+    file) measured −82% write cost (147 ms → ~27 ms) and was rejected anyway:
+    `changes[]` records are `{at, by, op, target, rev, note}` — descriptions, not
+    replayable operations — so a split store has a crash window that can only be
+    *detected*, never repaired, and the ledger can end up disagreeing with the state
+    it describes. That trades the one guarantee the store is built around for speed.
+    The alternative keeps one atomically replaced file and compresses history into
+    sealed zlib segments: measured −54% file size, ~60 ms writes, 11 ms to decompress
+    on read, round-trip verified. Its price is explicit — history stops being
+    text-greppable/diffable, `fingerprint` must be defined over decompressed meaning
+    rather than bytes, and it needs an `amg/v2` format bump. Deferred to the existing
+    trigger (20 MB / 250 ms p95 / 10k nodes, or a real `LockTimeout` with
+    `AMG_LOCK_TIMEOUT` already raised). Full design and build checklist:
+    `docs/DESIGN-HISTORY.md`.
+    *Signed 2026-10-30.*
