@@ -47,3 +47,19 @@ paragraph paired them loosely, and the per-length table in
 `experiments/retrieval_noise_realtext/sensitivity_window.json` is the authority. The reported
 shortfall is therefore **0.027 at recall@5** (0.70 − 0.673), not 0.008, once the most realistic
 configuration is the reference.
+
+**Retraction and reproducibility note 2026-10-31 (same day, after Mini仔 reproduced the harness).**
+Two statements in the note above are withdrawn. (1) The 0.673 / 0.654 figures are **not reproducible**:
+this experiment draws its distractor text from `README.md` and `docs/**` at run time, and those files
+changed after the run, so a re-run today gives whole-paragraph **r@5 0.654, r@1 0.635** where the
+committed artefact says 0.673 / 0.654. "0.027" was therefore a number tied to one document state, not
+to the corpus. (2) I publicly ruled that the independent verifier had misread a column; that ruling is
+wrong — he had re-run the harness and seen the drifted corpus, and the committed artefact was the
+outlier. `issue.mem-arch-realtext-column-mixup` is corrected accordingly.
+
+The 0.692 anchor at the eight-word window did reproduce across both states, but that is one
+configuration, not a claim about the corpus. Until the corpus is snapshotted and its digest recorded in
+`result.json` (Mini仔's ①, agreed in this round), **no number in this entry may be quoted as
+reproducible**. The fix and the re-measurement are tracked as
+`issue.mem-arch-realtext-corpus-unpinned`; until then the entry stands as published with this block
+attached, not rewritten.
