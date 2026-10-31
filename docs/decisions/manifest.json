@@ -1,6 +1,6 @@
 {
  "schema": "amg-decision-pages/v1",
- "count": 48,
+ "count": 49,
  "pages": [
   {
    "n": 1,
@@ -433,6 +433,15 @@
    "signed": true,
    "body_sha256": "337da723456f5ab144b118e2bb0293330608fca1e8c3509b8c9109afb285590b",
    "body_bytes": 1799
+  },
+  {
+   "n": 49,
+   "slug": "49-lexical-rerank-closed.md",
+   "title": "The lexical rerank family is closed for query-vocabulary noise.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "2779827604423f012df2b71712f13e44f273009aa81b7e0178fde063f9e51b32",
+   "body_bytes": 2320
   }
  ]
 }

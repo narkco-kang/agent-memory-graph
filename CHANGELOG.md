@@ -3,6 +3,42 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.33.0] — 2026-10-31
+
+The direction #48 named is tested and closed in one round, with its failed predictions on record.
+
+### Measured
+
+- `experiments/retrieval_lexical_ceiling/` pre-registered **three** signals that are not document
+  frequency — content-word coverage (stopwords stripped, #48's named direction), title coverage and
+  compactness — reranking the shipped top 100 on the same four corpora. **All nine arm/alpha
+  combinations lose N2 recall**: the best (compactness, alpha 0.5) is **0.481** against the shipped
+  **0.538**, and each arm also harms at least one non-target corpus (title coverage costs control
+  0.057 and n3 0.115; compactness costs n1 0.057). Nothing ships; `src/amg/retrieval.py` untouched.
+- The pre-registered diagnostic is what explains it. Pooled separability (AUC, gold vs non-gold
+  inside the top 100) looked usable — 0.665 for content coverage, 0.610 for compactness — but
+  splitting by whether the shipped ranking already solved the query shows the mean was carried by
+  the solved half: **0.779 / 0.515 / 0.767 on the 15 solved queries against 0.421 / 0.258 / 0.275
+  on the 11 failing ones.** On the queries that need repair, every lexical signal is at or below
+  chance.
+- **Two limits stay open, as recorded**: the 0.70 target is not shown impossible — the candidate
+  ceiling (gold inside the top 100) is **0.846**, above 0.70, so a perfect reranker could pass; and
+  **4 of 26 queries have gold beyond the top 100**, so a semantic arm must be judged on candidate
+  generation as well as reordering.
+
+### Added
+
+- DECISIONS **#49** closes the lexical rerank family for query-vocabulary noise and records the
+  general hazard behind the pooled number: an AUC averaged over a candidate set the scorer already
+  orders correctly measures the solved queries and hides the failures.
+- `tests/test_lexical_ceiling.py` pins the page to `result.json` and `diagnostic_by_solved.json`, and
+  asserts the three failed predictions stay visible in the pre-registration.
+
+### Not changed
+
+- N2 stays **0.538** against the published 0.70 target; the target remains **unmet** and no
+  published claim says otherwise.
+
 ## [0.32.7] — 2026-10-31
 
 A mechanism claim published two days* ago was falsified by an attack, and is corrected.
