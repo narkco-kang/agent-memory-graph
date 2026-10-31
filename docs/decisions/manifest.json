@@ -1,6 +1,6 @@
 {
  "schema": "amg-decision-pages/v1",
- "count": 49,
+ "count": 50,
  "pages": [
   {
    "n": 1,
@@ -442,6 +442,15 @@
    "signed": true,
    "body_sha256": "2779827604423f012df2b71712f13e44f273009aa81b7e0178fde063f9e51b32",
    "body_bytes": 2320
+  },
+  {
+   "n": 50,
+   "slug": "50-similarity-family-closed.md",
+   "title": "The similarity family is closed for N2, and the question is the noise model.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "e291f1c316ea69562297997cc19922f23a247b9b94981277484a3e1564b08b7f",
+   "body_bytes": 3057
   }
  ]
 }

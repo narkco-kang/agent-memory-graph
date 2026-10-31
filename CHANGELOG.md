@@ -3,6 +3,40 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.33.1] — 2026-10-31
+
+The direction #49 left open was measured and closed, with its failed predictions on record.
+
+### Measured
+
+- A pre-registered semantic arm (`experiments/retrieval_semantic/`) with a local embedding daemon
+  (`nomic-embed-text`, digest pinned) tested three shapes — RRF rerank of the shipped top-100, pure
+  full-corpus semantic retrieval, and their union. On the **real** corpus the same model lifts
+  recall@5 **0.865 → 0.981**, and on the two non-adversarial noise corpora to 0.962 / 0.942.
+- On **N2** all three land on **0.577** (+0.039 against the shipped 0.538), missing the
+  pre-registered +0.05 by 0.011; the 0.70 target is not approached. Every regression gate passes, so
+  the miss is specific to the target corpus, not a broken backend.
+- The informative miss is the candidate ceiling: semantics was predicted to find the four gold nodes
+  lexical search never reaches, and the semantic ceiling on N2 is **0.846 — identical to the
+  shipped one**. N2's distractors are built from the queries' own vocabulary in `label` and `note`,
+  so they are near-duplicates under any bag-of-vectors similarity; cosine is no more adversarial to
+  that construction than `df` was.
+- The aggregate hides churn: the three arms tie at 0.577 while fixing `q05`/`q26`/`q16`/`q24` and
+  breaking `q04` (2 → 23 or beyond 100) and `q14` (1 → 5 or 27). Six queries cross the top-5
+  boundary in opposite directions; the per-query table ships with the experiment.
+
+### Added
+
+- DECISIONS **#50**: the similarity family (lexical #49, semantic here) is closed for N2; the open
+  question moves from *which model* to *whether N2 is the noise a memory graph faces*, which is a
+  separate, measurable decision (`issue.mem-arch-n2-representativeness`).
+- `tests/test_semantic_arm.py` pins the page to `result.json` and the post-hoc diagnostic.
+
+### Not changed
+
+- `src/amg/` untouched; embeddings stay optional-only (274 MB model + daemon are outside the
+  zero-dependency default path). N2 stays **0.538** and the 0.70 target stays **unmet**.
+
 ## [0.33.0] — 2026-10-31
 
 The direction #48 named is tested and closed in one round, with its failed predictions on record.

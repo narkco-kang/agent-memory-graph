@@ -1,0 +1,250 @@
+{
+  "corpora": {
+    "control": {
+      "arms": {
+        "A_rerank": {
+          "mrr@10": 0.865,
+          "n": 26,
+          "recall@1": 0.769,
+          "recall@10": 0.865,
+          "recall@5": 0.865
+        },
+        "B_semantic": {
+          "mrr@10": 0.931,
+          "n": 26,
+          "recall@1": 0.808,
+          "recall@10": 1.0,
+          "recall@5": 0.981
+        },
+        "C_hybrid": {
+          "mrr@10": 0.882,
+          "n": 26,
+          "recall@1": 0.769,
+          "recall@10": 1.0,
+          "recall@5": 0.923
+        },
+        "shipped": {
+          "mrr@10": 0.821,
+          "n": 26,
+          "recall@1": 0.731,
+          "recall@10": 0.865,
+          "recall@5": 0.865
+        }
+      },
+      "ceilings": {
+        "A_rerank": 0.8846,
+        "B_semantic": 1.0,
+        "C_hybrid": 1.0,
+        "shipped": 0.8846
+      },
+      "latency_ms": {
+        "max": 1.63,
+        "p50": 0.82
+      },
+      "nodes": 27
+    },
+    "n1": {
+      "arms": {
+        "A_rerank": {
+          "mrr@10": 0.865,
+          "n": 26,
+          "recall@1": 0.769,
+          "recall@10": 0.865,
+          "recall@5": 0.865
+        },
+        "B_semantic": {
+          "mrr@10": 0.931,
+          "n": 26,
+          "recall@1": 0.808,
+          "recall@10": 0.981,
+          "recall@5": 0.962
+        },
+        "C_hybrid": {
+          "mrr@10": 0.889,
+          "n": 26,
+          "recall@1": 0.769,
+          "recall@10": 0.981,
+          "recall@5": 0.904
+        },
+        "shipped": {
+          "mrr@10": 0.815,
+          "n": 26,
+          "recall@1": 0.731,
+          "recall@10": 0.865,
+          "recall@5": 0.865
+        }
+      },
+      "ceilings": {
+        "A_rerank": 0.8846,
+        "B_semantic": 1.0,
+        "C_hybrid": 1.0,
+        "shipped": 0.8846
+      },
+      "latency_ms": {
+        "max": 153.87,
+        "p50": 78.9
+      },
+      "nodes": 10000
+    },
+    "n2": {
+      "arms": {
+        "A_rerank": {
+          "mrr@10": 0.58,
+          "n": 26,
+          "recall@1": 0.5,
+          "recall@10": 0.615,
+          "recall@5": 0.577
+        },
+        "B_semantic": {
+          "mrr@10": 0.619,
+          "n": 26,
+          "recall@1": 0.5,
+          "recall@10": 0.615,
+          "recall@5": 0.577
+        },
+        "C_hybrid": {
+          "mrr@10": 0.582,
+          "n": 26,
+          "recall@1": 0.5,
+          "recall@10": 0.615,
+          "recall@5": 0.577
+        },
+        "shipped": {
+          "mrr@10": 0.543,
+          "n": 26,
+          "recall@1": 0.481,
+          "recall@10": 0.577,
+          "recall@5": 0.538
+        }
+      },
+      "ceilings": {
+        "A_rerank": 0.8462,
+        "B_semantic": 0.8462,
+        "C_hybrid": 0.8846,
+        "shipped": 0.8462
+      },
+      "latency_ms": {
+        "max": 187.95,
+        "p50": 101.08
+      },
+      "nodes": 10000
+    },
+    "n3": {
+      "arms": {
+        "A_rerank": {
+          "mrr@10": 0.865,
+          "n": 26,
+          "recall@1": 0.769,
+          "recall@10": 0.865,
+          "recall@5": 0.865
+        },
+        "B_semantic": {
+          "mrr@10": 0.893,
+          "n": 26,
+          "recall@1": 0.769,
+          "recall@10": 0.923,
+          "recall@5": 0.904
+        },
+        "C_hybrid": {
+          "mrr@10": 0.897,
+          "n": 26,
+          "recall@1": 0.769,
+          "recall@10": 0.981,
+          "recall@5": 0.942
+        },
+        "shipped": {
+          "mrr@10": 0.821,
+          "n": 26,
+          "recall@1": 0.731,
+          "recall@10": 0.865,
+          "recall@5": 0.865
+        }
+      },
+      "ceilings": {
+        "A_rerank": 0.8846,
+        "B_semantic": 1.0,
+        "C_hybrid": 1.0,
+        "shipped": 0.8846
+      },
+      "latency_ms": {
+        "max": 202.44,
+        "p50": 91.39
+      },
+      "nodes": 10000
+    }
+  },
+  "criteria": {
+    "control_min_r5": 0.855,
+    "n1_min_r5": 0.855,
+    "n2_min_gain_r5": 0.05,
+    "n2_target_r5": 0.7,
+    "n3_min_r5": 0.845
+  },
+  "inputs": {
+    "corpora": {
+      "control": 27,
+      "n1": 10000,
+      "n2": 10000,
+      "n3": 10000
+    },
+    "deep_k": 100,
+    "model": "nomic-embed-text:latest",
+    "model_digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+    "rrf_k": 60
+  },
+  "verdicts": {
+    "arms": {
+      "A_rerank": {
+        "C1_control_no_regression": true,
+        "C2_n2_gain_at_least_0.05": false,
+        "C3_n1_unchanged": true,
+        "C4_n3_not_harmed": true,
+        "N2_target_met": false,
+        "ceiling": 0.8462,
+        "n2_gain": 0.039,
+        "n2_recall@5": 0.577,
+        "passes_all": false
+      },
+      "B_semantic": {
+        "C1_control_no_regression": true,
+        "C2_n2_gain_at_least_0.05": false,
+        "C3_n1_unchanged": true,
+        "C4_n3_not_harmed": true,
+        "N2_target_met": false,
+        "ceiling": 0.8462,
+        "n2_gain": 0.039,
+        "n2_recall@5": 0.577,
+        "passes_all": false
+      },
+      "C_hybrid": {
+        "C1_control_no_regression": true,
+        "C2_n2_gain_at_least_0.05": false,
+        "C3_n1_unchanged": true,
+        "C4_n3_not_harmed": true,
+        "N2_target_met": false,
+        "ceiling": 0.8846,
+        "n2_gain": 0.039,
+        "n2_recall@5": 0.577,
+        "passes_all": false
+      }
+    },
+    "criteria": {
+      "control_min_r5": 0.855,
+      "n1_min_r5": 0.855,
+      "n2_min_gain_r5": 0.05,
+      "n2_target_r5": 0.7,
+      "n3_min_r5": 0.845
+    },
+    "model": {
+      "digest": "0a109f422b47e3a30ba2b10eca18548e944e8a23073ee3f3e947efcf3c45e59f",
+      "name": "nomic-embed-text:latest"
+    },
+    "ship": false,
+    "shipped_r5": {
+      "control": 0.865,
+      "n1": 0.865,
+      "n2": 0.538,
+      "n3": 0.865
+    }
+  }
+}

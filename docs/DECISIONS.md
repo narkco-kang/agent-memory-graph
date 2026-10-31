@@ -84,3 +84,4 @@ split: the previous single file could hold 34 decisions and then stopped.
 | [47](decisions/47-coverage-rerank-rejected.md) | Coverage reranking is rejected: it is anti-correlated with the answer under query noise. | amended (#48) | ✓ |
 | [48](decisions/48-coverage-loss-is-distribution-mismatch.md) | The coverage loss is distribution mismatch, not anti-correlation. | active | ✓ |
 | [49](decisions/49-lexical-rerank-closed.md) | The lexical rerank family is closed for query-vocabulary noise. | active | ✓ |
+| [50](decisions/50-similarity-family-closed.md) | The similarity family is closed for N2, and the question is the noise model. | active | ✓ |
