@@ -19,6 +19,26 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.24.1 — 2026-10-31
+
+Status: **released**. Documentation round: "successful adoption" becomes six testable
+criteria, and the wrong criterion is named.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | The deliverable criterion existed as a finding, not a hunch | ✅ `issue.mem-arch-dod5-criterion-rewrite` (2026-10-29 adoption measurement) |
+| 2 | Written in the owning document, not the README | ✅ `docs/ADOPTION.md` §What counts as a successful adoption |
+| 3 | Each criterion is observable on the adopted copy | ✅ six checks, each names the command or the printed count |
+| 4 | The wrong criterion is named as wrong, with its failure mode | ✅ exit `0` would push closing live items / widening the threshold |
+| 5 | The definition cannot silently rot | ✅ 3 tests pin the section, the count, and the exit-code warning |
+| 6 | No code change smuggled in | ✅ `adopt`/`audit`/pin format identical to 0.24.0 |
+| 7 | CI green on nine jobs | ✅ 312 tests ×4 + `package` ×5 |
+| 8 | Documentation↔code gates | ✅ 16 documents; `ADOPTION.md` 5088/24576 B |
+| 9 | The scope statement stays honest | ✅ adopted graph is gated; `kg.py`-written graph is not |
+| 10 | Clean install from the tag | ✅ `git+...@v0.24.1` |
+
+---
+
 ## v0.24.0 — 2026-10-31
 
 Status: **released**. Correctness-of-signal round: the health report stops calling

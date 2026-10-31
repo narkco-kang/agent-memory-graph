@@ -6,9 +6,12 @@ weaken the gate for new writes.
 """
 import json
 import os
+import re
 import shutil
 import tempfile
 import unittest
+
+ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 from amg import Memory, ProtocolError
 from amg import cli as cli_mod
@@ -280,6 +283,45 @@ class AdoptTests(unittest.TestCase):
         audit = m.audit()
         self.assertFalse(any("valid_until passed" in c for c in audit["conflicts"]))
         self.assertTrue(any("validity time is unknown" in h for h in audit["hints"]))
+
+
+class AdoptionSuccessCriteriaDocTests(unittest.TestCase):
+    """`docs/ADOPTION.md` defines "successful adoption" — the definition is the contract.
+
+    `issue.mem-arch-dod5-criterion-rewrite`: "audit --pin exits 0" must never be the
+    criterion, because a real graph carries genuine stale work and requiring exit 0
+    pushes an operator to silence it. The six observable criteria live in the owning
+    document; this test fails if that section disappears or loses a criterion.
+    """
+
+    def setUp(self):
+        path = os.path.join(ROOT, "docs", "ADOPTION.md")
+        with open(path, encoding="utf-8") as fh:
+            self.text = fh.read()
+
+    def section(self):
+        start = self.text.find("## What counts as a successful adoption")
+        self.assertNotEqual(start, -1, "ADOPTION.md lost the success-criteria section")
+        end = self.text.find("\n## ", start + 1)
+        return self.text[start:end if end != -1 else None]
+
+    def test_six_criteria_are_numbered(self):
+        section = self.section()
+        numbered = re.findall(r"^\d\. ", section, flags=re.MULTILINE)
+        self.assertEqual(len(numbered), 6, section)
+
+    def test_each_criterion_is_named(self):
+        section = self.section().lower()
+        for needle in ("check` errors are `0", "counts the tool printed add up",
+                       "no fabricated evidence", "pin is self-consistent",
+                       "forward-only", "byte-identical"):
+            self.assertIn(needle, section)
+
+    def test_the_exit_code_is_not_the_criterion(self):
+        section = self.section()
+        self.assertIn("Do not use `audit --pin`'s exit code as the success criterion",
+                      section)
+        self.assertIn("pin.match: true", section)
 
 
 if __name__ == "__main__":

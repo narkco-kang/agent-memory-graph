@@ -3,6 +3,43 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.24.1] — 2026-10-31
+
+Documentation round: "successful adoption" now has six observable criteria, and the
+wrong criterion is named as wrong.
+
+### Changed
+
+- `docs/ADOPTION.md` gains **What counts as a successful adoption**: six checks that
+  must all be observed on the adopted copy — `check` errors `0`; the printed counts add
+  up (`nodes N→N`, `edges M→M−merged`, `changes[]` accounted for); no fabricated
+  evidence (`legacy_evidence` keeps the locator strings, `evidence` claims nothing
+  adoption could not observe); the pin is self-consistent and recomputable
+  (`pin.match: true` on a second run); the pin is forward-only and uncovered nodes are
+  reported as unanchored (measured 887/1063 after adoption vs 647/782 before); the
+  source file is byte-identical afterwards.
+- It also states what the criterion is **not**: `audit --pin`'s exit code. A real graph
+  carries genuine stale work, so `audit --pin` exits `1` with `pin.match: true`, and
+  requiring exit `0` would push an operator to close live items or widen the staleness
+  threshold to manufacture a clean report. Remaining conflicts are the graph owner's
+  tasks, not migration failures.
+- A corollary records which gate governs which graph: an adopted graph is under `amg`'s
+  write gate and evidence verifier; a graph still written by another tool (ours:
+  `kg.py`, `group-kg/v1`) is not, and no document may imply otherwise.
+
+### Added
+
+- 3 tests in `tests/test_adopt.py` pin the definition: the section exists, it has six
+  numbered criteria, each criterion is named, and the "do not use the exit code"
+  sentence with `pin.match: true` is present.
+
+### Not shipped in 0.24.1 (do not assume)
+
+- No code change: `adopt`, `audit`, `--pin` and the pin format are byte-for-byte what
+  0.24.0 shipped.
+- No gate that the project's own group graph is under `amg`'s write gate — that is an
+  open A/B decision, not a shipped capability.
+
 ## [0.24.0] — 2026-10-31
 
 The health report stops calling "nothing was verified" healthy.

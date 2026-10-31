@@ -45,6 +45,39 @@ not artifacts of adoption, and they are reported rather than silenced. A fourth 
 used to appear for a `group` node — a registration that is long-lived by nature, not
 a work item — which 0.7.7 stopped counting; `REAL-WORLD.md` has the breakdown.
 
+## What counts as a successful adoption
+
+Six checks, all of which must be observed on the **adopted copy**, none of which is a
+proxy for the others:
+
+1. `check` errors are `0` on the adopted copy (`amg check <dst>`).
+2. The counts the tool printed add up: `nodes N→N`, `edges M→M−merged` with the merged
+   count printed, and `changes[]` length accounted for (adoption appends its own entry;
+   `migrate` must not change the count).
+3. **No fabricated evidence**: `evidence` holds `0` claimed objects unless the source
+   really had valid ones; legacy locator strings are in `legacy_evidence` and their
+   count is printed. Adoption must never invent a hash to make an anchor look verified.
+4. The pin is self-consistent and recomputable: `--pin-out` written, then `audit --pin`
+   reports `pin.match: true` and the same conflict set on a second run.
+5. The pin is **forward-only**: it may exempt what existed at pin time and nothing
+   added afterwards, and every node it does not cover is reported as unanchored
+   (measured: 887/1063 after adoption vs 647/782 before — more honest, not less).
+6. The source file is byte-identical afterwards (`src_sha256` before/after equal) — the
+   tool never writes to the source.
+
+**Do not use `audit --pin`'s exit code as the success criterion.** A real graph usually
+carries genuine stale work, so `audit --pin` exits `1` with `pin.match: true`; requiring
+exit `0` would push an operator to close or re-date live work items, or to widen the
+staleness threshold, to make a migration look clean — that is manufacturing a green
+report. The success criterion is "nothing was lost, invented, or silently exempted", and
+the remaining conflicts are tasks for the graph's owner, not migration failures.
+
+Corollary for the operator: after `adopt`, run `audit --pin` once so the exemption
+baseline exists; otherwise every legacy node shows up as an unanchored obligation and
+the report is noise. Also record which gate governs which graph — an adopted graph is
+under `amg`'s write gate and evidence verifier; a graph still written by another tool
+(ours: `kg.py`, `group-kg/v1`) is not, and no document should imply otherwise.
+
 ## Why this is a separate document
 
 The migration rules are a contract: adoption is the only path by which data this
