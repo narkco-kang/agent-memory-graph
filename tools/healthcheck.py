@@ -140,6 +140,11 @@ def collect(path, check_evidence=True, evidence_root=None):
     concl_verified = [n for n in conclusions if n.get("id") in verified_node_ids]
     anchor_coverage = (round(len(concl_verified) / len(conclusions), 4)
                        if conclusions else None)
+    if coverage_state == "not_checked":
+        # A report that did not look must not pass a --strict run silently: keying only
+        # on the exit code is the documented failure mode this flag invites.
+        warnings.append("evidence hashing skipped (--no-evidence): negative findings cover "
+                        "check/audit/archive only")
     if concl_unanchored:
         warnings.append(f"{len(concl_unanchored)} of {len(conclusions)} done conclusion(s) "
                         f"have no evidence (unanchored)")
@@ -166,7 +171,7 @@ def collect(path, check_evidence=True, evidence_root=None):
         "conclusions": {"total": len(conclusions), "with_evidence":
                         len(conclusions) - len(concl_unanchored),
                         "verified": len(concl_verified),
-                        "unanchored": len(concl_unanchored),
+                        "unanchored_conclusions": len(concl_unanchored),
                         "anchor_coverage": anchor_coverage},
         "done": {"total": len(done_nodes), "unanchored": len(done_unanchored),
                  "other_unanchored": other_unanchored},
@@ -258,7 +263,8 @@ def main(argv=None):
             pct = ("n/a" if conclusions["anchor_coverage"] is None
                    else f"{conclusions['anchor_coverage']:.0%}")
             print(f"  conclusions: {conclusions['verified']}/{conclusions['total']} "
-                  f"verified ({pct}), {conclusions['unanchored']} unanchored")
+                  f"verified ({pct}), "
+                  f"{conclusions['unanchored_conclusions']} unanchored")
         else:
             print("  conclusions: none")
         done = report["done"]

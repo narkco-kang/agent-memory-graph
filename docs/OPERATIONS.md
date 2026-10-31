@@ -49,7 +49,7 @@ a human reads the line:
 | `healthy` | 0 | no problem, and at least one `path:` evidence file hashed to its declared digest | nothing |
 | `needs_attention` | 1 | `check` errors, or evidence that mismatches / is missing / is a directory / cannot be read / is outside the graph root, or archive verification failed (stale work and unanchored nodes too, with `--strict`) | the `x` line above the verdict names the command to run |
 | `unverified` | 3 | nothing is broken, but **zero** evidence items could be observed: no evidence at all, or only `cmd:`/`url:`/`sha256:` anchors, which carry no local bytes | write `path:` evidence for claims that matter, or accept the gap explicitly |
-| `not_checked` | 0 | `--no-evidence` was passed: negative findings are about `check`/`audit`/`archive` only | re-run without `--no-evidence` when the answer matters |
+| `not_checked` | 0 | `--no-evidence` was passed: negative findings are about `check`/`audit`/`archive` only. It is also a **warning**, so `--strict` fails on it | re-run without `--no-evidence` when the answer matters |
 
 `unverified` exists because "0 checked" and "0 failed" look identical in a problem list.
 v0.23.0 printed `healthy` and exited 0 on a store whose every claim was unproven (an
@@ -66,12 +66,27 @@ verified", and the JSON says so in `strict_scope`.
 ### Verifying a graph another tool wrote
 
 A graph curated by another tool (ours: `kg.py`, schema `group-kg/v1`) is **not** under
-`amg`'s write gate. `tools/verify_snapshot.py <graph.json>` adopts a copy into a temp
-directory, resolves `path:` evidence against the original graph's directory, and runs the
-same report above. It never writes the source, and it inherits the numbers — including
-`unverified` (exit 3), because a curated graph's evidence is usually citations, not
-hashed files. Exit 0 from the bridge means "the observable invariants hold", never "this
-graph is write-gated" and never "its content is correct".
+`amg`'s write gate. `tools/verify_snapshot.py <graph.json> [--evidence-root DIR]` adopts
+a copy into a temp directory and runs the same report above. It never writes the source,
+and it inherits the numbers — including `unverified` (exit 3), because a curated graph's
+evidence is usually citations, not hashed files.
+
+**The evidence base must be stated, not guessed.** The same graph answers three different
+things depending on which directory `path:` is resolved against — measured on this
+project's own graph: `graphs/` 0/240 files found, the workspace root 113/240, the
+repository root 89/240. So `--evidence-root DIR` is explicit (default: the graph's own
+directory), and every run prints `evidence base: … (files found N/M, P%)`. A base chosen
+by the tool would be a guess, and a wrong guess reads as `missing` — a false alarm — or
+as found, which is worse.
+
+**Legacy strings that carry their own digest are verified, never invented.** A curated
+string shaped `path:<rel>#sha256:<hex>` is hashed read-only and counted
+(`legacy strings: 3 with #sha256, 2 verified, 1 mismatched, 0 malformed`); a string with
+a broken digest is reported malformed; any other string stays a citation and is never
+promoted to evidence. That is the only way coverage grows without fabricating a hash.
+
+Exit 0 from the bridge means "the observable invariants hold", never "this graph is
+write-gated" and never "its content is correct".
 
 ## 1. What is already enforced (do not re-implement it)
 

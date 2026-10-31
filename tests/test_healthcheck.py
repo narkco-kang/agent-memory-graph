@@ -246,6 +246,19 @@ class HealthcheckTests(unittest.TestCase):
         finally:
             g.close()
 
+    def test_not_checked_is_a_warning_so_strict_fails(self):
+        # Hermes v0.25.0 re-test: a scheduler keyed on exit codes must not pass silently
+        report = json.loads(run(self.g.dir, "--json", "--no-evidence").stdout)
+        self.assertTrue(any("hashing skipped" in w for w in report["warnings"]), report)
+        strict = run(self.g.dir, "--no-evidence", "--strict")
+        self.assertEqual(strict.returncode, 1, strict.stdout + strict.stderr)
+        self.assertIn("NEEDS ATTENTION", strict.stdout)
+
+    def test_conclusions_field_is_named_for_what_it_counts(self):
+        report = json.loads(run(self.g.dir, "--json").stdout)
+        self.assertIn("unanchored_conclusions", report["conclusions"])
+        self.assertNotIn("unanchored", report["conclusions"])
+
     def test_strict_scope_is_declared_not_implied(self):
         # --strict means debt, not evidence verification; the report has to say which
         report = json.loads(run(self.g.dir, "--json").stdout)

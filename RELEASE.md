@@ -19,6 +19,26 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.26.0 — 2026-10-31
+
+Status: **released**. The bridge's evidence base becomes an explicit input, legacy
+declared digests are verified, and "did not look" fails a strict run.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | Every item came from a verifier, not from the author | ✅ Hermes `VERIFY-V025-V0.11.md` + `VERIFY-BPLUS-V0.10.md` |
+| 2 | The base is an input and is reported | ✅ `--evidence-root`, `evidence base: … (files found N/M, P%)` |
+| 3 | Coverage can grow without fabricating a hash | ✅ legacy `path:x#sha256:h` verified read-only; malformed reported |
+| 4 | "Did not look" fails a strict run | ✅ `not_checked` is a warning; `--no-evidence --strict` exits 1 |
+| 5 | Field names say what they count | ✅ `unanchored_conclusions` |
+| 6 | The false-alarm failure mode is documented with numbers | ✅ 0/240, 113/240, 89/240 in `OPERATIONS.md` |
+| 7 | CI green on nine jobs | ✅ 328 tests ×4 + `package` ×5 |
+| 8 | Documentation↔code gates | ✅ 16 documents; `OPERATIONS.md` 10556 B |
+| 9 | The bridge stays read-only | ✅ test asserts the source bytes are unchanged |
+| 10 | Clean install from the tag | ✅ `git+...@v0.26.0` |
+
+---
+
 ## v0.25.0 — 2026-10-31
 
 Status: **released**. Two false greens in the health report closed, plus the snapshot

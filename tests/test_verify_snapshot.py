@@ -106,6 +106,46 @@ class SnapshotBridgeTests(unittest.TestCase):
         res = run(os.path.join(self.dir, "nope.json"))
         self.assertEqual(res.returncode, 2)
 
+    def test_evidence_root_is_explicit_and_reported(self):
+        # Hermes: the same file answers 0/240 under graphs/, 113/240 under the workspace
+        # root — so the base must be an input and must appear in the report.
+        sub = os.path.join(self.dir, "graphs")
+        os.makedirs(sub)
+        moved = os.path.join(sub, "graph.json")
+        with open(moved, "w", encoding="utf-8") as fh:
+            json.dump(legacy_doc([{"locator": "path:proof.txt",
+                                   "content_sha256": sha(self.proof),
+                                   "captured_at": "2026-10-27T10:00:00+08:00"}]), fh)
+        wrong = json.loads(run(moved, "--json").stdout)["graphs"][0]
+        self.assertEqual(wrong["snapshot"]["resolve_root"], sub)
+        self.assertEqual(wrong["snapshot"]["exists_rate"], 0.0)   # wrong base
+        right = json.loads(run(moved, "--json", "--evidence-root", self.dir).stdout)
+        graph = right["graphs"][0]
+        self.assertEqual(graph["snapshot"]["resolve_root"], self.dir)
+        self.assertEqual(graph["snapshot"]["exists_rate"], 1.0)
+        self.assertEqual(right["exit"], 0)
+
+    def test_legacy_hash_string_is_verified_not_guessed(self):
+        digest = sha(self.proof)
+        self.write(legacy_doc([f"path:proof.txt#sha256:{digest}", "docs/plan.md"]))
+        res = run(self.src, "--json")
+        report = json.loads(res.stdout)["graphs"][0]
+        legacy = report["snapshot"]["legacy_strings"]
+        self.assertEqual(legacy["checked"], 1)
+        self.assertEqual(legacy["verified"], 1)
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        self.assertIn("1 with #sha256, 1 verified", run(self.src).stdout)
+
+    def test_legacy_hash_mismatch_and_malformed_are_reported(self):
+        self.write(legacy_doc([f"path:proof.txt#sha256:{'a' * 64}",
+                               "path:proof.txt#sha256:nothex"]))
+        report = json.loads(run(self.src, "--json").stdout)["graphs"][0]
+        legacy = report["snapshot"]["legacy_strings"]
+        self.assertEqual(len(legacy["mismatched"]), 1)
+        self.assertEqual(len(legacy["malformed"]), 1)
+        text = run(self.src).stdout
+        self.assertIn("mismatched", text)
+
     def test_json_carries_the_anchoring_numbers(self):
         self.write(legacy_doc([{"locator": "path:proof.txt",
                                 "content_sha256": sha(self.proof),

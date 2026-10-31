@@ -74,8 +74,8 @@ the remaining conflicts are tasks for the graph's owner, not migration failures.
 
 Corollary for the operator: after `adopt`, run `audit --pin` once so the exemption
 baseline exists; `tools/verify_snapshot.py <graph.json>` is the recurring version of
-this — it adopts a copy into a temp dir, resolves evidence against the original graph's
-directory and reports `unverified` (exit 3) instead of claiming coverage a curated graph
+this — it adopts a copy into a temp dir, resolves evidence against an explicit
+`--evidence-root` (default: the graph's own directory) and reports `unverified` (exit 3) instead of claiming coverage a curated graph
 does not have (v0.25.0); otherwise every legacy node shows up as an unanchored obligation and
 the report is noise. Also record which gate governs which graph — an adopted graph is
 under `amg`'s write gate and evidence verifier; a graph still written by another tool

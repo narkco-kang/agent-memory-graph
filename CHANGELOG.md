@@ -3,6 +3,44 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.26.0] — 2026-10-31
+
+The bridge states its evidence base, verifies declared digests in legacy strings, and
+`--no-evidence` can no longer slip past a `--strict` run.
+
+### Fixed
+
+- `not_checked` (from `--no-evidence`) is now also a **warning**, so `--strict` fails on
+  a run that did not look. Before, a scheduler keying only on the exit code — which
+  `OPERATIONS.md` invites — saw `0` and called it a pass (Hermes v0.25.0 re-test).
+- JSON field `conclusions.unanchored` renamed `unanchored_conclusions`: it counts
+  conclusion-typed nodes only, and sitting next to the `done nodes` line it read as
+  "there are no unanchored nodes".
+
+### Added
+
+- `tools/verify_snapshot.py --evidence-root DIR` — the directory the source's `path:`
+  locators are relative to, stated not guessed. Each run prints
+  `evidence base: … (files found N/M, P%)`. Measured why it must be explicit: this
+  project's own graph answers 0/240 under `graphs/`, 113/240 under the workspace root,
+  89/240 under the repository root — the same file, three answers.
+- Legacy `path:<rel>#sha256:<hex>` strings are verified read-only and counted
+  (`N with #sha256, V verified, M mismatched, X malformed`); a malformed digest is
+  reported, never repaired; every other string stays a citation. A graph whose only
+  observations come from such strings can now reach `healthy` instead of `unverified` —
+  without writing into the store and without fabricating a hash.
+- 5 tests: `--evidence-root` changes the answer and is reported; legacy digest verified;
+  mismatch and malformed reported; `not_checked` warns and `--strict` fails; the renamed
+  field.
+
+### Not shipped in 0.26.0 (do not assume)
+
+- No automatic evidence-base detection, on purpose: a wrong guess reads as a false
+  alarm, which is how two rounds of this attack started.
+- No write-back of verified legacy strings into the store: the bridge remains read-only.
+- Migrating `kg.py` writers to `amg/v1` is still not shipped (decision B+: gate boundary
+  is documented, not enforced).
+
 ## [0.25.0] — 2026-10-31
 
 The health report stops lying about coverage, and a graph another tool wrote can now be
