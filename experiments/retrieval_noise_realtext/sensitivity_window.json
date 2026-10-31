@@ -4,33 +4,322 @@
     {
       "window": 8,
       "median_words": 8,
-      "competing_share_ge_0.25": 0.4756,
-      "recall@1": 0.558,
+      "competing_share_ge_0.25": 0.4794,
+      "recall@1": 0.577,
       "recall@5": 0.692,
       "recall@10": 0.731,
-      "mrr@10": 0.65,
+      "mrr@10": 0.669,
       "ceiling": 0.8462
     },
     {
       "window": 20,
       "median_words": 20,
-      "competing_share_ge_0.25": 0.5888,
+      "competing_share_ge_0.25": 0.5844,
       "recall@1": 0.538,
       "recall@5": 0.692,
       "recall@10": 0.692,
       "mrr@10": 0.618,
-      "ceiling": 0.8077
+      "ceiling": 0.8462
     },
     {
       "window": "whole paragraph",
       "median_words": 37,
-      "competing_share_ge_0.25": 0.8267,
-      "recall@1": 0.654,
-      "recall@5": 0.673,
-      "recall@10": 0.673,
-      "mrr@10": 0.695,
+      "competing_share_ge_0.25": 0.8259,
+      "recall@1": 0.635,
+      "recall@5": 0.654,
+      "recall@10": 0.654,
+      "mrr@10": 0.658,
       "ceiling": 0.7692
     }
   ],
+  "corpus": {
+    "schema": "realtext-corpus/1",
+    "extractor": "prose_pool/1",
+    "paragraphs": 623,
+    "files": [
+      {
+        "path": "README.md",
+        "sha256": "7ff0987af887d000df2df5182c47ad7e6b72b8152abc3a9c35cb1c66952bd47e"
+      },
+      {
+        "path": "docs/ADOPTION.md",
+        "sha256": "ce42f63f153f5f688b83d64fbb9117d82237cdb633b84b15f4a53d778a7c5746"
+      },
+      {
+        "path": "docs/API.md",
+        "sha256": "54130c957f3add49557ffb1c93756b1700f44829265aee96134c5871369fb3cf"
+      },
+      {
+        "path": "docs/ARCHIVE.md",
+        "sha256": "f1659c1c1ce85adf7f81445b7511585cbfcc49e4e50c7256bc617945da55978c"
+      },
+      {
+        "path": "docs/BENCHMARKS.md",
+        "sha256": "da2a4ea755fd798937b96869940949e4e1a1ddad0b9607788059bd6bea4dfdf3"
+      },
+      {
+        "path": "docs/CONCURRENCY.md",
+        "sha256": "d2d71332cd2ef54d9f776a08dc8d6448a31ea3c1354fd58f33409752e0f2166b"
+      },
+      {
+        "path": "docs/DECISIONS.md",
+        "sha256": "25192b1f37450b0e30b17b8ba5a08406d727eae4fa451c2cbbae2cbd02ba70ac"
+      },
+      {
+        "path": "docs/DESIGN-HISTORY.md",
+        "sha256": "6f422c3258e444c4a9239c069967125a62004dddffc3d5292471baecfd705e04"
+      },
+      {
+        "path": "docs/HANDOFF.md",
+        "sha256": "5f2852b0c8c4a5bbb7b2fc6a587de0c9dd2281c8cf0c2e2179044581c5b02fc8"
+      },
+      {
+        "path": "docs/OPERATIONS.md",
+        "sha256": "35afb7642ec7e2dbb944a5b1801ddaf2aaae0bfb0ec225d426413f8937dc34d8"
+      },
+      {
+        "path": "docs/PRIOR-ART.md",
+        "sha256": "c00769497678a23ab7180e7e541295388ce6b23c42fa331c12fa770441d3be57"
+      },
+      {
+        "path": "docs/README.md",
+        "sha256": "80097c2494a7649a08e4478dc9e2f495c162b1655e4dd4e6a691a4434e6eb85d"
+      },
+      {
+        "path": "docs/REAL-WORLD.md",
+        "sha256": "b63f17b1c0951558ed6c65984c354c7d9cac794aa5744a5ea9cd08cdb68350e8"
+      },
+      {
+        "path": "docs/SCHEDULING.md",
+        "sha256": "8a70196b38b02f188f61176e37b72f0751dab45f1e25aa91f3302415f96e73f0"
+      },
+      {
+        "path": "docs/THREAT-MODEL.md",
+        "sha256": "c64c78dc564d0cc1828f9f6031e2c0aa3eb873c002342be5c07bf1f515f6694c"
+      },
+      {
+        "path": "docs/WRITE-COST.md",
+        "sha256": "66d2bd9c6141ed98cd9cef758d28cdd8edcb1b84449fc20ffe087732d1554827"
+      },
+      {
+        "path": "docs/decisions/01-write-gate-forward-only.md",
+        "sha256": "6d4833aaf99d386cb37b31c82083c0e13decfe020905dc9f0ad7e6acbb4aff86"
+      },
+      {
+        "path": "docs/decisions/02-conclusion-typed-gate.md",
+        "sha256": "bc9056ddf4c9b2b01ee0553bf25825f20f6b8d0e563996cb6ebed2a27c3580f4"
+      },
+      {
+        "path": "docs/decisions/03-anchor-filter-degrades.md",
+        "sha256": "b0d59891f71e95d31bd22c4cbb3c35899ebfe57398adadac1655514e2859adcb"
+      },
+      {
+        "path": "docs/decisions/04-no-shared-field-semantics.md",
+        "sha256": "bf940ca107ce5aef59012928c4ceb252bc3687a6878468bd9b9c307f4576e07b"
+      },
+      {
+        "path": "docs/decisions/05-bi-temporal-minimal.md",
+        "sha256": "6100b92eb44c19e769659cc9d047269d4fba3a1f9250c51bb26ef7901a5e1573"
+      },
+      {
+        "path": "docs/decisions/06-semantic-gates-may-not-reject.md",
+        "sha256": "31ffd5e712aaece1e41692fed2846139a3426cdc8e8e4e8cd69f5fcf64d91845"
+      },
+      {
+        "path": "docs/decisions/07-consolidation-pointers-only.md",
+        "sha256": "674386277ed99c8a6d8faba4667e94c4e82d8e450e588887aecef94f6c43a3f5"
+      },
+      {
+        "path": "docs/decisions/08-docs-equal-reality.md",
+        "sha256": "fa704061881d19b7907005ac6fc473f0cb295b81db0c8db6c07c082d18c52a8b"
+      },
+      {
+        "path": "docs/decisions/09-adoption-never-fabricates.md",
+        "sha256": "7f5f49cf7e96e035461d0632a81c2837fcdd0c99e289af37bc073b5cf1651d85"
+      },
+      {
+        "path": "docs/decisions/10-unknown-validity-never-auto-expired.md",
+        "sha256": "1c05e295bccec49d08c10c14b24a34fbb87b98a4db72f53ca909a489a125568b"
+      },
+      {
+        "path": "docs/decisions/11-tamper-evidence-outside-file.md",
+        "sha256": "06a287ee1916a13e030c18f82099206c1cab9d8730a9712ed689be19c3505796"
+      },
+      {
+        "path": "docs/decisions/12-prior-art-verified-in-full-text.md",
+        "sha256": "72ae632e8e4c2f8e8656b0204b73c697dea888a238d639499ffdb8a2b4bf3293"
+      },
+      {
+        "path": "docs/decisions/13-no-auth-no-multitenant.md",
+        "sha256": "7962b9d769884a6cfa38194cfa80daec0121382bdc184a254d3eb8c08643f005"
+      },
+      {
+        "path": "docs/decisions/14-write-cost-measure-first.md",
+        "sha256": "6f9c9aef66ccc5914a0a02ad2bdfc7cda30be476b5a1416228bba2851fe60abd"
+      },
+      {
+        "path": "docs/decisions/15-lock-retry-backoff.md",
+        "sha256": "15a7a8fe2e17db716af90b82f0992ac544c723d18f6076b91b7f9aea704fdc48"
+      },
+      {
+        "path": "docs/decisions/16-lock-timeout-policy.md",
+        "sha256": "47dcf892d742b865aeeb98b4daa23f4163e4012d9d1cad0e648dbacce02833da"
+      },
+      {
+        "path": "docs/decisions/17-history-sidecar-rejected.md",
+        "sha256": "23a2c85d8991cd94a0addea6daeeb5bf666de788d46395997fcf8cff4e7d71f3"
+      },
+      {
+        "path": "docs/decisions/18-coverage-gate-derives-scope.md",
+        "sha256": "384d94562ebd12b50a07e6d78f8eab52eb0b04581eeb95c83a10c4910941312c"
+      },
+      {
+        "path": "docs/decisions/19-artifact-is-a-claim.md",
+        "sha256": "4db07f7389f7e260eff372fa84624d3fdf0f08def28a86d8be61712b8fd3f40c"
+      },
+      {
+        "path": "docs/decisions/20-staleness-applies-to-work.md",
+        "sha256": "013e6361dcdf247d98fad35f6f907775aec07031e1165b5480bcf686cd667011"
+      },
+      {
+        "path": "docs/decisions/21-staleness-threshold-policy.md",
+        "sha256": "39ec319196d05b47dc28ec02c30a92b89dd0e0400d8d76519635fbde3875ab3c"
+      },
+      {
+        "path": "docs/decisions/22-one-source-of-truth-findings.md",
+        "sha256": "19afe5d40193b04f95ab71ad59d728d535da41c7ad97db2ad20cd0d64926e1d0"
+      },
+      {
+        "path": "docs/decisions/23-handoff-borrowed.md",
+        "sha256": "86d7718fb513f05507fd4eb16e3a62842242528b916182e411357b25f6520b82"
+      },
+      {
+        "path": "docs/decisions/24-archive-ledger-not-nodes.md",
+        "sha256": "4abc7ddc3fefdc1b852838f778fa010442e4dc582bf94ef465c69bfd13b8ba3d"
+      },
+      {
+        "path": "docs/decisions/25-word-aware-matching.md",
+        "sha256": "6aab985869ce1d9a0f94b22b0cd69d2be807d73d09d2508d4f79902a69376d3f"
+      },
+      {
+        "path": "docs/decisions/26-lock-timeout-stays-5s.md",
+        "sha256": "940a9fa1e0ca8fa8d56524ad4d99c3f1df55d1d93bab97a91e8ac34768ead8e9"
+      },
+      {
+        "path": "docs/decisions/27-scale-does-not-dilute.md",
+        "sha256": "d4165be77e87137ee2b655fab73fdf7dcd3801ffac3a1d3f468a3c835400b160"
+      },
+      {
+        "path": "docs/decisions/28-idf-term-weights.md",
+        "sha256": "7adcc43fdc2e0823c3c7a2829732444b70cf2ee968b4450f494cbd8e353a4e32"
+      },
+      {
+        "path": "docs/decisions/29-field-df-rejected.md",
+        "sha256": "ca6aee32fe1f8aa8dad4a5e4a49c9e45283bb3ce1110c3a8464c868014f3a883"
+      },
+      {
+        "path": "docs/decisions/30-bounded-scores-labelled.md",
+        "sha256": "7ed680cf3f9552261981ed264a3d26711930ccd2f66d0c627650bd8849f59a0c"
+      },
+      {
+        "path": "docs/decisions/31-evidence-hashes-declared.md",
+        "sha256": "a5bc855e594a6a91b0c51d68940e87352972bb6e0900cf127c2b3b310f3279ac"
+      },
+      {
+        "path": "docs/decisions/32-verifier-root-and-starvation.md",
+        "sha256": "62cbfdd2626b743a7e0f4b7314dabafd49d315fc5648a0b722b4858554d4b60a"
+      },
+      {
+        "path": "docs/decisions/33-migrate-folds-detail.md",
+        "sha256": "5971211097ff3e8c18ed10abfd5f4821b48c17953dc9f0b12b93de5f0905743f"
+      },
+      {
+        "path": "docs/decisions/34-nothing-verified-is-not-healthy.md",
+        "sha256": "c5e01c9c227d571e6b01b1c013893d3d47303ad04946fb0a35058302cb395dfe"
+      },
+      {
+        "path": "docs/decisions/35-coverage-two-denominators.md",
+        "sha256": "b658695b081f1ff3efd4c5b4098978bba503ff3ba2c148091c48587e97bfa1f2"
+      },
+      {
+        "path": "docs/decisions/36-evidence-root-explicit.md",
+        "sha256": "d070261bb99c2769d74ad3225e70ef2c4bfe595676b5240ec7ed3dc25f4c30e8"
+      },
+      {
+        "path": "docs/decisions/37-unobservable-anchoring-reported.md",
+        "sha256": "7cadcafc4f515edc288d2bf2490ad210168b3c0c3773e7c60e28652e688f9d87"
+      },
+      {
+        "path": "docs/decisions/38-bridge-requires-full-anchoring.md",
+        "sha256": "85b01c470894da3843dc8525ebb28b79001e6d522020b0be07eeac95d5523ec0"
+      },
+      {
+        "path": "docs/decisions/39-forged-digest-is-a-failure.md",
+        "sha256": "d23a6dc1e66f6a747f53583c4c05d2a849aa118012c288d861117b298cd214c9"
+      },
+      {
+        "path": "docs/decisions/40-doc-gates-walk-subdirectories.md",
+        "sha256": "af1aac4101bc86efcad764134df703905bc0e27b050680204eb5d79cb67333eb"
+      },
+      {
+        "path": "docs/decisions/41-doc-gates-select-by-directory.md",
+        "sha256": "cc5bd9ac84905f3d307d661dc901b945b8071ba118314f4a3bf44868dce0770b"
+      },
+      {
+        "path": "docs/decisions/42-entries-1-8-signed-by-preamble.md",
+        "sha256": "5eadc5d47f81899aed25e9891164a37b264ab426984402253687f29b6b0b7f5e"
+      },
+      {
+        "path": "docs/decisions/43-decision-log-is-an-index.md",
+        "sha256": "08c4ffd11d35cef0dafb515a71971d2209d4159f202fbdd97fa39d4636a15081"
+      },
+      {
+        "path": "docs/decisions/44-derived-artifact-expectation.md",
+        "sha256": "85525b6851742dfc944318b9202f9caa07bb2af16988f2043bc0c06862fa55ec"
+      },
+      {
+        "path": "docs/decisions/45-lock-tail-cross-platform.md",
+        "sha256": "17bde0640baf63cf8d07de2e227a24d4da95b38e87722443fe0392517e5f4ffb"
+      },
+      {
+        "path": "docs/decisions/46-one-run-is-not-a-measurement.md",
+        "sha256": "6f635e6848a586975a43f45a63bb05728ba8ce6a4d0c729f2fd6cc4a4e39f66c"
+      },
+      {
+        "path": "docs/decisions/47-coverage-rerank-rejected.md",
+        "sha256": "0e4125fb09963b2e198bf4760ee42a7dc1fbfd65a9414b67632597a4dbe5554c"
+      },
+      {
+        "path": "docs/decisions/48-coverage-loss-is-distribution-mismatch.md",
+        "sha256": "61629ce9cac72d26f7ce74b9fdbbdc34e8b64333bcdc34aec39c2092704a81c3"
+      },
+      {
+        "path": "docs/decisions/49-lexical-rerank-closed.md",
+        "sha256": "f286eb7afe821190afa6aae277753886b72cde42f0b622d08849c0489f22d353"
+      },
+      {
+        "path": "docs/decisions/50-similarity-family-closed.md",
+        "sha256": "76f61f39ae4f262ef9b5dfbd3ddcde3e4c241d5be31767369568ae84767f3575"
+      },
+      {
+        "path": "docs/decisions/51-calibrate-what-competes.md",
+        "sha256": "f75d393a1d5709573320c084c6e64face0fadf3e0f930093cb7f534f49e7ef76"
+      },
+      {
+        "path": "docs/decisions/52-real-noise-also-misses.md",
+        "sha256": "2b7d59357d539386a1633d4df7bccba02f502065bfa871e63d0b04bcb195842c"
+      },
+      {
+        "path": "docs/decisions/53-arm-name-must-match-code.md",
+        "sha256": "8ce062e1e26bc084dedfd4d60ef8fe018f740c5efc6d3886cf483ad32f7ed31c"
+      },
+      {
+        "path": "docs/decisions/54-decisions-need-a-discussion.md",
+        "sha256": "c03e7d5de1640a6eaa9d8aa14b808c3a3622af28e8b306bf3dd8d664d39d4d6a"
+      }
+    ],
+    "extracted_sha256": "98e2ada9fb63fb04e3c4cab0dcf5c9e4f2643c2666a7d1a66415c6aab18b7115",
+    "extracted_bytes": 214807
+  },
   "note": "the pre-registered number is a statement about short real notes; longer windows are reported to show how much of the difficulty is length"
 }

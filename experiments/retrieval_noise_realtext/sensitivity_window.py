@@ -64,9 +64,11 @@ def main():
               f"r@1={metrics['recall@1']:.3f} mrr={metrics['mrr@10']:.3f}")
     payload = {"caption": "post-hoc sensitivity on distractor length; the pre-registered run is window=8",
                "rows": rows,
+               "corpus": rt.corpus_snapshot(paragraphs),
                "note": ("the pre-registered number is a statement about short real notes; longer "
                         "windows are reported to show how much of the difficulty is length")}
-    with open(os.path.join(HERE, "sensitivity_window.json"), "w", encoding="utf-8") as fh:
+    out_dir = os.environ.get("REALTEXT_OUT_DIR") or HERE
+    with open(os.path.join(out_dir, "sensitivity_window.json"), "w", encoding="utf-8") as fh:
         json.dump(payload, fh, ensure_ascii=False, indent=2)
     return 0
 

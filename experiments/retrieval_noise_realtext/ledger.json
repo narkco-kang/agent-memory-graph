@@ -1,0 +1,740 @@
+{
+  "ceiling": 0.8462,
+  "failing": [
+    "q02",
+    "q06",
+    "q08",
+    "q10",
+    "q16",
+    "q18",
+    "q22",
+    "q24",
+    "q26"
+  ],
+  "fractional_r5": 0.692,
+  "hit_or_miss": 0.7308,
+  "metric": {
+    "best_gold_rank": "1-based rank of the best gold node, or null outside top_k",
+    "fractional_r5": "mean over queries of |top5 & gold| / |gold|",
+    "hit_or_miss": "share of queries with any gold inside the top five"
+  },
+  "n": 26,
+  "out_of_reach": [
+    "q06",
+    "q08",
+    "q10",
+    "q18"
+  ],
+  "rank_base": 1,
+  "rows": [
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "decision.atomic-replace"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "atomic",
+        "file",
+        "replace"
+      ],
+      "id": "q01",
+      "query_tokens": [
+        "atomic",
+        "file",
+        "replace"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "decision.atomic-replace",
+      "top1_shared_tokens": [
+        "atomic",
+        "file",
+        "replace"
+      ]
+    },
+    {
+      "best_gold_rank": 37,
+      "bucket": "paraphrase",
+      "gold": [
+        "decision.atomic-replace"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "graph",
+        "the"
+      ],
+      "id": "q02",
+      "query_tokens": [
+        "corrupt",
+        "crash",
+        "does",
+        "graph",
+        "middle",
+        "program",
+        "save",
+        "the"
+      ],
+      "recall@5": 0.0,
+      "top1_id": "task.n005148",
+      "top1_shared_tokens": [
+        "graph",
+        "the"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "task.windows-lock"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "locking",
+        "msvcrt"
+      ],
+      "id": "q03",
+      "query_tokens": [
+        "locking",
+        "msvcrt"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "task.windows-lock",
+      "top1_shared_tokens": [
+        "locking",
+        "msvcrt"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "paraphrase",
+      "gold": [
+        "task.windows-lock"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "windows"
+      ],
+      "id": "q04",
+      "query_tokens": [
+        "can",
+        "laptop",
+        "run",
+        "this",
+        "windows"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "task.windows-lock",
+      "top1_shared_tokens": [
+        "windows"
+      ]
+    },
+    {
+      "best_gold_rank": 4,
+      "bucket": "keyword",
+      "gold": [
+        "task.read-audit"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "jsonl",
+        "reads"
+      ],
+      "id": "q05",
+      "query_tokens": [
+        "jsonl",
+        "reads",
+        "rotation",
+        "size"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "task.n008281",
+      "top1_shared_tokens": []
+    },
+    {
+      "best_gold_rank": null,
+      "bucket": "paraphrase",
+      "gold": [
+        "task.read-audit"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": false,
+      "gold_shared_tokens": [],
+      "id": "q06",
+      "query_tokens": [
+        "can",
+        "searched",
+        "see",
+        "what",
+        "who"
+      ],
+      "recall@5": 0.0,
+      "top1_id": "task.n007368",
+      "top1_shared_tokens": [
+        "can",
+        "who"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "task.expiry-command"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "apply",
+        "expire"
+      ],
+      "id": "q07",
+      "query_tokens": [
+        "apply",
+        "expire"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "task.expiry-command",
+      "top1_shared_tokens": [
+        "apply",
+        "expire"
+      ]
+    },
+    {
+      "best_gold_rank": null,
+      "bucket": "paraphrase",
+      "gold": [
+        "decision.no-daemon",
+        "task.expiry-command"
+      ],
+      "gold_in_corpus": 2,
+      "gold_reachable_in_top_k": false,
+      "gold_shared_tokens": [],
+      "id": "q08",
+      "query_tokens": [
+        "automatically",
+        "facts",
+        "get",
+        "how",
+        "old",
+        "retired"
+      ],
+      "recall@5": 0.0,
+      "top1_id": "task.n003153",
+      "top1_shared_tokens": [
+        "facts"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "decision.zero-deps"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "dependencies",
+        "zero"
+      ],
+      "id": "q09",
+      "query_tokens": [
+        "dependencies",
+        "install",
+        "zero"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "decision.zero-deps",
+      "top1_shared_tokens": [
+        "dependencies",
+        "zero"
+      ]
+    },
+    {
+      "best_gold_rank": null,
+      "bucket": "paraphrase",
+      "gold": [
+        "decision.zero-deps"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": false,
+      "gold_shared_tokens": [],
+      "id": "q10",
+      "query_tokens": [
+        "anything",
+        "install",
+        "need",
+        "pip"
+      ],
+      "recall@5": 0.0,
+      "top1_id": "task.n009785",
+      "top1_shared_tokens": [
+        "install",
+        "pip"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "decision.two-key-ranking"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "evidence",
+        "key",
+        "ranking",
+        "two"
+      ],
+      "id": "q11",
+      "query_tokens": [
+        "evidence",
+        "first",
+        "key",
+        "ranking",
+        "two"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "decision.two-key-ranking",
+      "top1_shared_tokens": [
+        "evidence",
+        "key",
+        "ranking",
+        "two"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "paraphrase",
+      "gold": [
+        "decision.two-key-ranking"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [],
+      "id": "q12",
+      "query_tokens": [
+        "higher",
+        "notes",
+        "proof",
+        "rank",
+        "why",
+        "with"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "decision.two-key-ranking",
+      "top1_shared_tokens": []
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "decision.read-only"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "mcp",
+        "only",
+        "read",
+        "server"
+      ],
+      "id": "q13",
+      "query_tokens": [
+        "mcp",
+        "only",
+        "read",
+        "server"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "decision.read-only",
+      "top1_shared_tokens": [
+        "mcp",
+        "only",
+        "read",
+        "server"
+      ]
+    },
+    {
+      "best_gold_rank": 2,
+      "bucket": "paraphrase",
+      "gold": [
+        "decision.read-only"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "can",
+        "the"
+      ],
+      "id": "q14",
+      "query_tokens": [
+        "can",
+        "client",
+        "from",
+        "prevented",
+        "the",
+        "writing"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "task.n002749",
+      "top1_shared_tokens": [
+        "client",
+        "the"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "task.digest-budget"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "budget",
+        "byte",
+        "digest"
+      ],
+      "id": "q15",
+      "query_tokens": [
+        "budget",
+        "byte",
+        "digest",
+        "truncation"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "task.digest-budget",
+      "top1_shared_tokens": [
+        "budget",
+        "byte",
+        "digest"
+      ]
+    },
+    {
+      "best_gold_rank": 55,
+      "bucket": "keyword",
+      "gold": [
+        "task.digest-budget",
+        "issue.unbounded-digest"
+      ],
+      "gold_in_corpus": 2,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "how",
+        "summary",
+        "the"
+      ],
+      "id": "q16",
+      "query_tokens": [
+        "big",
+        "can",
+        "get",
+        "how",
+        "summary",
+        "the"
+      ],
+      "recall@5": 0.0,
+      "top1_id": "task.n009188",
+      "top1_shared_tokens": [
+        "summary",
+        "the"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "rule.no-fabricated-hash"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "evidence",
+        "fabricated"
+      ],
+      "id": "q17",
+      "query_tokens": [
+        "evidence",
+        "fabricated",
+        "sha256"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "rule.no-fabricated-hash",
+      "top1_shared_tokens": [
+        "evidence",
+        "fabricated"
+      ]
+    },
+    {
+      "best_gold_rank": null,
+      "bucket": "paraphrase",
+      "gold": [
+        "rule.no-fabricated-hash"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": false,
+      "gold_shared_tokens": [
+        "the"
+      ],
+      "id": "q18",
+      "query_tokens": [
+        "checksum",
+        "lost",
+        "make",
+        "one",
+        "should",
+        "the",
+        "was",
+        "what"
+      ],
+      "recall@5": 0.0,
+      "top1_id": "task.n009510",
+      "top1_shared_tokens": [
+        "one",
+        "the"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "issue.cjk-tokenization"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "characters",
+        "cjk",
+        "single",
+        "tokenization"
+      ],
+      "id": "q19",
+      "query_tokens": [
+        "characters",
+        "cjk",
+        "single",
+        "tokenization"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "issue.cjk-tokenization",
+      "top1_shared_tokens": [
+        "characters",
+        "cjk",
+        "single",
+        "tokenization"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "issue.cjk-tokenization"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "chinese",
+        "queries"
+      ],
+      "id": "q20",
+      "query_tokens": [
+        "chinese",
+        "does",
+        "for",
+        "queries",
+        "work"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "issue.cjk-tokenization",
+      "top1_shared_tokens": [
+        "chinese",
+        "queries"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "issue.lock-timeout"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "code",
+        "lock",
+        "three",
+        "timeout"
+      ],
+      "id": "q21",
+      "query_tokens": [
+        "code",
+        "exit",
+        "lock",
+        "three",
+        "timeout"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "issue.lock-timeout",
+      "top1_shared_tokens": [
+        "code",
+        "lock",
+        "three",
+        "timeout"
+      ]
+    },
+    {
+      "best_gold_rank": 2,
+      "bucket": "paraphrase",
+      "gold": [
+        "issue.double-write",
+        "decision.lock-strategy"
+      ],
+      "gold_in_corpus": 2,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "the",
+        "two"
+      ],
+      "id": "q22",
+      "query_tokens": [
+        "processes",
+        "same",
+        "the",
+        "time",
+        "two",
+        "writing"
+      ],
+      "recall@5": 0.5,
+      "top1_id": "decision.two-key-ranking",
+      "top1_shared_tokens": [
+        "same",
+        "the",
+        "two"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "rule.append-only-history"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "append",
+        "history",
+        "only"
+      ],
+      "id": "q23",
+      "query_tokens": [
+        "append",
+        "history",
+        "only"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "rule.append-only-history",
+      "top1_shared_tokens": [
+        "append",
+        "history",
+        "only"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "model.embedding",
+        "question.vector-value"
+      ],
+      "gold_in_corpus": 2,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "encoder",
+        "sentence",
+        "would"
+      ],
+      "id": "q24",
+      "query_tokens": [
+        "encoder",
+        "help",
+        "sentence",
+        "would"
+      ],
+      "recall@5": 0.5,
+      "top1_id": "model.embedding",
+      "top1_shared_tokens": [
+        "encoder",
+        "sentence",
+        "would"
+      ]
+    },
+    {
+      "best_gold_rank": 1,
+      "bucket": "keyword",
+      "gold": [
+        "task.vector-search",
+        "question.vector-value"
+      ],
+      "gold_in_corpus": 2,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "labelled",
+        "query",
+        "search",
+        "set",
+        "vector"
+      ],
+      "id": "q25",
+      "query_tokens": [
+        "labelled",
+        "query",
+        "search",
+        "set",
+        "vector"
+      ],
+      "recall@5": 1.0,
+      "top1_id": "task.vector-search",
+      "top1_shared_tokens": [
+        "labelled",
+        "query",
+        "search",
+        "set",
+        "vector"
+      ]
+    },
+    {
+      "best_gold_rank": 9,
+      "bucket": "paraphrase",
+      "gold": [
+        "decision.plain-json"
+      ],
+      "gold_in_corpus": 1,
+      "gold_reachable_in_top_k": true,
+      "gold_shared_tokens": [
+        "readable"
+      ],
+      "id": "q26",
+      "query_tokens": [
+        "data",
+        "humans",
+        "keep",
+        "readable",
+        "something",
+        "the"
+      ],
+      "recall@5": 0.0,
+      "top1_id": "task.n007305",
+      "top1_shared_tokens": [
+        "readable"
+      ]
+    }
+  ],
+  "schema": "realtext-ledger/1",
+  "top_k": 100
+}

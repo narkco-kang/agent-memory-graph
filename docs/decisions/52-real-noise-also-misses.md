@@ -63,3 +63,16 @@ configuration, not a claim about the corpus. Until the corpus is snapshotted and
 reproducible**. The fix and the re-measurement are tracked as
 `issue.mem-arch-realtext-corpus-unpinned`; until then the entry stands as published with this block
 attached, not rewritten.
+
+**Corpus pin, and the re-measurement it enables (2026-10-31, same day, after the reproduction).**
+The drifting parameter is now committed instead of described. `result.json` records the prose input it
+read — per-file `sha256` for the 70 corpus files plus an `extracted_sha256` over the paragraph text —
+and `corpus_snapshot.json` holds the same record standalone, so a re-run can say *stale corpus*
+instead of quietly producing a new number. At the pinned corpus (623 paragraphs) the measurements are:
+eight-word window r@5 **0.692** / r@1 0.577 / MRR 0.669 with competing share **0.479**; whole
+paragraphs r@5 **0.654** / r@1 0.635. The 0.476 share and the 0.558 r@1 in the table above belong to
+the earlier, unpinned corpus state and stay as history; the shortfall at the most realistic
+configuration is therefore 0.70 − 0.654 = **0.046** at the pinned state, not 0.027. `ledger.json`
+carries the per-query rows (1-based `best_gold_rank`, matched tokens, out-of-reach set), and
+`paired_test.py` compares two ledgers as a falsifier — pass means zero regressions, and no p value is
+reported as significance at n=26.
