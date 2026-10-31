@@ -36,6 +36,33 @@ class DocSymbolGateTests(unittest.TestCase):
         self.assertIn("forget_everything", res.stdout)
 
 
+class RecursiveCoverageTests(unittest.TestCase):
+    """v0.30.0: a document in a subdirectory must not escape the symbol gate."""
+
+    def test_default_targets_are_recursive(self):
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        try:
+            import check_doc_symbols
+        finally:
+            sys.path.pop(0)
+        fake = tempfile.mkdtemp(prefix="amg-docwalk-")
+        for rel in ("README.md", "docs/ok.md", "docs/decisions/new.md",
+                    "docs/decisions/v19/more.md"):
+            path = os.path.join(fake, rel)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write("x")
+        original = check_doc_symbols.ROOT
+        check_doc_symbols.ROOT = fake
+        try:
+            targets = {path.replace(os.sep, "/")
+                       for path in check_doc_symbols.default_targets()}
+        finally:
+            check_doc_symbols.ROOT = original
+        self.assertEqual(targets, {"README.md", "docs/ok.md", "docs/decisions/new.md",
+                                   "docs/decisions/v19/more.md"})
+
+
 class DocCoverageTests(unittest.TestCase):
     """Documents must be reachable from the index, and commands from the contract.
 

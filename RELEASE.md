@@ -19,6 +19,25 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.30.0 — 2026-10-31
+
+Status: **released**. The documentation gates now see subdirectories.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | The escape was real, not hypothetical | ✅ `docs/decisions/x.md` was invisible to both gates |
+| 2 | Both gates fixed, not one | ✅ size budget and code-symbol gate walk recursively |
+| 3 | A regression test proves coverage | ✅ nested files asserted in both suites |
+| 4 | The change is the prerequisite, not the split | ✅ CHANGELOG says `DECISIONS.md` is still unsplit |
+| 5 | What the gates enforce is unchanged | ✅ same budgets, same symbol rules |
+| 6 | CI green on nine jobs | ✅ 339 tests ×4 + `package` ×5 |
+| 7 | Documentation↔code gates | ✅ 16 documents, all within budget |
+| 8 | Nothing else changed | ✅ no library/CLI change |
+| 9 | Tag install verified | ✅ `git+...@v0.30.0` |
+| 10 | Architecture diagram re-rendered | ✅ v0.30.0 |
+
+---
+
 ## v0.29.1 — 2026-10-31
 
 Status: **released**. Documentation-only: what `--strict` is for.

@@ -98,6 +98,32 @@ class DocSizeGateTests(unittest.TestCase):
                 if name.endswith(".md")}
         self.assertEqual(docs - targets, set(), "documents not covered by the budget gate")
 
+    def test_subdirectory_documents_cannot_escape_the_budget(self):
+        # v0.30.0: the walk listed only docs/*.md, so docs/decisions/big.md escaped
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        try:
+            import check_doc_sizes
+        finally:
+            sys.path.pop(0)
+        fake = tempfile.mkdtemp(prefix="amg-docwalk-")
+        os.makedirs(os.path.join(fake, "docs", "decisions"))
+        for rel in ("README.md", "docs/ok.md",
+                    "docs/decisions/big.md", "docs/decisions/nested/deeper.md"):
+            path = os.path.join(fake, rel)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write("x")
+        original = check_doc_sizes.ROOT
+        check_doc_sizes.ROOT = fake
+        try:
+            targets = {path.replace(os.sep, "/")
+                       for path in check_doc_sizes.default_targets()}
+        finally:
+            check_doc_sizes.ROOT = original
+        self.assertIn("docs/decisions/big.md", targets)
+        self.assertIn("docs/decisions/nested/deeper.md", targets)
+        self.assertEqual(len(targets), 4, targets)
+
     def test_logs_are_out_of_scope_in_words(self):
         res = run("CHANGELOG.md")
         self.assertEqual(res.returncode, 0, res.stdout + res.stderr)

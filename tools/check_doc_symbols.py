@@ -30,20 +30,21 @@ def scan(path):
 
 
 def default_targets():
-    """README plus every document in docs/ — so a new document cannot escape the gate.
+    """README plus every document under docs/, recursively.
 
-    Passing an explicit list stays supported (CI did that until v0.7.0); the list
-    itself was the staleness risk: docs were added and the gate kept checking two.
+    Passing an explicit list stays supported (CI did that until v0.7.0); the default
+    list itself was the staleness risk. v0.30.0 makes the walk recursive: a document in
+    `docs/decisions/` used to escape the symbol gate entirely, which is the same
+    "hand-written list is a claim about the past" failure the gate exists to prevent.
     """
     targets = ["README.md"]
     docs_dir = os.path.join(ROOT, "docs")
-    if os.path.isdir(docs_dir):
-        # Forward slashes on purpose: the gate's output is compared as text in a
-        # test, and os.sep would make the same run print differently on Windows.
-        targets += sorted(
-            "docs/" + name for name in os.listdir(docs_dir) if name.endswith(".md")
-        )
-    return targets
+    for current, _dirs, names in os.walk(docs_dir):
+        for name in sorted(names):
+            if name.endswith(".md"):
+                rel = os.path.relpath(os.path.join(current, name), ROOT)
+                targets.append(rel.replace(os.sep, "/"))
+    return sorted(targets)
 
 
 def main(argv):

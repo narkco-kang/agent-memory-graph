@@ -45,13 +45,21 @@ def budget_for(path):
 
 
 def default_targets():
-    """README plus every document in docs/ — a new document cannot escape the gate."""
+    """README plus every document under docs/, recursively.
+
+    v0.30.0: the walk used to list only `docs/*.md`, so a document placed in a
+    subdirectory (`docs/decisions/…`) silently escaped the budget — the same "a
+    hand-written list is a claim about the past" failure the gate exists to prevent.
+    A directory is not an exemption.
+    """
     targets = ["README.md"]
     docs_dir = os.path.join(ROOT, "docs")
-    if os.path.isdir(docs_dir):
-        targets += sorted("docs/" + name for name in os.listdir(docs_dir)
-                          if name.endswith(".md"))
-    return targets
+    for current, _dirs, names in os.walk(docs_dir):
+        for name in sorted(names):
+            if name.endswith(".md"):
+                rel = os.path.relpath(os.path.join(current, name), ROOT)
+                targets.append(rel.replace(os.sep, "/"))
+    return sorted(targets)
 
 
 def document_size(full):

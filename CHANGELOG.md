@@ -3,6 +3,27 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.30.0] — 2026-10-31
+
+A document in a subdirectory no longer escapes the documentation gates.
+
+### Fixed
+
+- Both documentation gates derived their file list with one `os.listdir(docs)` level, so
+  `docs/decisions/…` would have been invisible to the size budget **and** to the
+  code-symbol gate — the exact "a hand-written list is a claim about the past" failure
+  DECISIONS #18 exists to prevent, reappearing one level down. Both now walk the
+  directory tree recursively (`README.md` plus every `docs/**/*.md`), with tests that
+  place documents in nested directories and assert they are covered.
+- This is the prerequisite for splitting `docs/DECISIONS.md` (24569/24576 B of a 24576 B
+  budget): the split is only safe if new pages cannot silently drop out of the gates.
+
+### Not shipped in 0.30.0 (do not assume)
+
+- `DECISIONS.md` itself is **not** split yet: it still holds every entry and has 7 B of
+  headroom. The split is a separate round, with the attackers reviewing the plan first.
+- No change to what the gates enforce, only to which files they see.
+
 ## [0.29.1] — 2026-10-31
 
 Documentation-only patch: `--strict` is an acceptance mode, not an inspection mode.
