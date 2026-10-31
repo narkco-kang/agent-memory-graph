@@ -3,6 +3,21 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.34.1] — 2026-10-31
+
+A checkout's line ending is not corpus content.
+
+### Fixed
+
+- CI `windows-latest` failed on the corpus pin added in v0.34.0: the pin hashed raw file bytes, so the
+  same text produced `7ff0987a…` on an LF checkout and `ecf06ff9…` on a CRLF one and a clean Windows run
+  reported *stale corpus*. CRLF is now folded to LF before hashing, for the per-file digests and for
+  the extracted-text digest, and a regression test asserts the fold is not vacuous (raw hashing must
+  differ). Numbers are unchanged: fractional 0.692, hit-or-miss 0.7308, out-of-reach still
+  {q06, q08, q10, q18}.
+- Fixed as an L0 hotfix (CI red, mechanical, reversible) and reported for review by Mini仔, the author
+  of the pin, and Hermes仔 for independent verification.
+
 ## [0.34.0] — 2026-10-31
 
 The evaluation harness is pinned, and the numbers it produces can be reproduced byte for byte. This
