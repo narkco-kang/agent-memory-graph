@@ -1,0 +1,36 @@
+{
+  "caption": "post-hoc sensitivity on distractor length; the pre-registered run is window=8",
+  "rows": [
+    {
+      "window": 8,
+      "median_words": 8,
+      "competing_share_ge_0.25": 0.4756,
+      "recall@1": 0.558,
+      "recall@5": 0.692,
+      "recall@10": 0.731,
+      "mrr@10": 0.65,
+      "ceiling": 0.8462
+    },
+    {
+      "window": 20,
+      "median_words": 20,
+      "competing_share_ge_0.25": 0.5888,
+      "recall@1": 0.538,
+      "recall@5": 0.692,
+      "recall@10": 0.692,
+      "mrr@10": 0.618,
+      "ceiling": 0.8077
+    },
+    {
+      "window": "whole paragraph",
+      "median_words": 37,
+      "competing_share_ge_0.25": 0.8267,
+      "recall@1": 0.654,
+      "recall@5": 0.673,
+      "recall@10": 0.673,
+      "mrr@10": 0.695,
+      "ceiling": 0.7692
+    }
+  ],
+  "note": "the pre-registered number is a statement about short real notes; longer windows are reported to show how much of the difficulty is length"
+}

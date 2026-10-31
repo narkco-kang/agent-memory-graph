@@ -3,6 +3,37 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.33.3] — 2026-10-31
+
+The question #50 and #51 were leaning toward — "the 0.70 target may only measure an artifact of N2's
+construction" — was tested with real prose and answered **no**.
+
+### Measured
+
+- A pre-registered corpus of 10,000 distractors built from **real documentation prose** (seeded
+  8-word windows of paragraphs in this repository, no vocabulary sampling) passes the calibration
+  check (competing share 0.476 against N2's 0.918) and lands at recall@5 **0.692** — **below the
+  published 0.70 target**, with N2 at 0.538 and the real corpus at 0.865.
+- A post-hoc length sweep shows it is not a short-note artifact: 20-word windows give 0.692, whole
+  paragraphs (median 37 words) give **0.673** with r@1 rising to 0.654.
+- Ordering holds throughout: N2 < real text < control. n1 / n3 stay 0.865.
+
+### Added
+
+- DECISIONS **#52**: publish two noise corpora — N2 as the adversarial worst case, real text as the
+  realistic measure; the 0.70 target stays attached to N2 and stays **unmet**; N2 is recorded as
+  overstating the gap by roughly 0.13–0.15 recall@5, and #50's suspicion that the target measures only
+  an artifact is recorded as **wrong**.
+- `experiments/retrieval_noise_realtext/` — pre-registration, runner, post-hoc length sweep,
+  machine-readable outputs.
+- `tests/test_realtext_noise.py` pins the page to the result files, including the calibration-first
+  ordering and the recorded wrong prediction.
+
+### Not changed
+
+- `src/amg/` untouched. The remaining realistic shortfall (0.008–0.027) is a separate problem and is
+  not claimed as fixed.
+
 ## [0.33.2] — 2026-10-31
 
 An attempt to answer #50's open question failed its own pre-registered check. The failure is the

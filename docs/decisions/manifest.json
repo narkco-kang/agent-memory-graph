@@ -1,6 +1,6 @@
 {
  "schema": "amg-decision-pages/v1",
- "count": 51,
+ "count": 52,
  "pages": [
   {
    "n": 1,
@@ -460,6 +460,15 @@
    "signed": true,
    "body_sha256": "0bad9606adde14de8cb367522ad8c41e2388d3d2f18b355eda7897b63f15246e",
    "body_bytes": 2437
+  },
+  {
+   "n": 52,
+   "slug": "52-real-noise-also-misses.md",
+   "title": "The 0.70 target is missed under realistic noise too.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "9e6502554dbdf4fb2dc6effa6f71381a2832835592d7915f47ebd0ebb9bb61be",
+   "body_bytes": 2484
   }
  ]
 }
