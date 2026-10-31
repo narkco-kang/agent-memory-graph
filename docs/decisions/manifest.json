@@ -1,6 +1,6 @@
 {
  "schema": "amg-decision-pages/v1",
- "count": 52,
+ "count": 53,
  "pages": [
   {
    "n": 1,
@@ -431,8 +431,8 @@
    "title": "The coverage loss is distribution mismatch, not anti-correlation.",
    "status": "active",
    "signed": true,
-   "body_sha256": "337da723456f5ab144b118e2bb0293330608fca1e8c3509b8c9109afb285590b",
-   "body_bytes": 1799
+   "body_sha256": "07e7c45d9a734dd9d76904c479170efce0b49e0477c840e6d1ef2d9240120ec8",
+   "body_bytes": 2709
   },
   {
    "n": 49,
@@ -469,6 +469,15 @@
    "signed": true,
    "body_sha256": "9e6502554dbdf4fb2dc6effa6f71381a2832835592d7915f47ebd0ebb9bb61be",
    "body_bytes": 2484
+  },
+  {
+   "n": 53,
+   "slug": "53-arm-name-must-match-code.md",
+   "title": "An arm is described by its implementation, not the idea it resembles.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "fb37138d764d774a9628953aaebf84ceb8be3524021956c2b8a96754cffdad6c",
+   "body_bytes": 3036
   }
  ]
 }

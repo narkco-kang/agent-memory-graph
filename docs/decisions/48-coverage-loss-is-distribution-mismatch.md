@@ -21,3 +21,14 @@ next direction is **content-word weighting or stop-word stripping**, not "separa
 from injected ones" (#47's sentence). Cost: a signed explanation replaced two rounds after it was
 published, which is the point of writing mechanism claims down where an attacker can reach them.
 *Signed 2026-10-31; `docs/memory-arch/ATTACK-COVERAGE-MECHANISM-GLM.md`; v0.32.7.*
+
+**Correction 2026-10-31, after independent verification (DECISIONS #53).** The arm this page calls
+"coverage to content words only" was implemented as a **vocabulary filter**, not a part-of-speech one:
+`/tmp/re8/attack_coverage_mechanism.py` restricts counted query tokens to `orig_vocab` — the
+vocabulary of the original 27-node corpus — with the denominator left as the full query length.
+Every number here reproduces, and the mechanism conclusion stands; what does not stand is reading the
+**+0.077 as an estimate for content-word weighting**. It is a filter that knows which vocabulary is
+"original", so it is partly oracle, and it is closer to the sentence #47 proposed than to the
+direction this page named. The sentence above stays as published; the correction is that its named
+next direction was inferred from the wrong arm. DECISIONS #49 then tested content-word weighting
+itself and it failed.

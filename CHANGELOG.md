@@ -3,6 +3,38 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.33.4] — 2026-10-31
+
+Independent verification of v0.33.0–v0.33.2 reproduced every published number and caught one arm whose
+name does not match its code.
+
+### Verified
+
+- **v0.33.1**: all twelve semantic-arm values reproduce (control 0.865/0.865/0.981/0.923, n1
+  0.865/0.865/0.962/0.904, n2 0.538/0.577/0.577/0.577, n3 0.865/0.865/0.904/0.942), including the
+  load-bearing "n2 ceiling 0.846 = shipped ceiling". Cache hits read the same vectors (keyed by text
+  digest + model digest); a cold re-embed was **not** run and is listed as unverified.
+- **v0.33.2**: 0.144 / 0.918 / 0.606 and the probe ladder 0.537 / 0.516 / 0.497 all reproduce, with
+  `Q1/Q2 = False, Q3 = True`.
+- **v0.33.0**: all nine lexical arms are negative; attribution clarified — 0.481 is `s3_compact@0.5`,
+  and the earlier coverage experiment's N2 arm also happened to land on 0.481 (different experiment).
+- Five mutation classes were injected (result.json number, page number, `rejected` → `delivered`,
+  `rejected` → `blessed`, `Q2 = True`) and all five failed, so the new tests can catch a forged result.
+
+### Corrected
+
+- **DECISIONS #48's "content words only" arm was a vocabulary filter.** The code restricts counted
+  query tokens to `orig_vocab` — the original 27-node corpus's vocabulary — with the denominator still
+  the full query length. Numbers reproduce; the **+0.077 is not an estimate for content-word
+  weighting**, and #48's named next direction was inferred from it. A dated correction is appended to
+  #48 (original sentence kept) and DECISIONS **#53** records the rule: an arm is described by its
+  implementation, not the idea it resembles.
+- #49's conclusion is unchanged: content-word weighting was tested properly there and failed.
+
+### Not changed
+
+- `src/amg/` untouched; N2 stays 0.538 and the 0.70 target stays unmet on both corpora.
+
 ## [0.33.3] — 2026-10-31
 
 The question #50 and #51 were leaning toward — "the 0.70 target may only measure an artifact of N2's
