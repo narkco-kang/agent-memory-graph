@@ -200,33 +200,48 @@ Operationally: size the timeout to the burst, not to a feeling.
 200-write, 10k-node case that is ≥ 18 s, so 30–60 s is a sane setting. The default
 stays 5 s for interactive use ([DECISIONS #26](decisions/26-lock-timeout-stays-5s.md)), and the error already names the knob.
 
-## The tail on three operating systems (v0.32.3)
+## The tail on three operating systems (v0.32.3, corrected in v0.32.4)
 
 [DECISIONS #15](decisions/15-lock-retry-backoff.md) read the tail as starvation from non-FIFO lock wake-ups, measured on **macOS
 only**; Windows stayed "not measured" from v0.15.0 to v0.32.2. `experiments/concurrency/tail_latency.py`
-now measures the same thing everywhere, in CI, on a 5,000-node graph with an 8 x 10 burst
-(`AMG_LOCK_TIMEOUT=180` so the run finishes; the timeout decides when a run stops, not what a
-waiter waited — `worst_wait_ms` comes from the lock's own counters):
+now measures the same thing on all three, in CI, on a 5,000-node graph with an 8 x 10 burst
+(`AMG_LOCK_TIMEOUT=180` so a slow runner finishes; the timeout decides when a run stops, not what
+a waiter waited — `worst_wait_ms` comes from the lock's own counters).
 
-| platform | one write, no contention | contended p50 | p95 | max | worst lock wait | polls | waiters > 100 ms |
+Three consecutive runs of the same command. Every number names the run and job that produced it,
+because a table assembled by hand drifted from its own source once (v0.32.3 quoted a single run
+without saying which, and the next run differed by 3.9x):
+
+| run | platform (job) | one write | p50 | p95 | max | worst lock wait | polls |
 |---|---|---|---|---|---|---|---|
-| ubuntu-latest | 137.9 ms | 146.4 ms | 151.8 ms | 155.8 ms | 10.46 s | 874 | 7 |
-| macos-latest | 94.6 ms | 82.5 ms | 94.9 ms | 148.5 ms | 6.16 s | 104 | 7 |
-| windows-latest | 168.8 ms | 151.8 ms | **1,672 ms** | **6,431 ms** | 10.49 s | 849 | 8 |
+| 41165391527 (tag v0.32.3) | ubuntu (124431735505) | 142.0 ms | 154.5 ms | 163.6 ms | 2.33 s | **11.01 s** | 920 |
+| 41165391527 | macos (124431735510) | 91.0 ms | 95.2 ms | 130.4 ms | 144.9 ms | **7.26 s** | 195 |
+| 41165391527 | windows (124431735275) | 193.1 ms | 191.6 ms | 6,587.8 ms | 12.54 s | **12.36 s** | 998 |
+| 41165389976 (main) | ubuntu (124431731008) | 137.7 ms | 153.6 ms | 2,896.7 ms | 10.85 s | **10.67 s** | 883 |
+| 41165389976 | macos (124431730775) | 86.8 ms | 89.4 ms | 113.5 ms | 153.1 ms | **6.66 s** | 169 |
+| 41165389976 | windows (124431730926) | 125.2 ms | 124.4 ms | 2,567.6 ms | 5.71 s | **5.58 s** | 450 |
+| 41165056624 (pre-release) | ubuntu (124430705796) | 137.9 ms | 146.4 ms | 151.8 ms | 155.8 ms | **10.46 s** | 874 |
+| 41165056624 | macos (124430705769) | 94.6 ms | 82.5 ms | 94.9 ms | 148.5 ms | **6.16 s** | 104 |
+| 41165056624 | windows (124430705600) | 168.8 ms | 151.8 ms | 1,672.0 ms | 6.43 s | **10.49 s** | 849 |
 
-All three runs kept 80/80 writes with one change record each and `check` clean.
+All nine runs kept 80/80 writes with one change record each and `check` clean — the correctness
+half is stable; only the timing is not.
 
-What this does and does not say:
+What survives repetition, and what does not:
 
-- The tail is **not a macOS artefact**: ubuntu sees the same worst wait with 8x the polls, so
-  #15's cause survives the platform change.
-- **Windows is materially worse in what a caller feels** — p95 1.67 s against 0.09–0.15 s —
-  while its worst *lock wait* is comparable to Linux's. The difference is in the distribution
-  of waits, not in the maximum.
-- These are shared cloud runners at 5,000 nodes. **The 10k Windows figure is still not
-  measured** and no document should imply it is.
-- The 5 s default stays policy (#26): at 168.8 ms a write, 8 x 10 queued writes need about
-  13.5 s, so the arithmetic — not a defect — is why the plain default aborts first.
+- **Survives: the tail is not a macOS artefact.** Ubuntu's worst wait is 10.5-11.0 s in all three
+  runs; macOS is consistently the mildest at 6.2-7.3 s. Windows ranges 5.6-12.4 s, overlapping
+  Linux.
+- **Does not survive: "Windows is materially worse".** That claim came from one run's p95
+  (1,672 ms). The same command measured p95 at 6,588 ms, 2,568 ms and 1,672 ms on Windows, and
+  **2,897 ms on ubuntu in one run against 164 ms in another** — at 80 samples, p95 sits between the
+  76th and 77th value, so one stalled write moves it by an order of magnitude. p95 here is not a
+  statistic to quote; the worst wait is.
+- **Not measured at all:** Windows at 10k nodes, and any repeat count that would make p95 stable.
+  Both are stated as gaps rather than estimated.
+- The 5 s default stays policy (#26): at 125-193 ms a write, 8 x 10 queued writes need 10-15 s,
+  so a plain default run aborts on arithmetic, not on a defect — which is what happened on the
+  first CI run of this script.
 
 ## A real bug the Windows burst test found
 

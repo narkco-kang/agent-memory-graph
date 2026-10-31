@@ -79,4 +79,5 @@ split: the previous single file could hold 34 decisions and then stopped.
 | [42](decisions/42-entries-1-8-signed-by-preamble.md) | Entries 1–8 are signed by the preamble; no signature is invented. | active | ✓ |
 | [43](decisions/43-decision-log-is-an-index.md) | The decision log is an index plus one page per decision. | active | ✓ |
 | [44](decisions/44-derived-artifact-expectation.md) | A derived expectation must derive the same way it checks. | active | ✓ |
-| [45](decisions/45-lock-tail-cross-platform.md) | The lock tail is cross-platform, and Windows pays more of it. | active | ✓ |
+| [45](decisions/45-lock-tail-cross-platform.md) | The lock tail is cross-platform, and Windows pays more of it. | amended (#46) | ✓ |
+| [46](decisions/46-one-run-is-not-a-measurement.md) | One run is not a measurement: quote the run, and claim only what repeats. | active | ✓ |

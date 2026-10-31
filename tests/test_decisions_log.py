@@ -125,6 +125,31 @@ class DecisionPageGateCoverageTests(unittest.TestCase):
         self.assertEqual(pages - sizes, set(), "pages escape the size budget")
         self.assertEqual(pages - symbols, set(), "pages escape the symbol gate")
 
+    def test_index_status_matches_manifest(self):
+        """The index and the manifest are two copies of one fact, and can drift separately.
+
+        Found by the independent verifier on v0.32.3: the amended-claim test reads the
+        *manifest*, so editing only the index row — the copy a human reads — passed every
+        test. DECISIONS #22 says one source of truth; this asserts the index agrees with it.
+        """
+        man = load_manifest()
+        by_number = {p["n"]: p for p in man["pages"]}
+        with open(INDEX, encoding="utf-8") as fh:
+            index = fh.read()
+        rows = 0
+        for line in index.splitlines():
+            m = ROW_RE.match(line.strip())
+            if not m:
+                continue
+            rows += 1
+            number = int(m.group(1))
+            self.assertIn(number, by_number, f"index row #{number} has no page record")
+            self.assertEqual(m.group(4).strip(), by_number[number]["status"],
+                             f"#{number}: the index says one status, the manifest another")
+            self.assertEqual(m.group(2), "decisions/" + by_number[number]["slug"],
+                             f"#{number}: index link and manifest slug disagree")
+        self.assertEqual(rows, len(man["pages"]), "index rows != pages")
+
 
 class ReferenceResolutionTests(unittest.TestCase):
     """`DECISIONS #N` must land on decision N, not on the index (v0.32.2).

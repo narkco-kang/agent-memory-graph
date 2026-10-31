@@ -1,6 +1,6 @@
 # Decision #45
 
-[← decision log](../DECISIONS.md) · status: active
+[← decision log](../DECISIONS.md) · status: amended (#46)
 
 **The lock tail is cross-platform, and Windows pays more of it.** DECISIONS #15 concluded that
 the ~200 ms tail is starvation from non-FIFO wake-ups, measured on macOS; Windows stayed

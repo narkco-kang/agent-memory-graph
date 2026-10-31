@@ -1,6 +1,6 @@
 {
  "schema": "amg-decision-pages/v1",
- "count": 45,
+ "count": 46,
  "pages": [
   {
    "n": 1,
@@ -402,10 +402,19 @@
    "n": 45,
    "slug": "45-lock-tail-cross-platform.md",
    "title": "The lock tail is cross-platform, and Windows pays more of it.",
-   "status": "active",
+   "status": "amended (#46)",
    "signed": true,
    "body_sha256": "44a970e4e5a8a1b96dee2d2d3e47569b26e29a4dcefe73ac6999ddef30909b2c",
    "body_bytes": 1274
+  },
+  {
+   "n": 46,
+   "slug": "46-one-run-is-not-a-measurement.md",
+   "title": "One run is not a measurement: quote the run, and claim only what repeats.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "948fc4cd23e8624fc94cf71d5217fc7581ab5320508b3fb145338114a373fd11",
+   "body_bytes": 1135
   }
  ]
 }

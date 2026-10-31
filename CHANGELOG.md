@@ -3,6 +3,38 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.32.4] — 2026-10-31
+
+v0.32.3 published a performance table that could not be traced to any run, and the index's
+status column and its page records could drift apart. Both were found by verification, not by
+tests.
+
+### Fixed
+
+- **The nine-cell tail table in `docs/CONCURRENCY.md` named no run.** Its numbers came from one
+  CI run (41165056624) that the document never named; the independent verifier read the job logs
+  and found not one cell reproducible on the following runs. Rewritten as a **three-run table
+  where every row names its run id and job id**, and the conclusion is cut back to what repeats:
+  the worst lock wait is stable (ubuntu 10.46–11.01 s, macOS 6.16–7.26 s, Windows 5.58–12.36 s)
+  and macOS is consistently the mildest; **p95 is not a statistic to quote here** — at 80 samples
+  it sits between the 76th and 77th value, and the same command measured 164 ms and 2,897 ms on
+  ubuntu in two runs.
+- **`#45`'s headline claim is withdrawn.** "Windows is materially worse" rested on a single p95
+  (1,672 ms); over three runs Windows measured 1,672 / 2,568 / 6,588 ms, so the platform ordering
+  the decision asserted does not survive repetition. `#45` is `amended` by **#46**, which states
+  the rule the rest of the project already follows (#44): a number without the run that produced
+  it is not evidence.
+- **The index and the page records could drift separately.** The `amended (#N)` test read
+  `manifest.json`, so editing only the index row — the copy a human reads — passed everything.
+  New `test_index_status_matches_manifest` asserts status and slug agreement for all 46 rows
+  (DECISIONS #22, one source of truth, applied to the decision log).
+
+### Tests
+
+- 355 tests: +1 index/manifest cross-check, +2 in `tests/test_concurrency_doc.py` (every table
+  row carries a run id and a job id; the section still states what was not measured).
+- 62 documents.
+
 ## [0.32.3] — 2026-10-31
 
 The lock tail is measured on three operating systems, and the index's hand-written column was
