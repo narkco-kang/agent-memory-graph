@@ -3,6 +3,37 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.27.0] — 2026-10-31
+
+Thin anchoring cannot pass silently, and "did not look" stops printing a percentage.
+
+### Fixed
+
+- A graph with one verified anchor and nineteen `cmd:`-only conclusions printed
+  `healthy`, exit 0, **zero warnings**: the verdict keyed on "at least one verified" and
+  never looked at the ratio. `conclusions` now carries `unobservable` (evidence declared
+  but not observable), the text line reads `1/20 verified (5%), 0 unanchored,
+  19 unobservable`, and it raises a warning — `--strict` fails it
+  (`issue.mem-arch-cmd-ratio-healthy-threshold`, Glm仔's re-attack of v0.25.0, case X1).
+- With `--no-evidence` the `conclusions` line still printed `0/1 verified (0%)`, i.e.
+  "did not look" shown as "looked and found zero". It now prints
+  `conclusions: not checked (evidence hashing skipped)` and the JSON reports
+  `verified: null`, `anchor_coverage: null` (`issue.mem-arch-notchecked-conclusions-zero`).
+
+### Added
+
+- 2 tests: the 1-real-19-`cmd:` graph must warn and fail `--strict`; `--no-evidence`
+  must not print a percentage.
+- `docs/OPERATIONS.md` documents the bridge's boundary: it accepts **legacy-schema
+  sources only** — an `amg/v1` graph is refused with `E_ALREADY_AMG`, because it is
+  already under the gate and belongs to `healthcheck`, not to the bridge.
+
+### Not shipped in 0.27.0 (do not assume)
+
+- No hard floor on anchoring: a low ratio is a **warning**, not a failure, because a
+  curated graph legitimately cites `cmd:`/`url:` evidence. `--strict` is the switch.
+- The bridge still cannot write verified legacy digests back into the store.
+
 ## [0.26.0] — 2026-10-31
 
 The bridge states its evidence base, verifies declared digests in legacy strings, and

@@ -138,8 +138,14 @@ def collect(path, check_evidence=True, evidence_root=None):
     concl_unanchored = [n for n in conclusions if not (n.get("evidence") or [])]
     verified_node_ids = {row["node"] for row in evidence_rows if row["status"] == "ok"}
     concl_verified = [n for n in conclusions if n.get("id") in verified_node_ids]
-    anchor_coverage = (round(len(concl_verified) / len(conclusions), 4)
-                       if conclusions else None)
+    # "Did not look" must not be printed as "looked and found zero": with --no-evidence
+    # no conclusion can be *verified*, so the ratio is unknown, not 0% (`issue.mem-arch-
+    # notchecked-conclusions-zero`, Glm仔's re-attack of v0.25.0).
+    concl_verified_count = len(concl_verified) if check_evidence else None
+    anchor_coverage = (round(concl_verified_count / len(conclusions), 4)
+                       if (conclusions and check_evidence) else None)
+    unobservable = ((len(conclusions) - len(concl_unanchored) - concl_verified_count)
+                    if check_evidence else None)
     if coverage_state == "not_checked":
         # A report that did not look must not pass a --strict run silently: keying only
         # on the exit code is the documented failure mode this flag invites.
@@ -148,6 +154,14 @@ def collect(path, check_evidence=True, evidence_root=None):
     if concl_unanchored:
         warnings.append(f"{len(concl_unanchored)} of {len(conclusions)} done conclusion(s) "
                         f"have no evidence (unanchored)")
+    if unobservable:
+        # Glm仔 X1: 1 real anchor + 19 `cmd:`-only conclusions printed healthy with zero
+        # warnings; the verdict keyed on "at least one verified", so the ratio was
+        # invisible. Evidence that exists but cannot be observed is debt, not breakage —
+        # a warning here, and --strict turns it into a failure.
+        warnings.append(f"{unobservable} of {len(conclusions)} done conclusion(s) carry "
+                        f"evidence that cannot be observed ({concl_verified_count} "
+                        f"verified)")
     other_unanchored = len(done_unanchored) - len(concl_unanchored)
     if other_unanchored:
         warnings.append(f"{other_unanchored} other done node(s) carry no evidence")
@@ -170,8 +184,9 @@ def collect(path, check_evidence=True, evidence_root=None):
                      "unreadable": unconfirmed["unreadable"]},
         "conclusions": {"total": len(conclusions), "with_evidence":
                         len(conclusions) - len(concl_unanchored),
-                        "verified": len(concl_verified),
+                        "verified": concl_verified_count,
                         "unanchored_conclusions": len(concl_unanchored),
+                        "unobservable": unobservable,
                         "anchor_coverage": anchor_coverage},
         "done": {"total": len(done_nodes), "unanchored": len(done_unanchored),
                  "other_unanchored": other_unanchored},
@@ -259,12 +274,16 @@ def main(argv=None):
             print(f"  evidence rows: {evidence['declared']} declared, "
                   f"{evidence['verified']} verified{pct} - "
                   + ", ".join(f"{name} {count}" for name, count in sorted(counts.items())))
-        if conclusions["total"]:
+        if evidence["coverage_state"] == "not_checked":
+            print("  conclusions: not checked (evidence hashing skipped)")
+        elif conclusions["total"]:
             pct = ("n/a" if conclusions["anchor_coverage"] is None
                    else f"{conclusions['anchor_coverage']:.0%}")
+            extra = (f", {conclusions['unobservable']} unobservable"
+                     if conclusions["unobservable"] else "")
             print(f"  conclusions: {conclusions['verified']}/{conclusions['total']} "
                   f"verified ({pct}), "
-                  f"{conclusions['unanchored_conclusions']} unanchored")
+                  f"{conclusions['unanchored_conclusions']} unanchored{extra}")
         else:
             print("  conclusions: none")
         done = report["done"]

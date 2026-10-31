@@ -254,6 +254,34 @@ class HealthcheckTests(unittest.TestCase):
         self.assertEqual(strict.returncode, 1, strict.stdout + strict.stderr)
         self.assertIn("NEEDS ATTENTION", strict.stdout)
 
+    def test_cmd_only_conclusions_are_not_healthy_silently(self):
+        # Glm仔 X1: one real anchor + nineteen `cmd:`-only conclusions was healthy with
+        # zero warnings, because the verdict keyed on "at least one verified".
+        for i in range(19):
+            self.g.m.add_node(f"decision.cmd{i}", "decision", f"cmd {i}",
+                              source="group:t", status="done",
+                              evidence=[{"locator": "cmd:pytest -q",
+                                         "content_sha256": "e" * 64,
+                                         "captured_at": "2026-10-31T00:00:00+08:00"}])
+        report = json.loads(run(self.g.dir, "--json").stdout)
+        self.assertEqual(report["conclusions"]["total"], 20)
+        self.assertEqual(report["conclusions"]["verified"], 1)
+        self.assertEqual(report["conclusions"]["unobservable"], 19)
+        self.assertLess(report["conclusions"]["anchor_coverage"], 0.5)
+        warning = [w for w in report["warnings"] if "cannot be observed" in w]
+        self.assertTrue(warning, report["warnings"])
+        self.assertIn("19 unobservable", run(self.g.dir).stdout)
+        strict = run(self.g.dir, "--strict")
+        self.assertEqual(strict.returncode, 1, strict.stdout + strict.stderr)
+
+    def test_not_checked_does_not_print_a_zero_percentage(self):
+        text = run(self.g.dir, "--no-evidence").stdout
+        self.assertIn("conclusions: not checked (evidence hashing skipped)", text)
+        self.assertNotIn("verified (0%)", text)
+        report = json.loads(run(self.g.dir, "--json", "--no-evidence").stdout)
+        self.assertIsNone(report["conclusions"]["verified"])
+        self.assertIsNone(report["conclusions"]["anchor_coverage"])
+
     def test_conclusions_field_is_named_for_what_it_counts(self):
         report = json.loads(run(self.g.dir, "--json").stdout)
         self.assertIn("unanchored_conclusions", report["conclusions"])

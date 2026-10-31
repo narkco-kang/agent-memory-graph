@@ -39,6 +39,12 @@ them carry at least one *verified* item. `done nodes` counts every finished node
 any evidence, which is what migration leaves behind. Read all three; a single percentage
 is not a health statement.
 
+A conclusion whose evidence exists but cannot be observed (`cmd:`, `url:`, `sha256:`)
+is counted as **unobservable**: `1/20 verified (5%), 0 unanchored, 19 unobservable`.
+That line is the difference between "all twenty were checked" and "one was checked and
+nineteen are citations", and it raises a warning — a graph can be 100% covered by
+*declared* evidence and still be 5% anchored.
+
 ### Verdicts and exit codes
 
 The last line is a verdict, and the exit code matches it — a scheduler keys on the code,
@@ -87,6 +93,11 @@ promoted to evidence. That is the only way coverage grows without fabricating a 
 
 Exit 0 from the bridge means "the observable invariants hold", never "this graph is
 write-gated" and never "its content is correct".
+
+The bridge accepts **legacy-schema sources only**. Point it at an `amg/v1` graph and
+adoption refuses with `E_ALREADY_AMG` (exit 1): an `amg`-written graph is already under
+the gate, so verify it with `healthcheck` directly. `--evidence-root` therefore applies
+to the legacy side only.
 
 ## 1. What is already enforced (do not re-implement it)
 

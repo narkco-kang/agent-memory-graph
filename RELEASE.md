@@ -19,6 +19,25 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.27.0 — 2026-10-31
+
+Status: **released**. Thin anchoring warns, and `--no-evidence` stops printing a ratio.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | Found by an attacker, not by the author | ✅ Glm仔 re-attack of v0.25.0, case X1 |
+| 2 | The failure case is encoded as a test | ✅ 1 real anchor + 19 `cmd:` conclusions warns, `--strict` exits 1 |
+| 3 | "Did not look" cannot print a percentage | ✅ `conclusions: not checked …`, JSON `null` |
+| 4 | The policy stays explicit | ✅ low anchoring is a warning (debt), `--strict` is the switch |
+| 5 | The bridge's real boundary is documented | ✅ legacy sources only; `amg/v1` → `E_ALREADY_AMG` |
+| 6 | CI green on nine jobs | ✅ 330 tests ×4 + `package` ×5 |
+| 7 | Documentation↔code gates | ✅ 16 documents |
+| 8 | Nothing else changed | ✅ `adopt`/`audit`/pin/bridge formats unchanged |
+| 9 | Tag install verified | ✅ `git+...@v0.27.0` |
+| 10 | Architecture diagram re-rendered | ✅ v0.27.0, four gates pass |
+
+---
+
 ## v0.26.0 — 2026-10-31
 
 Status: **released**. The bridge's evidence base becomes an explicit input, legacy
