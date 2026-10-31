@@ -3,6 +3,56 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.35.0] — 2026-10-31
+
+The evaluation corpus is frozen, and the ranking rule says what it does when scores tie.
+
+### Added
+
+- `docs/RANKING.md` states the ranking rule instead of leaving it in a lambda: anchored hits first,
+  then the displayed score (three decimals), then **node id descending** — which means that when two
+  hits round to the same score, the order is alphabetical, not relevance. The key is now a single
+  named function (`retrieval.rank_key`) rather than an inline expression.
+- The tie surface is measured, not assumed: every arm in `result.json` carries `tie_surface` (how many
+  queries have a tie at the k=5 and k=10 boundary, with their ids), and every `ledger.json` row carries
+  `boundary_tie_at_5` / `boundary_tie_at_10`. At the pinned corpus that is realtext **10/26** at k=5,
+  n2 10/26, control 5/26.
+- The corpus is frozen as data: `experiments/retrieval_noise_realtext/corpus_src/` holds the 71 source
+  documents with a `manifest.json` (per-file sha256), and the pin records `source_sha256` over their
+  concatenation **in `files[]` order** as well as `extracted_sha256` over the paragraph text. A test
+  re-derives both, so the two copies cannot drift apart silently.
+- `result.json` must declare `representativeness`: that this corpus measures lexical retrieval over this
+  repository's own prose, that its distractors are drawn from the same documents as the answers, and
+  what that does and does not license. The validator raises if the block is missing or incomplete, so it
+  is a gate rather than a paragraph in a README.
+- `corpus_version` (currently `v2`) in both the pin and the result, so a change of corpus is a visible
+  event instead of a silent shift in every quoted number.
+
+### Changed
+
+- `--check-corpus` is an audit, not a gate. It reports how many documents differ from the frozen set and
+  how old the pin is, and **never fails**: the project's own documentation changes with every release, so
+  a check that fails whenever `docs/` moves would be permanently red and would be turned off. What CI
+  asserts instead is internal consistency — the committed numbers must reproduce from the pinned corpus.
+- Refreshing the corpus is a deliberate version bump (`--refresh-corpus`, formerly `--rebuild-corpus`),
+  not a routine command: **every number quoted anywhere has to be restated when it runs**.
+- `tools/check_dist.py` requires `corpus_src/manifest.json` and `corpus_pin.json` in the artifacts, and
+  the documentation-size budget keeps scanning only `README.md` + `docs/`, so the frozen fixtures are a
+  fixture and not a document.
+
+### Notes
+
+- Nothing measured moved: at corpus v2 fractional r@5 **0.692**, r@1 0.615, MRR 0.688, competing share
+  0.492, hit-or-miss **0.7308**, ceiling 0.8462 — identical to v1. Freezing the input is not a change to
+  the measurement.
+- **The corpus is a same-domain regression set, not an independent validation set.** 20 of 20 rare terms
+  of the gold nodes (df ≤ 1 in the 27-node corpus) appear in the evaluation prose, because both describe
+  this same product, and 12.8% of its paragraphs are the project's own writing about retrieval evaluation
+  — including the decision entries some gold nodes point at. Freezing that corpus preserves the property;
+  it does not remove it. No external claim may cite realtext as evidence of real-world retrieval ability.
+- The 0.70 target remains attached to N2, remains **unmet** at 0.538, and the realistic corpus is reported
+  as its own measurement. Decoupling changed which number is comparable, not whether the target is met.
+
 ## [0.34.1] — 2026-10-31
 
 A checkout's line ending is not corpus content.
