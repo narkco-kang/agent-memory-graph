@@ -100,6 +100,7 @@ Read in this order; each one narrows the next:
 | Document | Answers | Status |
 |---|---|---|
 | [`API.md`](API.md) | Commands, methods, error codes — the on-disk `amg/v1` contract | contract, CI-enforced |
+| [`RANKING.md`](RANKING.md) | Hit ordering: score rounding, the id tie-break, and the boundary-tie surface | contract, CI-enforced |
 | [`BENCHMARKS.md`](BENCHMARKS.md) | How fast on 1k/5k/10k synthetic nodes | measured |
 | [`REAL-WORLD.md`](REAL-WORLD.md) | Two live graphs of different shape, and where their numbers disagree | measured |
 | [`WRITE-COST.md`](WRITE-COST.md) | Where the write time goes, and what could move it | measured, all options rejected or deferred |

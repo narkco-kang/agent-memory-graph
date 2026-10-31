@@ -183,6 +183,7 @@ def evaluate(corpus, queries, detail=None):
                             else "keyword")
                for item in queries}
     rows = []
+    tie_rows = []
     ceiling = 0
     for item in queries:
         gold = [g for g in item["gold"] if g in nodes_by_id]
@@ -194,17 +195,29 @@ def evaluate(corpus, queries, detail=None):
                "reciprocal_rank": 0.0}
         for k in run_eval.K_VALUES:
             row[f"recall@{k}"] = round(len(set(ranked[:k]) & set(gold)) / len(gold), 4) if gold else 0.0
+        boundary = {}
+        for cutoff in (5, 10):
+            scores = [hit["score"] for hit in hits]
+            boundary[cutoff] = (len(scores) > cutoff and scores[cutoff - 1] == scores[cutoff])
         best_rank = None
         for position, node_id in enumerate(ranked, start=1):
             if node_id in gold and best_rank is None:
                 best_rank = position
                 row["reciprocal_rank"] = 1.0 / position
         rows.append(row)
+        tie_rows.append((item["id"], boundary))
         if detail is not None:
-            detail.append(_detail_row(nodes_by_id, item, gold, ranked, best_rank, row))
+            row_detail = _detail_row(nodes_by_id, item, gold, ranked, best_rank, row)
+            row_detail["boundary_tie_at_5"] = boundary[5]
+            row_detail["boundary_tie_at_10"] = boundary[10]
+            detail.append(row_detail)
     result = run_eval.aggregate(run_eval.stratified_halves(rows))
     result["ceiling"] = round(ceiling / len(queries), 4)
     result["hit_or_miss@5"] = round(sum(1 for r in rows if r.get("recall@5", 0.0) > 0) / len(rows), 4)
+    result["tie_surface"] = {
+        f"k{cutoff}": {"queries": sum(1 for _qid, bound in tie_rows if bound[cutoff]),
+                       "ids": [qid for qid, bound in tie_rows if bound[cutoff]]}
+        for cutoff in (5, 10)}
     return result
 
 

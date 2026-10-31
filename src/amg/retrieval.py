@@ -35,6 +35,17 @@ _WORD = re.compile(r"[a-z0-9]")
 WEIGHTS = {"id": 3.0, "label": 2.0, "note": 1.0, "source": 0.5, "owner": 0.5}
 
 
+def rank_key(raw, anchor_present, node_id):
+    """The single ordering key for L3/L4 hits (highest first).
+
+    Anchored hits first, then the pre-normalization score rounded to the displayed precision,
+    then the node id **reversed**. The id component is what breaks exact ties, so at a tie the
+    rank is decided by the identifier, not by relevance: results are reproducible, but a tie is
+    not a relevance judgement. Callers reading `hits[i]["score"]` see the same 3-dp rounding.
+    """
+    return (bool(anchor_present), round(raw, 3), node_id or "")
+
+
 def _tokens(query: str):
     """Query -> matchable tokens, with two deliberate refusals.
 
@@ -218,8 +229,8 @@ def search(doc: dict, query: str, layer: str = "L3", k: int = 10, strict: bool =
         }))
     if strict:
         scored = [(raw, hit) for raw, hit in scored if hit["anchor_state"] == "present"]
-    scored.sort(key=lambda item: (item[1]["anchor_state"] == "present",
-                                  round(item[0], 3), item[1]["id"] or ""), reverse=True)
+    scored.sort(key=lambda item: rank_key(item[0], item[1]["anchor_state"] == "present",
+                                          item[1]["id"]), reverse=True)
     hits = [hit for _, hit in scored[:k]]
     if expand and layer != "L2":
         hits = _expand(doc, hits, strict=strict)

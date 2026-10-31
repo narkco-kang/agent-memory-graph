@@ -110,6 +110,8 @@ hit, marked `expanded_from`.
 Cycle policy: `depends_on` and `supersedes` must form a DAG — a cycle there is a
 `check` error. Other kinds may legitimately cycle and are only counted as a hint.
 
+Ranking, score rounding, and what decides an exact tie: [RANKING.md](RANKING.md).
+
 ## MCP server (stdio, v0.3)
 
 `amg mcp <dir>` speaks newline-delimited JSON-RPC 2.0 on stdin/stdout and exposes

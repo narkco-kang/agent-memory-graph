@@ -29,6 +29,8 @@
   "rows": [
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": false,
       "bucket": "keyword",
       "gold": [
         "decision.atomic-replace"
@@ -55,7 +57,9 @@
       ]
     },
     {
-      "best_gold_rank": 37,
+      "best_gold_rank": 45,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": false,
       "bucket": "paraphrase",
       "gold": [
         "decision.atomic-replace"
@@ -78,14 +82,15 @@
         "the"
       ],
       "recall@5": 0.0,
-      "top1_id": "task.n005148",
+      "top1_id": "task.n008219",
       "top1_shared_tokens": [
-        "graph",
-        "the"
+        "graph"
       ]
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": false,
+      "boundary_tie_at_5": true,
       "bucket": "keyword",
       "gold": [
         "task.windows-lock"
@@ -110,6 +115,8 @@
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": false,
+      "boundary_tie_at_5": false,
       "bucket": "paraphrase",
       "gold": [
         "task.windows-lock"
@@ -135,6 +142,8 @@
     },
     {
       "best_gold_rank": 4,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": false,
       "bucket": "keyword",
       "gold": [
         "task.read-audit"
@@ -153,11 +162,16 @@
         "size"
       ],
       "recall@5": 1.0,
-      "top1_id": "task.n008281",
-      "top1_shared_tokens": []
+      "top1_id": "task.n000240",
+      "top1_shared_tokens": [
+        "jsonl",
+        "reads"
+      ]
     },
     {
       "best_gold_rank": null,
+      "boundary_tie_at_10": false,
+      "boundary_tie_at_5": false,
       "bucket": "paraphrase",
       "gold": [
         "task.read-audit"
@@ -174,14 +188,15 @@
         "who"
       ],
       "recall@5": 0.0,
-      "top1_id": "task.n007368",
+      "top1_id": "task.n009965",
       "top1_shared_tokens": [
-        "can",
         "who"
       ]
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": true,
       "bucket": "keyword",
       "gold": [
         "task.expiry-command"
@@ -206,6 +221,8 @@
     },
     {
       "best_gold_rank": null,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": false,
       "bucket": "paraphrase",
       "gold": [
         "decision.no-daemon",
@@ -224,13 +241,15 @@
         "retired"
       ],
       "recall@5": 0.0,
-      "top1_id": "task.n003153",
+      "top1_id": "task.n005688",
       "top1_shared_tokens": [
-        "facts"
+        "get"
       ]
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": false,
+      "boundary_tie_at_5": false,
       "bucket": "keyword",
       "gold": [
         "decision.zero-deps"
@@ -256,6 +275,8 @@
     },
     {
       "best_gold_rank": null,
+      "boundary_tie_at_10": false,
+      "boundary_tie_at_5": true,
       "bucket": "paraphrase",
       "gold": [
         "decision.zero-deps"
@@ -271,7 +292,7 @@
         "pip"
       ],
       "recall@5": 0.0,
-      "top1_id": "task.n009785",
+      "top1_id": "task.n003826",
       "top1_shared_tokens": [
         "install",
         "pip"
@@ -279,6 +300,8 @@
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": true,
       "bucket": "keyword",
       "gold": [
         "decision.two-key-ranking"
@@ -310,6 +333,8 @@
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": true,
       "bucket": "paraphrase",
       "gold": [
         "decision.two-key-ranking"
@@ -332,6 +357,8 @@
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": true,
       "bucket": "keyword",
       "gold": [
         "decision.read-only"
@@ -361,7 +388,9 @@
       ]
     },
     {
-      "best_gold_rank": 2,
+      "best_gold_rank": 1,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": false,
       "bucket": "paraphrase",
       "gold": [
         "decision.read-only"
@@ -382,14 +411,16 @@
         "writing"
       ],
       "recall@5": 1.0,
-      "top1_id": "task.n002749",
+      "top1_id": "decision.read-only",
       "top1_shared_tokens": [
-        "client",
+        "can",
         "the"
       ]
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": false,
       "bucket": "keyword",
       "gold": [
         "task.digest-budget"
@@ -417,7 +448,9 @@
       ]
     },
     {
-      "best_gold_rank": 55,
+      "best_gold_rank": 48,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": true,
       "bucket": "keyword",
       "gold": [
         "task.digest-budget",
@@ -440,14 +473,15 @@
         "the"
       ],
       "recall@5": 0.0,
-      "top1_id": "task.n009188",
+      "top1_id": "task.n002192",
       "top1_shared_tokens": [
-        "summary",
         "the"
       ]
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": true,
       "bucket": "keyword",
       "gold": [
         "rule.no-fabricated-hash"
@@ -473,6 +507,8 @@
     },
     {
       "best_gold_rank": null,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": false,
       "bucket": "paraphrase",
       "gold": [
         "rule.no-fabricated-hash"
@@ -494,7 +530,7 @@
         "what"
       ],
       "recall@5": 0.0,
-      "top1_id": "task.n009510",
+      "top1_id": "task.n007015",
       "top1_shared_tokens": [
         "one",
         "the"
@@ -502,6 +538,8 @@
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": true,
       "bucket": "keyword",
       "gold": [
         "issue.cjk-tokenization"
@@ -532,6 +570,8 @@
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": false,
+      "boundary_tie_at_5": false,
       "bucket": "keyword",
       "gold": [
         "issue.cjk-tokenization"
@@ -559,6 +599,8 @@
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": false,
       "bucket": "keyword",
       "gold": [
         "issue.lock-timeout"
@@ -590,6 +632,8 @@
     },
     {
       "best_gold_rank": 2,
+      "boundary_tie_at_10": false,
+      "boundary_tie_at_5": false,
       "bucket": "paraphrase",
       "gold": [
         "issue.double-write",
@@ -620,6 +664,8 @@
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": true,
       "bucket": "keyword",
       "gold": [
         "rule.append-only-history"
@@ -647,6 +693,8 @@
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": false,
+      "boundary_tie_at_5": false,
       "bucket": "keyword",
       "gold": [
         "model.embedding",
@@ -676,6 +724,8 @@
     },
     {
       "best_gold_rank": 1,
+      "boundary_tie_at_10": true,
+      "boundary_tie_at_5": false,
       "bucket": "keyword",
       "gold": [
         "task.vector-search",
@@ -709,7 +759,9 @@
       ]
     },
     {
-      "best_gold_rank": 9,
+      "best_gold_rank": 11,
+      "boundary_tie_at_10": false,
+      "boundary_tie_at_5": false,
       "bucket": "paraphrase",
       "gold": [
         "decision.plain-json"
@@ -729,7 +781,7 @@
         "the"
       ],
       "recall@5": 0.0,
-      "top1_id": "task.n007305",
+      "top1_id": "task.n007096",
       "top1_shared_tokens": [
         "readable"
       ]

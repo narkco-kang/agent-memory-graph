@@ -1,6 +1,6 @@
 {
-  "extracted_bytes": 214807,
-  "extracted_sha256": "98e2ada9fb63fb04e3c4cab0dcf5c9e4f2643c2666a7d1a66415c6aab18b7115",
+  "extracted_bytes": 217680,
+  "extracted_sha256": "5ad5b00aea5495b9df1b32504869820e789bbb6f3270cceba3d9139953d82d6c",
   "extractor": "prose_pool/1",
   "files": [
     {
@@ -13,7 +13,7 @@
     },
     {
       "path": "docs/API.md",
-      "sha256": "54130c957f3add49557ffb1c93756b1700f44829265aee96134c5871369fb3cf"
+      "sha256": "f7e5f134272ff3edb1d7266bdbf936de6602a56bc610922df60cf3cc1fd753ca"
     },
     {
       "path": "docs/ARCHIVE.md",
@@ -48,8 +48,12 @@
       "sha256": "c00769497678a23ab7180e7e541295388ce6b23c42fa331c12fa770441d3be57"
     },
     {
+      "path": "docs/RANKING.md",
+      "sha256": "bde155f7f81d55cf7805d8a40cd8e35f663966e25554e393d31a48aa3916912e"
+    },
+    {
       "path": "docs/README.md",
-      "sha256": "80097c2494a7649a08e4478dc9e2f495c162b1655e4dd4e6a691a4434e6eb85d"
+      "sha256": "bd6bc25a6dbb59a9d040acda7021bfb616ed7b900434a1b2279b4678afd35cc3"
     },
     {
       "path": "docs/REAL-WORLD.md",
@@ -273,7 +277,7 @@
     },
     {
       "path": "docs/decisions/52-real-noise-also-misses.md",
-      "sha256": "2b7d59357d539386a1633d4df7bccba02f502065bfa871e63d0b04bcb195842c"
+      "sha256": "3389dd0cb2d481bc355b1bdbb53a874ed79f23f23a19c89e67bd76fa81a479d1"
     },
     {
       "path": "docs/decisions/53-arm-name-must-match-code.md",
@@ -284,6 +288,6 @@
       "sha256": "c03e7d5de1640a6eaa9d8aa14b808c3a3622af28e8b306bf3dd8d664d39d4d6a"
     }
   ],
-  "paragraphs": 623,
+  "paragraphs": 635,
   "schema": "realtext-corpus/1"
 }

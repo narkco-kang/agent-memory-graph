@@ -7,7 +7,28 @@
       "n": 26,
       "recall@1": 0.731,
       "recall@10": 0.865,
-      "recall@5": 0.865
+      "recall@5": 0.865,
+      "tie_surface": {
+        "k10": {
+          "ids": [
+            "q02",
+            "q14",
+            "q16",
+            "q26"
+          ],
+          "queries": 4
+        },
+        "k5": {
+          "ids": [
+            "q08",
+            "q10",
+            "q16",
+            "q20",
+            "q21"
+          ],
+          "queries": 5
+        }
+      }
     },
     "n1": {
       "ceiling": 0.8846,
@@ -16,7 +37,29 @@
       "n": 26,
       "recall@1": 0.731,
       "recall@10": 0.865,
-      "recall@5": 0.865
+      "recall@5": 0.865,
+      "tie_surface": {
+        "k10": {
+          "ids": [
+            "q02",
+            "q14",
+            "q16",
+            "q26"
+          ],
+          "queries": 4
+        },
+        "k5": {
+          "ids": [
+            "q08",
+            "q10",
+            "q16",
+            "q18",
+            "q20",
+            "q21"
+          ],
+          "queries": 6
+        }
+      }
     },
     "n2": {
       "ceiling": 0.8462,
@@ -25,7 +68,47 @@
       "n": 26,
       "recall@1": 0.481,
       "recall@10": 0.577,
-      "recall@5": 0.538
+      "recall@5": 0.538,
+      "tie_surface": {
+        "k10": {
+          "ids": [
+            "q01",
+            "q03",
+            "q04",
+            "q05",
+            "q06",
+            "q07",
+            "q08",
+            "q09",
+            "q11",
+            "q13",
+            "q14",
+            "q15",
+            "q16",
+            "q17",
+            "q19",
+            "q20",
+            "q23",
+            "q24"
+          ],
+          "queries": 18
+        },
+        "k5": {
+          "ids": [
+            "q01",
+            "q03",
+            "q05",
+            "q07",
+            "q09",
+            "q11",
+            "q13",
+            "q16",
+            "q23",
+            "q24"
+          ],
+          "queries": 10
+        }
+      }
     },
     "n3": {
       "ceiling": 0.8846,
@@ -34,31 +117,100 @@
       "n": 26,
       "recall@1": 0.731,
       "recall@10": 0.865,
-      "recall@5": 0.865
+      "recall@5": 0.865,
+      "tie_surface": {
+        "k10": {
+          "ids": [
+            "q01",
+            "q02",
+            "q03",
+            "q12",
+            "q14",
+            "q16",
+            "q18",
+            "q21",
+            "q22",
+            "q26"
+          ],
+          "queries": 10
+        },
+        "k5": {
+          "ids": [
+            "q01",
+            "q03",
+            "q08",
+            "q10",
+            "q16",
+            "q20",
+            "q21",
+            "q26"
+          ],
+          "queries": 8
+        }
+      }
     },
     "realtext": {
       "ceiling": 0.8462,
       "hit_or_miss@5": 0.7308,
-      "mrr@10": 0.669,
+      "mrr@10": 0.688,
       "n": 26,
-      "recall@1": 0.577,
-      "recall@10": 0.731,
-      "recall@5": 0.692
+      "recall@1": 0.615,
+      "recall@10": 0.692,
+      "recall@5": 0.692,
+      "tie_surface": {
+        "k10": {
+          "ids": [
+            "q01",
+            "q02",
+            "q05",
+            "q07",
+            "q08",
+            "q11",
+            "q12",
+            "q13",
+            "q14",
+            "q15",
+            "q16",
+            "q17",
+            "q18",
+            "q19",
+            "q21",
+            "q23",
+            "q25"
+          ],
+          "queries": 17
+        },
+        "k5": {
+          "ids": [
+            "q03",
+            "q07",
+            "q10",
+            "q11",
+            "q12",
+            "q13",
+            "q16",
+            "q17",
+            "q19",
+            "q23"
+          ],
+          "queries": 10
+        }
+      }
     }
   },
   "coverage": {
     "n2_reference_share_ge_0.25": 0.918,
     "realtext": {
-      "mean": 0.2343,
+      "mean": 0.2428,
       "median": 0.2,
-      "pairs": 2474,
-      "share_ge_0.25": 0.4794
+      "pairs": 2494,
+      "share_ge_0.25": 0.492
     }
   },
   "inputs": {
     "corpus": {
-      "extracted_bytes": 214807,
-      "extracted_sha256": "98e2ada9fb63fb04e3c4cab0dcf5c9e4f2643c2666a7d1a66415c6aab18b7115",
+      "extracted_bytes": 217680,
+      "extracted_sha256": "5ad5b00aea5495b9df1b32504869820e789bbb6f3270cceba3d9139953d82d6c",
       "extractor": "prose_pool/1",
       "files": [
         {
@@ -71,7 +223,7 @@
         },
         {
           "path": "docs/API.md",
-          "sha256": "54130c957f3add49557ffb1c93756b1700f44829265aee96134c5871369fb3cf"
+          "sha256": "f7e5f134272ff3edb1d7266bdbf936de6602a56bc610922df60cf3cc1fd753ca"
         },
         {
           "path": "docs/ARCHIVE.md",
@@ -106,8 +258,12 @@
           "sha256": "c00769497678a23ab7180e7e541295388ce6b23c42fa331c12fa770441d3be57"
         },
         {
+          "path": "docs/RANKING.md",
+          "sha256": "bde155f7f81d55cf7805d8a40cd8e35f663966e25554e393d31a48aa3916912e"
+        },
+        {
           "path": "docs/README.md",
-          "sha256": "80097c2494a7649a08e4478dc9e2f495c162b1655e4dd4e6a691a4434e6eb85d"
+          "sha256": "bd6bc25a6dbb59a9d040acda7021bfb616ed7b900434a1b2279b4678afd35cc3"
         },
         {
           "path": "docs/REAL-WORLD.md",
@@ -331,7 +487,7 @@
         },
         {
           "path": "docs/decisions/52-real-noise-also-misses.md",
-          "sha256": "2b7d59357d539386a1633d4df7bccba02f502065bfa871e63d0b04bcb195842c"
+          "sha256": "3389dd0cb2d481bc355b1bdbb53a874ed79f23f23a19c89e67bd76fa81a479d1"
         },
         {
           "path": "docs/decisions/53-arm-name-must-match-code.md",
@@ -342,12 +498,12 @@
           "sha256": "c03e7d5de1640a6eaa9d8aa14b808c3a3622af28e8b306bf3dd8d664d39d4d6a"
         }
       ],
-      "paragraphs": 623,
+      "paragraphs": 635,
       "schema": "realtext-corpus/1"
     },
     "deep_k": 100,
     "nodes": 10000,
-    "paragraphs": 623,
+    "paragraphs": 635,
     "seed": 20261031,
     "window_words": 8
   },
@@ -357,11 +513,11 @@
     "Q3_ordering_n2_lt_realtext_lt_control": true,
     "Q4_target_stays_attached_to_n2_unmet": true,
     "control_r5": 0.865,
-    "corpus_extracted_sha256": "98e2ada9fb63fb04e3c4cab0dcf5c9e4f2643c2666a7d1a66415c6aab18b7115",
+    "corpus_extracted_sha256": "5ad5b00aea5495b9df1b32504869820e789bbb6f3270cceba3d9139953d82d6c",
     "n2_r5": 0.538,
     "realtext_hit_or_miss@5": 0.7308,
     "realtext_r5": 0.692,
-    "realtext_share_ge_0.25": 0.4794,
+    "realtext_share_ge_0.25": 0.492,
     "shipped_r5": {
       "control": 0.865,
       "n1": 0.865,
