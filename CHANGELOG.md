@@ -3,6 +3,39 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.32.6] — 2026-10-31
+
+Next attempt at query-vocabulary noise, rejected — with the mechanism recorded.
+
+### Measured
+
+- The shipped scorer leaves N2 (query-vocabulary noise) at recall@5 **0.538** against a 0.70
+  target, and #28 explained why IDF cannot move it. `experiments/retrieval_beyond_df/`
+  pre-registered a signal outside the frequency family: rerank the top 100 by **query coverage**
+  (`score × coverage**alpha`), with `alpha = 0` as a control arm that must reproduce the shipped
+  metrics.
+- Result: it makes every corpus worse — N2 **0.538 → 0.481**, control 0.865 → 0.846, unrelated
+  noise 0.865 → 0.808, frequent noise 0.865 → 0.808. All four pre-registered criteria failed;
+  no ship, no retuning (DECISIONS #47).
+- **The mechanism is the finding**: N2 injects distractors from the query's *own vocabulary*, so
+  coverage counts the injected tokens and a distractor absorbing three of them outranks the gold
+  node — the feature points away from the answer, which is why the harm is larger on N2 (−0.057)
+  than where it merely dilutes (−0.019 on control). Next candidate must separate source tokens
+  from injected ones (term proximity inside one field), not aggregate over query tokens.
+- All four predictions were wrong and are recorded as wrong.
+
+### Fixed (in the harness, before drawing any conclusion)
+
+- The first version broke ties by id, which moved n1 recall@5 from 0.865 to 0.827 with no signal
+  involved. It now breaks ties by the scorer's own order and asserts that `alpha = 0` reproduces
+  the shipped metrics on all four corpora (`tests/test_retrieval_beyond_df.py`). A reranker that
+  cannot reproduce its baseline is measuring its own tie-break.
+
+### Not changed
+
+- `src/amg/retrieval.py` is untouched. N2 remains 0.538 and its target remains unmet; the
+  frozen 27-query baseline remains 0.865.
+
 ## [0.32.5] — 2026-10-31
 
 Test tightening: the provenance check now pins *which* id is which.

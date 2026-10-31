@@ -81,3 +81,4 @@ split: the previous single file could hold 34 decisions and then stopped.
 | [44](decisions/44-derived-artifact-expectation.md) | A derived expectation must derive the same way it checks. | active | ✓ |
 | [45](decisions/45-lock-tail-cross-platform.md) | The lock tail is cross-platform, and Windows pays more of it. | amended (#46) | ✓ |
 | [46](decisions/46-one-run-is-not-a-measurement.md) | One run is not a measurement: quote the run, and claim only what repeats. | active | ✓ |
+| [47](decisions/47-coverage-rerank-rejected.md) | Coverage reranking is rejected: it is anti-correlated with the answer under query noise. | active | ✓ |

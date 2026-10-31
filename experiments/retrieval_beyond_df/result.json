@@ -1,0 +1,231 @@
+{
+  "corpora": {
+    "control": {
+      "alpha0_metrics_equal_shipped": true,
+      "arms": {
+        "0": {
+          "mrr@10": 0.821,
+          "n": 26,
+          "recall@1": 0.731,
+          "recall@10": 0.865,
+          "recall@5": 0.865
+        },
+        "0.5": {
+          "mrr@10": 0.79,
+          "n": 26,
+          "recall@1": 0.692,
+          "recall@10": 0.846,
+          "recall@5": 0.846
+        },
+        "1": {
+          "mrr@10": 0.79,
+          "n": 26,
+          "recall@1": 0.692,
+          "recall@10": 0.846,
+          "recall@5": 0.846
+        },
+        "2": {
+          "mrr@10": 0.79,
+          "n": 26,
+          "recall@1": 0.692,
+          "recall@10": 0.846,
+          "recall@5": 0.846
+        },
+        "shipped": {
+          "mrr@10": 0.821,
+          "n": 26,
+          "recall@1": 0.731,
+          "recall@10": 0.865,
+          "recall@5": 0.865
+        }
+      },
+      "latency_ms": {
+        "max": 1.69,
+        "p50": 0.87
+      },
+      "nodes": 27
+    },
+    "n1": {
+      "alpha0_metrics_equal_shipped": true,
+      "arms": {
+        "0": {
+          "mrr@10": 0.815,
+          "n": 26,
+          "recall@1": 0.731,
+          "recall@10": 0.865,
+          "recall@5": 0.865
+        },
+        "0.5": {
+          "mrr@10": 0.788,
+          "n": 26,
+          "recall@1": 0.692,
+          "recall@10": 0.846,
+          "recall@5": 0.808
+        },
+        "1": {
+          "mrr@10": 0.788,
+          "n": 26,
+          "recall@1": 0.692,
+          "recall@10": 0.846,
+          "recall@5": 0.808
+        },
+        "2": {
+          "mrr@10": 0.788,
+          "n": 26,
+          "recall@1": 0.692,
+          "recall@10": 0.846,
+          "recall@5": 0.808
+        },
+        "shipped": {
+          "mrr@10": 0.815,
+          "n": 26,
+          "recall@1": 0.731,
+          "recall@10": 0.865,
+          "recall@5": 0.865
+        }
+      },
+      "latency_ms": {
+        "max": 158.56,
+        "p50": 79.32
+      },
+      "nodes": 10000
+    },
+    "n2": {
+      "alpha0_metrics_equal_shipped": true,
+      "arms": {
+        "0": {
+          "mrr@10": 0.543,
+          "n": 26,
+          "recall@1": 0.481,
+          "recall@10": 0.577,
+          "recall@5": 0.538
+        },
+        "0.5": {
+          "mrr@10": 0.488,
+          "n": 26,
+          "recall@1": 0.442,
+          "recall@10": 0.538,
+          "recall@5": 0.481
+        },
+        "1": {
+          "mrr@10": 0.488,
+          "n": 26,
+          "recall@1": 0.442,
+          "recall@10": 0.538,
+          "recall@5": 0.481
+        },
+        "2": {
+          "mrr@10": 0.431,
+          "n": 26,
+          "recall@1": 0.365,
+          "recall@10": 0.5,
+          "recall@5": 0.442
+        },
+        "shipped": {
+          "mrr@10": 0.543,
+          "n": 26,
+          "recall@1": 0.481,
+          "recall@10": 0.577,
+          "recall@5": 0.538
+        }
+      },
+      "latency_ms": {
+        "max": 190.91,
+        "p50": 105.97
+      },
+      "nodes": 10000
+    },
+    "n3": {
+      "alpha0_metrics_equal_shipped": true,
+      "arms": {
+        "0": {
+          "mrr@10": 0.821,
+          "n": 26,
+          "recall@1": 0.731,
+          "recall@10": 0.865,
+          "recall@5": 0.865
+        },
+        "0.5": {
+          "mrr@10": 0.788,
+          "n": 26,
+          "recall@1": 0.692,
+          "recall@10": 0.846,
+          "recall@5": 0.808
+        },
+        "1": {
+          "mrr@10": 0.788,
+          "n": 26,
+          "recall@1": 0.692,
+          "recall@10": 0.846,
+          "recall@5": 0.808
+        },
+        "2": {
+          "mrr@10": 0.788,
+          "n": 26,
+          "recall@1": 0.692,
+          "recall@10": 0.846,
+          "recall@5": 0.808
+        },
+        "shipped": {
+          "mrr@10": 0.821,
+          "n": 26,
+          "recall@1": 0.731,
+          "recall@10": 0.865,
+          "recall@5": 0.865
+        }
+      },
+      "latency_ms": {
+        "max": 212.11,
+        "p50": 94.24
+      },
+      "nodes": 10000
+    }
+  },
+  "criteria": {
+    "control_min_r5": 0.855,
+    "n1_min_r5": 0.855,
+    "n2_min_gain_r5": 0.05,
+    "n2_target_r5": 0.7,
+    "n3_min_r5": 0.845
+  },
+  "inputs": {
+    "alphas": [
+      0.0,
+      0.5,
+      1.0,
+      2.0
+    ],
+    "corpora": {
+      "control": 27,
+      "n1": 10000,
+      "n2": 10000,
+      "n3": 10000
+    },
+    "deep_k": 100,
+    "shipped_scorer": "v0.19.0+ IDF weights, src/amg/retrieval.py"
+  },
+  "verdicts": {
+    "C1_control_no_regression": false,
+    "C2_n2_gain_at_least_0.05": false,
+    "C3_n1_unchanged": false,
+    "C4_n3_not_harmed": false,
+    "N2_target_met": false,
+    "chosen_alpha": "0.5",
+    "chosen_on_corpus": "n2 (selection uses the target corpus only)",
+    "criteria": {
+      "control_min_r5": 0.855,
+      "n1_min_r5": 0.855,
+      "n2_min_gain_r5": 0.05,
+      "n2_target_r5": 0.7,
+      "n3_min_r5": 0.845
+    },
+    "n2_gain": -0.057,
+    "ship": false,
+    "shipped_r5": {
+      "control": 0.865,
+      "n1": 0.865,
+      "n2": 0.538,
+      "n3": 0.865
+    }
+  }
+}
