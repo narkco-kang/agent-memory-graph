@@ -32,6 +32,28 @@ jobs:
           bash examples/handoff.sh
           bash examples/archive.sh
 
+  tail:
+    # DECISIONS #15 concluded the ~200 ms tail is starvation from non-FIFO lock wake-ups,
+    # measured on macOS only. Windows stayed "not measured" from v0.15.0 to v0.32.2. This
+    # job measures the same thing on every platform with the same script, so the claim is
+    # no longer macOS-only: a seeded graph, one uncontended write for the cost, then a
+    # burst whose lock waiters are counted. Lost writes fail the job; a slow wait is a
+    # finding to publish, not a failure.
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-latest, macos-latest, windows-latest]
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-python@v5
+        with:
+          python-version: "3.12"
+      - name: install
+        run: pip install -e .
+      - name: lock tail latency (5,000 nodes, 8 writers x 10 writes)
+        run: python experiments/concurrency/tail_latency.py --nodes 5000 --writers 8 --writes 10 --json
+
   package:
     # The artifact is a claim too. v0.7.0's first sdist shipped tests that could
     # not run (docs/, tools/ and experiments/ were missing), and an install-only
