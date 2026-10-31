@@ -37,7 +37,8 @@ class DocSymbolGateTests(unittest.TestCase):
 
 
 class RecursiveCoverageTests(unittest.TestCase):
-    """v0.30.0: a document in a subdirectory must not escape the symbol gate."""
+    """v0.30.0: a document in a subdirectory must not escape the symbol gate.
+    v0.31.0: nor may a document renamed away from `.md`."""
 
     def test_default_targets_are_recursive(self):
         sys.path.insert(0, os.path.join(ROOT, "tools"))
@@ -47,7 +48,8 @@ class RecursiveCoverageTests(unittest.TestCase):
             sys.path.pop(0)
         fake = tempfile.mkdtemp(prefix="amg-docwalk-")
         for rel in ("README.md", "docs/ok.md", "docs/decisions/new.md",
-                    "docs/decisions/v19/more.md"):
+                    "docs/decisions/v19/more.md", "docs/n/A.markdown",
+                    "docs/n/B.txt", "docs/n/NOEXT"):
             path = os.path.join(fake, rel)
             os.makedirs(os.path.dirname(path), exist_ok=True)
             with open(path, "w", encoding="utf-8") as fh:
@@ -60,7 +62,57 @@ class RecursiveCoverageTests(unittest.TestCase):
         finally:
             check_doc_symbols.ROOT = original
         self.assertEqual(targets, {"README.md", "docs/ok.md", "docs/decisions/new.md",
-                                   "docs/decisions/v19/more.md"})
+                                   "docs/decisions/v19/more.md", "docs/n/A.markdown",
+                                   "docs/n/B.txt", "docs/n/NOEXT"})
+
+    def test_renamed_document_cannot_hide_a_phantom_command(self):
+        # v0.31.0: on v0.30.0 this page documented `amg teleport` with exit 0, because
+        # the gate selected files by `.md` suffix. The suffix was the only difference.
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        try:
+            import check_doc_symbols
+        finally:
+            sys.path.pop(0)
+        fake = tempfile.mkdtemp(prefix="amg-docscope-")
+        path = os.path.join(fake, "docs", "n", "PHANTOM.markdown")
+        os.makedirs(os.path.dirname(path))
+        with open(path, "w", encoding="utf-8") as fh:
+            fh.write("Run `amg teleport` to beam the graph.\n")
+        with open(os.path.join(fake, "README.md"), "w", encoding="utf-8") as fh:
+            fh.write("entry document, no symbols here\n")
+        original = check_doc_symbols.ROOT
+        check_doc_symbols.ROOT = fake
+        try:
+            missing = check_doc_symbols.scan_targets(check_doc_symbols.default_targets())
+        finally:
+            check_doc_symbols.ROOT = original
+        self.assertEqual(len(missing), 1, missing)
+        self.assertIn("teleport", missing[0])
+
+    def test_both_gates_see_the_same_files(self):
+        # One design was copied twice and the copy diverged in neither place — the
+        # v0.31.0 bug was in both. Sharing doc_scope.py fixes it structurally; this
+        # test fails if either gate ever stops using it.
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        try:
+            import check_doc_sizes
+            import check_doc_symbols
+        finally:
+            sys.path.pop(0)
+        fake = tempfile.mkdtemp(prefix="amg-docscope-")
+        for rel in ("README.md", "docs/a.md", "docs/deep/b.markdown", "docs/deep/c.txt"):
+            path = os.path.join(fake, rel)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as fh:
+                fh.write("x")
+        sizes_root, symbols_root = check_doc_sizes.ROOT, check_doc_symbols.ROOT
+        check_doc_sizes.ROOT = check_doc_symbols.ROOT = fake
+        try:
+            sizes = {p.replace(os.sep, "/") for p in check_doc_sizes.default_targets()}
+            symbols = {p.replace(os.sep, "/") for p in check_doc_symbols.default_targets()}
+        finally:
+            check_doc_sizes.ROOT, check_doc_symbols.ROOT = sizes_root, symbols_root
+        self.assertEqual(sizes, symbols)
 
 
 class DocCoverageTests(unittest.TestCase):
@@ -80,11 +132,12 @@ class DocCoverageTests(unittest.TestCase):
         targets = {path.replace(os.sep, "/") for path in check_doc_symbols.default_targets()}
         # Forward slashes: the gate emits POSIX-style relative paths so its output is
         # identical on every platform (see the Windows fix on 4e0daa6).
-        docs = {
-            "docs/" + name
-            for name in os.listdir(os.path.join(ROOT, "docs"))
-            if name.endswith(".md")
-        }
+        # v0.31.0: every file under docs/, not only `*.md` — the suffix was the bypass.
+        docs = set()
+        for current, _dirs, names in os.walk(os.path.join(ROOT, "docs")):
+            for name in names:
+                rel = os.path.relpath(os.path.join(current, name), ROOT)
+                docs.add(rel.replace(os.sep, "/"))
         self.assertIn("README.md", targets)
         self.assertEqual(docs - targets, set(), "documents not scanned by the gate")
 

@@ -8,6 +8,10 @@ Pre-registered criteria:
 4. the numbers in the gate are the numbers stated in docs/README.md;
 5. every document is covered by default, so a new one cannot escape the budget;
 6. the append-only logs are out of scope on purpose and say so.
+
+Criterion 7 was added for v0.31.0 after the independent verifier measured the bypass
+on v0.30.0: `docs/n/A.markdown`, `docs/n/B.txt` and `docs/n/NOEXT` at 30,000 B each
+all passed. 7. renaming a page does not remove it from the budget.
 """
 import os
 import subprocess
@@ -94,9 +98,42 @@ class DocSizeGateTests(unittest.TestCase):
             sys.path.pop(0)
         targets = {path.replace(os.sep, "/") for path in check_doc_sizes.default_targets()}
         self.assertIn("README.md", targets)
-        docs = {"docs/" + name for name in os.listdir(os.path.join(ROOT, "docs"))
-                if name.endswith(".md")}
+        # v0.31.0: the scope is the directory, not the `.md` suffix, so this fixture
+        # collects every file rather than every `.md` file.
+        docs = set()
+        for current, _dirs, names in os.walk(os.path.join(ROOT, "docs")):
+            for name in names:
+                rel = os.path.relpath(os.path.join(current, name), ROOT)
+                docs.add(rel.replace(os.sep, "/"))
         self.assertEqual(docs - targets, set(), "documents not covered by the budget gate")
+
+    def test_renamed_documents_cannot_escape_the_budget(self):
+        # v0.31.0: the walk matched `.md`, so `mv page.md page.markdown` (or `.txt`,
+        # or no extension) made a 30 KB page invisible. Measured on v0.30.0 by the
+        # independent verifier: three 30,000 B files passed both gates.
+        sys.path.insert(0, os.path.join(ROOT, "tools"))
+        try:
+            import check_doc_sizes
+        finally:
+            sys.path.pop(0)
+        fake = tempfile.mkdtemp(prefix="amg-docscope-")
+        for rel in ("README.md", "docs/n/A.markdown", "docs/n/B.txt", "docs/n/NOEXT"):
+            path = os.path.join(fake, rel)
+            os.makedirs(os.path.dirname(path), exist_ok=True)
+            with open(path, "w", encoding="utf-8") as fh:
+                # README stays small so only the three renamed pages can fail.
+                fh.write("x" * (1024 if rel == "README.md" else 30 * 1024))
+        original = check_doc_sizes.ROOT
+        check_doc_sizes.ROOT = fake
+        try:
+            targets = check_doc_sizes.default_targets()
+            report = check_doc_sizes.check(targets)
+        finally:
+            check_doc_sizes.ROOT = original
+        self.assertEqual({t.replace(os.sep, "/") for t in targets},
+                         {"README.md", "docs/n/A.markdown", "docs/n/B.txt", "docs/n/NOEXT"})
+        self.assertEqual(sorted(p.replace(os.sep, "/") for p in report["over"]),
+                         ["docs/n/A.markdown", "docs/n/B.txt", "docs/n/NOEXT"])
 
     def test_subdirectory_documents_cannot_escape_the_budget(self):
         # v0.30.0: the walk listed only docs/*.md, so docs/decisions/big.md escaped

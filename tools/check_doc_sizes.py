@@ -10,11 +10,17 @@ document had silently grown to 20 KB of material that already lived in `docs/`.
 Budgets (both stated in docs/README.md; the test asserts they match this file):
 
   * an **entry** document (`README.md`, `docs/README.md`) — 12 KiB;
-  * any other `docs/*.md` — 24 KiB.
+  * any other file under `docs/`, at any depth and under any name — 24 KiB.
 
-Scope is deliberately narrow: `CHANGELOG.md` and `RELEASE.md` are append-only logs
-read top-to-bottom-never, so a size cap there would force deleting history. They are
-out of scope in words, not silently exempted by a pattern.
+Scope: every regular file under `docs/` plus the repository `README.md`, selected by
+`tools/doc_scope.py` — by **directory, not by suffix** (v0.31.0). Until then the walk
+matched `.md`, so renaming a page to `.markdown`, `.txt` or giving it no extension
+made its size invisible to this gate; the verifier measured three 30,000 B files
+passing. A budget you can escape with `mv` is not a budget.
+
+`CHANGELOG.md` and `RELEASE.md` are append-only logs read top-to-bottom-never, so a
+size cap there would force deleting history. They are out of scope in words, not
+silently exempted by a pattern, and they live outside `docs/`.
 
 The budget is measured in **bytes of content**, with CRLF folded to LF first: a Windows
 checkout with `core.autocrlf` writes a `\r` per line, which would count the same document
@@ -32,7 +38,13 @@ import json
 import os
 import sys
 
-ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
+HERE = os.path.dirname(os.path.abspath(__file__))
+if HERE not in sys.path:
+    sys.path.insert(0, HERE)
+
+from doc_scope import document_files  # noqa: E402
+
+ROOT = os.path.dirname(HERE)
 ENTRY_BUDGET = 12 * 1024
 DOC_BUDGET = 24 * 1024
 ENTRY_BASENAME = "README.md"
@@ -45,21 +57,16 @@ def budget_for(path):
 
 
 def default_targets():
-    """README plus every document under docs/, recursively.
+    """README plus every document under docs/, recursively, whatever it is named.
 
     v0.30.0: the walk used to list only `docs/*.md`, so a document placed in a
     subdirectory (`docs/decisions/…`) silently escaped the budget — the same "a
     hand-written list is a claim about the past" failure the gate exists to prevent.
     A directory is not an exemption.
+    v0.31.0: the walk also used to match `.md`, so renaming the same page escaped it.
+    Both gates now delegate to `tools/doc_scope.py`, which selects by directory.
     """
-    targets = ["README.md"]
-    docs_dir = os.path.join(ROOT, "docs")
-    for current, _dirs, names in os.walk(docs_dir):
-        for name in sorted(names):
-            if name.endswith(".md"):
-                rel = os.path.relpath(os.path.join(current, name), ROOT)
-                targets.append(rel.replace(os.sep, "/"))
-    return sorted(targets)
+    return document_files(ROOT)
 
 
 def document_size(full):

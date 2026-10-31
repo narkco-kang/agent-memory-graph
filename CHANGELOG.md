@@ -3,6 +3,40 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.31.0] — 2026-10-31
+
+The documentation gates select documents by **directory**, not by `.md` suffix.
+
+### Fixed
+
+- Both gates filtered the walk with `name.endswith(".md")`, so renaming a page was a
+  complete bypass. Measured on v0.30.0 by the independent verifier (exit codes read off
+  the process, not off a pipe): `docs/n/A.markdown`, `docs/n/B.txt` and `docs/n/NOEXT`
+  at 30,000 B each all passed the size gate, and a 30 KB `.markdown` page documenting
+  `amg teleport` — a command that does not exist — passed the symbol gate with exit 0.
+  The suffix was the only difference from a page the gates would have failed.
+- Scope now lives in one place, `tools/doc_scope.py`: `README.md` plus **every regular
+  file under `docs/`**, recursively, whatever it is named at any depth. Both gates
+  import it, because the v0.30.0 bug was one walk copied into two files; the fix is one
+  implementation used twice, and `test_both_gates_see_the_same_files` fails if either
+  gate stops using it.
+- `tools/check_doc_symbols.py` resolves its targets against the repository root instead
+  of the process working directory. Run from anywhere but the root, every default
+  target used to print `skip (missing)` and the gate exited 0: a green run that checked
+  nothing. The size gate already resolved against the root, so this also makes the two
+  agree.
+- `scan()` decodes with `errors="replace"`, so a file under `docs/` that is not UTF-8
+  text cannot crash the gate; replacement characters cannot spell a documented symbol,
+  so decoding damage cannot hide a phantom command either.
+
+### Not shipped in 0.31.0 (do not assume)
+
+- `docs/DECISIONS.md` is **still not split**: it holds all 34 entries at 24569/24576 B.
+  This round only makes the gates safe for the pages the split will create.
+- The gate-scope rule is recorded as DECISIONS **#35** and will be written when the
+  split lands (there are 7 B of headroom in the file today, so it cannot be written
+  now). Until then its statement lives here and in `docs/OPERATIONS.md` §1.
+
 ## [0.30.0] — 2026-10-31
 
 A document in a subdirectory no longer escapes the documentation gates.

@@ -51,10 +51,12 @@ important — **which ones are contracts and which are proposals**.
 ## The documentation budget (a contract, not a preference)
 
 A document over its budget is a document nobody finishes. This repository enforces
-**README.md and `docs/README.md` ≤ 12 KiB**, and **every other `docs/*.md` ≤ 24 KiB**,
-with `tools/check_doc_sizes.py` in CI. The rule is adapted from a field-tested public
-workbench (credited in `PRIOR-ART.md`), where handovers are capped at 4 KB and a
-single skill at 12 KB.
+**README.md and `docs/README.md` ≤ 12 KiB**, and **every other file under `docs/` ≤
+24 KiB** — at any depth, whatever it is named, because the scope is the directory and
+not the `.md` suffix (`tools/doc_scope.py`; renaming a page must not remove it from the
+budget). `tools/check_doc_sizes.py` and `tools/check_doc_symbols.py` run in CI. The rule
+is adapted from a field-tested public workbench (credited in `PRIOR-ART.md`), where
+handovers are capped at 4 KB and a single skill at 12 KB.
 
 When a document hits its budget, the answer is to **move detail to the document that
 owns it** — not to delete it. That is why the README no longer carries the adoption
@@ -123,7 +125,7 @@ check when `dist/` exists. Individually:
 
 ```bash
 PYTHONPATH=src python3 -W error::ResourceWarning -m unittest discover -s tests -v
-python3 tools/check_doc_symbols.py                        # README + every docs/*.md
+python3 tools/check_doc_symbols.py                        # README + every file under docs/
 python3 benchmarks/real_graph.py <graph.json>             # the table in REAL-WORLD.md
 bash examples/quickstart.sh && bash examples/lifecycle.sh
 python3 examples/mcp_client.py                            # a real MCP session

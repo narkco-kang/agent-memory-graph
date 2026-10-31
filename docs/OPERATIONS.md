@@ -124,6 +124,7 @@ to the legacy side only.
 | every write is one atomic replace under a lock | `docs/CONCURRENCY.md` |
 | archive moves are proven on every `--apply` and rolled back from a snapshot on failure | `docs/ARCHIVE.md` |
 | state and history digests are reproducible without trusting the file | `amg fingerprint`, `amg verify` |
+| every file under `docs/` is size- and symbol-gated, whatever it is named | `tools/doc_scope.py`; `tests/test_doc_sizes.py`, `tests/test_doc_symbols.py` |
 
 ## 2. Schedule
 

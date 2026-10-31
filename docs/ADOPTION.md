@@ -86,4 +86,4 @@ under `amg`'s write gate and evidence verifier; a graph still written by another
 The migration rules are a contract: adoption is the only path by which data this
 project did not write enters it. Keeping the full table here rather than in the
 README is part of the documentation budget rule (`README.md` ≤ 12 KiB, every other
-`docs/*.md` ≤ 24 KiB, enforced by `tools/check_doc_sizes.py`).
+file under `docs/` ≤ 24 KiB, enforced by `tools/check_doc_sizes.py`).

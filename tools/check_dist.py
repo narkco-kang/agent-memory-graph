@@ -93,6 +93,7 @@ def check_sdist(path):
         + expected_docs()
         + [
             "tools/check_doc_symbols.py",
+            "tools/doc_scope.py",   # both doc gates import it (v0.31.0)
             "tests/test_doc_symbols.py",
             "examples/quickstart.sh",
             "examples/lifecycle.sh",
