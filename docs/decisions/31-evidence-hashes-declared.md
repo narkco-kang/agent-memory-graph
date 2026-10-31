@@ -1,6 +1,6 @@
 # Decision #31
 
-[← decision log](../DECISIONS.md) · status: active · *Signed 2026-10-31; `tests/test_evidence_verify.py`; v0.20.0.*
+[← decision log](../DECISIONS.md) · status: active · amends #3 · *Signed 2026-10-31; `tests/test_evidence_verify.py`; v0.20.0.*
 
 **Evidence hashes are declared, not proven — disclose and make them observable.**
     `content_sha256` is caller-supplied; the gate checks shape only, so a fabricated hash

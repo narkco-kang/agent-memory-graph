@@ -1,6 +1,6 @@
 {
  "schema": "amg-decision-pages/v1",
- "count": 44,
+ "count": 45,
  "pages": [
   {
    "n": 1,
@@ -104,7 +104,7 @@
   {
    "n": 12,
    "slug": "12-prior-art-verified-in-full-text.md",
-   "title": "Prior art is verified in full text, and our two \"design commitments\" are  conceded.",
+   "title": "Prior art is verified in full text, and our two \"design commitments\" are conceded.",
    "status": "active",
    "signed": true,
    "body_sha256": "536575bde123073298d34fae2e616728e7d7658f13f69d745ed3cc2c3f42b1e7",
@@ -113,7 +113,7 @@
   {
    "n": 13,
    "slug": "13-no-auth-no-multitenant.md",
-   "title": "No authentication, no authorization, no multi-tenancy — decided, not  deferred.",
+   "title": "No authentication, no authorization, no multi-tenancy — decided, not deferred.",
    "status": "active",
    "signed": true,
    "body_sha256": "33adeed8fbfabab5005f2907d2e03a13424de1033563a1a92c6ec756648048bc",
@@ -122,7 +122,7 @@
   {
    "n": 14,
    "slug": "14-write-cost-measure-first.md",
-   "title": "Write cost: measure the bytes before optimising, and do not trade atomicity  for 20 MB.",
+   "title": "Write cost: measure the bytes before optimising, and do not trade atomicity for 20 MB.",
    "status": "active",
    "signed": true,
    "body_sha256": "6f377a16774eef54ef0bc8085d9ceaca241458ce3ca888b9752bc663fe9bb82f",
@@ -140,7 +140,7 @@
   {
    "n": 16,
    "slug": "16-lock-timeout-policy.md",
-   "title": "The lock timeout is a policy knob, not a constant — and fairness is not the  fix for bursts.",
+   "title": "The lock timeout is a policy knob, not a constant — and fairness is not the fix for bursts.",
    "status": "active",
    "signed": true,
    "body_sha256": "7ff5a70054836ec587dfd4c265df167fa1576af9c438c8f12a5e913e4ec92e8d",
@@ -149,8 +149,8 @@
   {
    "n": 17,
    "slug": "17-history-sidecar-rejected.md",
-   "title": "History sidecar: rejected. Segmented compression: the sanctioned direction, not  yet built.",
-   "status": "amended (#24)",
+   "title": "History sidecar: rejected. Segmented compression: the sanctioned direction, not yet built.",
+   "status": "active",
    "signed": true,
    "body_sha256": "76e2858c0aaa63ef72297a4e1d3e6991715e8426b5546b0dc7c23369d97b6ae2",
    "body_bytes": 921
@@ -158,7 +158,7 @@
   {
    "n": 18,
    "slug": "18-coverage-gate-derives-scope.md",
-   "title": "A coverage gate must derive its own scope; a hand-written list is a claim about  the past.",
+   "title": "A coverage gate must derive its own scope; a hand-written list is a claim about the past.",
    "status": "active",
    "signed": true,
    "body_sha256": "4afe1cc54a1edfce79df3caf37e97d62120a3ed04f42a56f57308af6e4ac63e4",
@@ -194,7 +194,7 @@
   {
    "n": 22,
    "slug": "22-one-source-of-truth-findings.md",
-   "title": "One source of truth for audit output: structured findings, human strings  derived.",
+   "title": "One source of truth for audit output: structured findings, human strings derived.",
    "status": "active",
    "signed": true,
    "body_sha256": "513680324a8816cb3dbe149bd4d8f5d58df9826c37e381af851a45946cb1804a",
@@ -239,7 +239,7 @@
   {
    "n": 27,
    "slug": "27-scale-does-not-dilute.md",
-   "title": "Scale does not dilute lexical recall; vocabulary overlap does, and the scorer is  why.",
+   "title": "Scale does not dilute lexical recall; vocabulary overlap does, and the scorer is why.",
    "status": "active",
    "signed": true,
    "body_sha256": "d5a6f58a18ea05b7b2b95601d9bb8feb9dba4c57536c733eb7bedf7a650d69ae",
@@ -257,7 +257,7 @@
   {
    "n": 29,
    "slug": "29-field-df-rejected.md",
-   "title": "Field-specific document frequency is rejected: the noise gain is paid for by  note-only queries.",
+   "title": "Field-specific document frequency is rejected: the noise gain is paid for by note-only queries.",
    "status": "active",
    "signed": true,
    "body_sha256": "a2ff18f4d5649f7b4242ff40bd41441b140f27440ddc083c6b36d385b333fa35",
@@ -397,6 +397,15 @@
    "signed": true,
    "body_sha256": "7e9299a87f0b7b5a06ba7e483362f21e29705850693d9ec280697614c747089e",
    "body_bytes": 1013
+  },
+  {
+   "n": 45,
+   "slug": "45-lock-tail-cross-platform.md",
+   "title": "The lock tail is cross-platform, and Windows pays more of it.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "44a970e4e5a8a1b96dee2d2d3e47569b26e29a4dcefe73ac6999ddef30909b2c",
+   "body_bytes": 1274
   }
  ]
 }

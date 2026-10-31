@@ -1,6 +1,6 @@
 # Decision #17
 
-[← decision log](../DECISIONS.md) · status: amended (#24) · *Signed 2026-10-30.*
+[← decision log](../DECISIONS.md) · status: active · *Signed 2026-10-30.*
 
 **History sidecar: rejected. Segmented compression: the sanctioned direction, not
     yet built.** The sidecar measured −82% write cost (147 → ~27 ms) and was rejected

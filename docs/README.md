@@ -110,7 +110,7 @@ Read in this order; each one narrows the next:
 | [`SCHEDULING.md`](SCHEDULING.md) | How to expire on a timer without a daemon | operational |
 | [`HANDOFF.md`](HANDOFF.md) | The bounded handover card: four questions, one 4 KB answer | operational |
 | [`PRIOR-ART.md`](PRIOR-ART.md) | What others did first, verified in full text | verified reference |
-| [`DECISIONS.md`](DECISIONS.md) | Index of the 44 decisions: status, signature, link to each page | decision record |
+| [`DECISIONS.md`](DECISIONS.md) | Index of the 45 decisions: status, signature, link to each page | decision record |
 | [`decisions/`](decisions/) | One page per decision — evidence, cost, and reversals | decision record |
 
 Root-level documents: **[`../CHANGELOG.md`](../CHANGELOG.md)**, **`../RELEASE.md`**,

@@ -12,17 +12,22 @@ asserts that a link labelled `#N` resolves to the page numbered N (`CHANGELOG.md
 
 **Status.** `active` = still the rule. `amended (#N)` = the rule stands but a later entry
 changed part of it. `superseded` = replaced (none yet). `archived` = kept for history only
-(none yet). The column is maintained by hand: nothing in the prose is structured enough to
-derive it, so it is asserted by a human judgement per entry, not computed.
+(none yet). The column is judged by hand, because nothing in the prose is structured enough to
+derive it — so two things are enforced by test instead: the page that amends (#N) must say so
+in its header, and the count above must match measurement. The first hand-written version of
+this column marked #17 as amended by #24 when #24 never mentions it; an attack found that, and
+the status is `active` again.
 
 **Signature.** 26 of the 34 original entries carry a `*Signed …*` line; the eight without
 one are #1–#8, signed only by this log's preamble (DECISIONS #42), marked `preamble` here.
 No signature was invented during the split.
 
-**Cost.** Not every entry prices itself: a keyword search for *cost*, *price* or *pays*
-hits 8 of the 34 original entries; the rest state the decision and its evidence without a
-numbered cost. A pre-split attack report counted 11 with a looser criterion — both counts
-describe keyword classes, and neither is a completeness judgement.
+**Cost.** Not every entry prices itself: a stem match for `cost*`, `price*` or `pay/pays/paid`
+hits **11 of the 34** original entries (9, 11, 14, 16, 17, 24, 25, 26, 27, 28, 29); the other
+23 state the decision and its evidence without a numbered cost. An earlier revision of this
+paragraph said 8 — the pattern it used required a word boundary after `cost`, so `costs`
+did not match. The number is now asserted by a test, because a hand-maintained count drifted
+the first time it was checked.
 
 **Budget.** The 24 KiB documentation budget applies per page here, not to this file as a
 whole, so the log's capacity grows with the number of decisions. That is the point of the
@@ -46,7 +51,7 @@ split: the previous single file could hold 34 decisions and then stopped.
 | [14](decisions/14-write-cost-measure-first.md) | Write cost: measure the bytes before optimising, and do not trade atomicity  for 20 MB. | active | ✓ |
 | [15](decisions/15-lock-retry-backoff.md) | Lock retry backs off; lock fairness is not implemented. | active | ✓ |
 | [16](decisions/16-lock-timeout-policy.md) | The lock timeout is a policy knob, not a constant — and fairness is not the  fix for bursts. | active | ✓ |
-| [17](decisions/17-history-sidecar-rejected.md) | History sidecar: rejected. Segmented compression: the sanctioned direction, not  yet built. | amended (#24) | ✓ |
+| [17](decisions/17-history-sidecar-rejected.md) | History sidecar: rejected. Segmented compression: the sanctioned direction, not yet built. | active | ✓ |
 | [18](decisions/18-coverage-gate-derives-scope.md) | A coverage gate must derive its own scope; a hand-written list is a claim about  the past. | active | ✓ |
 | [19](decisions/19-artifact-is-a-claim.md) | The artifact is a claim: build it, inspect it, and run the tests inside it. | active | ✓ |
 | [20](decisions/20-staleness-applies-to-work.md) | Staleness applies to work, not to registrations. | active | ✓ |
@@ -74,3 +79,4 @@ split: the previous single file could hold 34 decisions and then stopped.
 | [42](decisions/42-entries-1-8-signed-by-preamble.md) | Entries 1–8 are signed by the preamble; no signature is invented. | active | ✓ |
 | [43](decisions/43-decision-log-is-an-index.md) | The decision log is an index plus one page per decision. | active | ✓ |
 | [44](decisions/44-derived-artifact-expectation.md) | A derived expectation must derive the same way it checks. | active | ✓ |
+| [45](decisions/45-lock-tail-cross-platform.md) | The lock tail is cross-platform, and Windows pays more of it. | active | ✓ |

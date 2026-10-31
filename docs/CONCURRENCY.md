@@ -200,6 +200,34 @@ Operationally: size the timeout to the burst, not to a feeling.
 200-write, 10k-node case that is ≥ 18 s, so 30–60 s is a sane setting. The default
 stays 5 s for interactive use ([DECISIONS #26](decisions/26-lock-timeout-stays-5s.md)), and the error already names the knob.
 
+## The tail on three operating systems (v0.32.3)
+
+[DECISIONS #15](decisions/15-lock-retry-backoff.md) read the tail as starvation from non-FIFO lock wake-ups, measured on **macOS
+only**; Windows stayed "not measured" from v0.15.0 to v0.32.2. `experiments/concurrency/tail_latency.py`
+now measures the same thing everywhere, in CI, on a 5,000-node graph with an 8 x 10 burst
+(`AMG_LOCK_TIMEOUT=180` so the run finishes; the timeout decides when a run stops, not what a
+waiter waited — `worst_wait_ms` comes from the lock's own counters):
+
+| platform | one write, no contention | contended p50 | p95 | max | worst lock wait | polls | waiters > 100 ms |
+|---|---|---|---|---|---|---|---|
+| ubuntu-latest | 137.9 ms | 146.4 ms | 151.8 ms | 155.8 ms | 10.46 s | 874 | 7 |
+| macos-latest | 94.6 ms | 82.5 ms | 94.9 ms | 148.5 ms | 6.16 s | 104 | 7 |
+| windows-latest | 168.8 ms | 151.8 ms | **1,672 ms** | **6,431 ms** | 10.49 s | 849 | 8 |
+
+All three runs kept 80/80 writes with one change record each and `check` clean.
+
+What this does and does not say:
+
+- The tail is **not a macOS artefact**: ubuntu sees the same worst wait with 8x the polls, so
+  #15's cause survives the platform change.
+- **Windows is materially worse in what a caller feels** — p95 1.67 s against 0.09–0.15 s —
+  while its worst *lock wait* is comparable to Linux's. The difference is in the distribution
+  of waits, not in the maximum.
+- These are shared cloud runners at 5,000 nodes. **The 10k Windows figure is still not
+  measured** and no document should imply it is.
+- The 5 s default stays policy (#26): at 168.8 ms a write, 8 x 10 queued writes need about
+  13.5 s, so the arithmetic — not a defect — is why the plain default aborts first.
+
 ## A real bug the Windows burst test found
 
 The CI version of this burst (3 writers × 3 writes) failed on Windows with:

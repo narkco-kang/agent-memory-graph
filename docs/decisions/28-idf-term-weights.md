@@ -1,6 +1,6 @@
 # Decision #28
 
-[← decision log](../DECISIONS.md) · status: active · *Signed 2026-10-31; `experiments/retrieval_idf/`, `result.json`; v0.18.0.*
+[← decision log](../DECISIONS.md) · status: active · amends the cost recorded in #25 · *Signed 2026-10-31; `experiments/retrieval_idf/`, `result.json`; v0.18.0.*
 
 **IDF term weights ship — and they do not fix query-vocabulary noise.** Pre-registered
     (`experiments/retrieval_idf/PREREGISTRATION.md`) with four corpora and the v0.17.0

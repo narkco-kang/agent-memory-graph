@@ -3,6 +3,44 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.32.3] — 2026-10-31
+
+The lock tail is measured on three operating systems, and the index's hand-written column was
+checked by an attacker (and lost one row).
+
+### Measured
+
+- **Windows tail latency, previously "not measured" since v0.15.0.** New
+  `experiments/concurrency/tail_latency.py` runs the same measurement in CI on ubuntu, macOS and
+  Windows (5,000 nodes, 8 x 10 burst). Worst lock wait: 10.46 s / 6.16 s / 10.49 s; all three
+  kept 80/80 writes with `check` clean. The finding: **Windows p95 is 1.67 s against 0.09–0.15 s
+  on the other two**, while its worst wait matches Linux's — the distribution, not the maximum,
+  is what a Windows caller feels. Fairness stays unbuilt per #15's trigger; the 10k Windows
+  number is still unmeasured and the document still says so. DECISIONS #45.
+- First CI run of the new script failed on all three platforms with `LockTimeout after 5.0s`:
+  the documented default (a 5 s timeout covers `writers x writes x per-write cost`, #26) working
+  as designed on slow runners. The burst now runs with `AMG_LOCK_TIMEOUT=180`, which decides
+  when a run stops, not what a waiter waited; the script reports the value it used.
+
+### Fixed (found by an attack on the new index)
+
+- `#17` was marked `amended (#24)`, but #24 never mentions a sidecar, history or compression —
+  the two decisions are parallel, not corrective. It is `active` again (DECISIONS #42-adjacent
+  reasoning: a status that is not backed by the cited page is a claim without evidence).
+- `#3` (via #31) and `#25` (via #28) are genuinely amended, but the amending pages did not say
+  so. Their headers now do, and a test requires that any `amended (#N)` claim is declared by
+  page N.
+- The index preamble said the cost-keyword match "hits 8 of the 34"; a stem match finds **11**
+  (9, 11, 14, 16, 17, 24, 25, 26, 27, 28, 29). The old count used a pattern with a word boundary
+  after `cost`, so `costs` never matched. It now states 11 and a test asserts the number, because
+  a hand-maintained fact drifted the first time anyone checked it.
+
+### Tests
+
+- `tests/test_decisions_log.py` (10 tests): adds the two column checks above, and catches a
+  bare `DECISIONS #15` that this release's own new prose introduced.
+- 352 tests; 62 documents.
+
 ## [0.32.2] — 2026-10-31
 
 Documentation patch: a reference now lands on the decision, not on the index.

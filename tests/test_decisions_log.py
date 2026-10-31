@@ -173,5 +173,53 @@ class ReferenceResolutionTests(unittest.TestCase):
         self.assertEqual(leftovers, [], "bare DECISIONS #N references (make them page links)")
 
 
+class StatusColumnTests(unittest.TestCase):
+    """The two machine-checks the index needs because its column is hand-written.
+
+    The first hand-written version marked #17 `amended (#24)` although #24 never mentions
+    it, and the preamble's cost count said 8 where a stem match finds 11 (the pattern it
+    used required a word boundary after `cost`, so `costs` did not match). Both were found
+    by an attack, not by a test — hence these.
+    """
+
+    # Stems, not a prefix match: "payload" is not a cost, and a `pay\w*` pattern
+    # counted it once. The index states this exact rule.
+    COST_RE = re.compile(r"\bcost\w*|\bprice\w*|\bpays?\b|\bpaid\b|\bpaying\b|\bpayments?\b",
+                         re.I)
+    COUNT_RE = re.compile(r"hits \*\*(\d+) of the 34\*\*")
+
+    def test_every_amended_claim_is_made_by_the_amending_page(self):
+        man = load_manifest()
+        pages = {p["n"]: p for p in man["pages"]}
+        checked = 0
+        for page in man["pages"]:
+            m = re.match(r"^amended \(#(\d+)\)$", page["status"])
+            if not m:
+                continue
+            checked += 1
+            amender = int(m.group(1))
+            self.assertIn(amender, pages, f"#{page['n']} is amended by a page that does not exist")
+            _head, meta, _body = split_page(os.path.join(DECISIONS_DIR, pages[amender]["slug"]))
+            self.assertIn(f"#{page['n']}", meta,
+                          f"#{page['n']} claims it is amended by #{amender}, but #{amender} does "
+                          f"not say so in its header")
+        self.assertGreater(checked, 0, "expected at least one amended entry")
+
+    def test_preamble_cost_count_matches_a_stem_match(self):
+        with open(INDEX, encoding="utf-8") as fh:
+            index = fh.read()
+        m = self.COUNT_RE.search(index)
+        self.assertIsNotNone(m, "the index must state how many entries price themselves")
+        stated = int(m.group(1))
+        hits = 0
+        for page in load_manifest()["pages"]:
+            if page["n"] > 34:
+                continue
+            _head, _meta, body = split_page(os.path.join(DECISIONS_DIR, page["slug"]))
+            if self.COST_RE.search(body):
+                hits += 1
+        self.assertEqual(stated, hits, "the preamble's cost count drifted from measurement")
+
+
 if __name__ == "__main__":
     unittest.main()
