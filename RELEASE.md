@@ -19,6 +19,25 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.28.0 — 2026-10-31
+
+Status: **released**. The bridge's verdict stops disagreeing with its own report.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | Two independent verifiers found the same mechanism | ✅ Glm仔 N3 (`REATTACK-V0270-GLM.md`), Hermes §2 (`VERIFY-V026-V027-*.md`) |
+| 2 | One implementation, two documented postures | ✅ `verdict_of(require_full_anchoring=True)` for the bridge |
+| 3 | Numbers describe the graph, not the storage shape | ✅ legacy verified strings count toward anchoring |
+| 4 | `--strict` exists on the bridge and cannot turn a failure into a pass | ✅ test asserts breakage still wins |
+| 5 | The stricter posture is justified in the runbook | ✅ `OPERATIONS.md` bridge section |
+| 6 | CI green on nine jobs | ✅ 334 tests ×4 + `package` ×5 |
+| 7 | Documentation↔code gates | ✅ 16 documents |
+| 8 | Nothing else changed | ✅ healthcheck debt policy, adopt/audit/archive unchanged |
+| 9 | Tag install verified | ✅ `git+...@v0.28.0` |
+| 10 | Architecture diagram re-rendered | ✅ v0.28.0, four gates pass |
+
+---
+
 ## v0.27.0 — 2026-10-31
 
 Status: **released**. Thin anchoring warns, and `--no-evidence` stops printing a ratio.

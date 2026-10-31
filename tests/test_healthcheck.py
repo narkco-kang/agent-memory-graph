@@ -282,6 +282,28 @@ class HealthcheckTests(unittest.TestCase):
         self.assertIsNone(report["conclusions"]["verified"])
         self.assertIsNone(report["conclusions"]["anchor_coverage"])
 
+    def test_verified_non_conclusion_evidence_alone_is_not_healthy(self):
+        # same boundary as the bridge: something verified, no conclusion anchored
+        self.g.m.add_node("issue.note", "issue", "note", source="group:t", status="done",
+                          evidence=[{"locator": "path:proof.txt",
+                                     "content_sha256": sha(self.proof),
+                                     "captured_at": "2026-10-31T00:00:00+08:00"}])
+        self.g.m.add_node("decision.start", "decision", "open", source="group:t",
+                          status="in_progress")
+        path = os.path.join(self.g.dir, "graph.json")
+        with open(path, encoding="utf-8") as fh:
+            doc = json.load(fh)
+        for node in doc["nodes"]:
+            if node["id"] == "decision.claim":   # unanchor the conclusion from setUp
+                node["evidence"] = []
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(doc, fh)
+        res = run(self.g.dir, "--json")
+        report = json.loads(res.stdout)
+        self.assertEqual(report["conclusions"]["anchor_coverage"], 0.0)
+        self.assertEqual(report["verdict"], "partially_verified")
+        self.assertEqual(res.returncode, 3, res.stdout + res.stderr)
+
     def test_conclusions_field_is_named_for_what_it_counts(self):
         report = json.loads(run(self.g.dir, "--json").stdout)
         self.assertIn("unanchored_conclusions", report["conclusions"])

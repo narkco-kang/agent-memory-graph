@@ -59,10 +59,17 @@ LEGACY_MALFORMED_RE = re.compile(r"#sha256:")
 
 
 def verify_legacy_strings(doc, root):
-    """Hash legacy `path:x#sha256:h` strings read-only; count what cannot be parsed."""
+    """Hash legacy `path:x#sha256:h` strings read-only; count what cannot be parsed.
+
+    Also returns which nodes those strings belong to, so the report's anchoring numbers
+    describe the graph rather than the storage shape (`evidence` vs `legacy_evidence`).
+    """
     checked = verified = 0
     mismatched, malformed, missing = [], [], []
+    with_evidence_nodes, verified_nodes = set(), set()
     for node in doc.get("nodes") or []:
+        if node.get("legacy_evidence"):
+            with_evidence_nodes.add(node.get("id"))
         for raw in node.get("legacy_evidence") or []:
             match = LEGACY_HASH_RE.match(str(raw))
             if not match:
@@ -83,10 +90,12 @@ def verify_legacy_strings(doc, root):
                 continue
             if actual == expected:
                 verified += 1
+                verified_nodes.add(node.get("id"))
             else:
                 mismatched.append({"node": node.get("id"), "string": raw})
     return {"checked": checked, "verified": verified, "mismatched": mismatched,
-            "malformed": malformed, "missing": missing}
+            "malformed": malformed, "missing": missing,
+            "evidence_nodes": with_evidence_nodes, "verified_nodes": verified_nodes}
 
 EXIT_OK = 0
 EXIT_PROBLEM = 1
@@ -113,9 +122,11 @@ def snapshot(source, keep=False, evidence_root=None):
                 "error": f"{type(exc).__name__}: {exc}"}, None
     root = os.path.abspath(evidence_root or os.path.dirname(os.path.abspath(source)))
     # resolve the locators against that root, not against the temp copy
-    report = healthcheck.collect(dst, evidence_root=root)
     adopted_memory = Memory.open(dst, read_only=True)
     legacy = verify_legacy_strings(adopted_memory.doc, root)
+    report = healthcheck.collect(dst, evidence_root=root,
+                                 extra_evidence_nodes=legacy["evidence_nodes"],
+                                 extra_verified_nodes=legacy["verified_nodes"])
 
     counts = report["evidence"]["counts"]
     path_rows = sum(counts.get(name, 0) for name in
@@ -126,7 +137,8 @@ def snapshot(source, keep=False, evidence_root=None):
         "exists_rate": (round(found / path_rows, 4) if path_rows else None),
         "path_rows": path_rows,
         "files_found": found,
-        "legacy_strings": legacy,
+        "legacy_strings": {key: legacy[key] for key in
+                           ("checked", "verified", "mismatched", "malformed", "missing")},
         "observed_verified": report["evidence"]["verified"] + legacy["verified"],
     }
     report["source"] = os.path.abspath(source)
@@ -138,18 +150,22 @@ def snapshot(source, keep=False, evidence_root=None):
     return report, (workdir if keep else None)
 
 
-def judge(report, allow_unverified=False):
+def judge(report, allow_unverified=False, strict=False):
+    """Delegate to the health report's verdict, with legacy observations counted in.
+
+    The bridge has no private green light any more: it used to return `healthy` as soon
+    as one legacy hash verified, while its own report printed `0/20 verified, 20
+    unanchored` (Glm仔 N3). `verdict_of` now owns the boundary — including
+    `partially_verified` (something verified, no conclusion anchored, exit 3) — so a fix
+    there applies here automatically.
+    """
     if report.get("error"):
         return "adoption_failed", EXIT_PROBLEM
-    if report["problems"]:
-        return "needs_attention", EXIT_PROBLEM
-    if report["evidence"]["coverage_state"] == "none":
-        # legacy `path:x#sha256:h` strings are observations too; without this, a curated
-        # graph that *is* verifiable would still read as unverified.
-        if (report.get("snapshot") or {}).get("legacy_strings", {}).get("verified"):
-            return "healthy", EXIT_OK
-        return "unverified", (EXIT_OK if allow_unverified else EXIT_UNVERIFIED)
-    return "healthy", EXIT_OK
+    observed = (report.get("snapshot") or {}).get("observed_verified")
+    return healthcheck.verdict_of(report, strict=strict,
+                                  allow_unverified=allow_unverified,
+                                  observed_verified=observed,
+                                  require_full_anchoring=True)
 
 
 def main(argv=None):
@@ -160,6 +176,9 @@ def main(argv=None):
     parser.add_argument("--json", action="store_true")
     parser.add_argument("--allow-unverified", action="store_true")
     parser.add_argument("--keep", action="store_true", help="keep the adopted copies")
+    parser.add_argument("--strict", action="store_true",
+                        help="also fail on debt: unanchored nodes and unobservable "
+                             "evidence")
     parser.add_argument("--evidence-root", metavar="DIR", default=None,
                         help="directory the source's path: locators are relative to; "
                              "required when it is not the graph's own directory")
@@ -175,11 +194,12 @@ def main(argv=None):
     for source in args.sources:
         report, _kept = snapshot(source, keep=args.keep,
                                  evidence_root=args.evidence_root)
-        verdict, code = judge(report, args.allow_unverified)
+        verdict, code = judge(report, args.allow_unverified, args.strict)
         report["verdict"], report["healthy"] = verdict, verdict == "healthy"
         report["allow_unverified"] = bool(args.allow_unverified)
-        report["strict_scope"] = ("none: this bridge promotes nothing; "
-                                   "unverified evidence stays exit 3")
+        report["strict_scope"] = ("audit conflicts + unanchored/unobservable conclusions "
+                                  "(not evidence); --strict never turns a failed check "
+                                  "into a pass")
         report["unverified_accepted"] = (verdict == "unverified"
                                          and bool(args.allow_unverified))
         reports.append(report)
@@ -238,6 +258,7 @@ def main(argv=None):
         for warning in report["warnings"]:
             print(f"  ! {warning}")
         label = {"needs_attention": "NEEDS ATTENTION", "unverified": "UNVERIFIED",
+                 "partially_verified": "PARTIALLY VERIFIED (no conclusion anchored)",
                  }.get(report["verdict"], "healthy")
         accepted = report["unverified_accepted"]
         print("  verdict: " + label

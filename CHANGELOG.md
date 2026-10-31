@@ -3,6 +3,41 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.28.0] — 2026-10-31
+
+The snapshot bridge stops having a private green light, and legacy observations count
+where they belong.
+
+### Fixed
+
+- The bridge's verdict ignored anchoring: one verified legacy string turned a graph
+  whose own report said `0/20 verified, 20 unanchored` into `healthy`, exit 0, while
+  `healthcheck --strict` on the same graph exited 1 (Glm仔 N3, Hermes §2). The bridge now
+  calls the shared `verdict_of` with `require_full_anchoring=True`: `healthy` means every
+  `done` conclusion is anchored; anything less is `partially_verified` (exit 3). Two
+  postures, one implementation, both documented — a store owner keeps the debt policy,
+  a verification of someone else's graph does not get to call 5% anchoring healthy.
+- The bridge counted only `evidence` for anchoring, so adopted graphs always read
+  `0/N` even when their legacy `path:x#sha256:h` strings verified. Those observations now
+  count: `1/20 verified (5%), 19 unobservable` instead of `0/20 verified, 20 unanchored`.
+- `--strict` is now available on the bridge too (it was missing entirely): it fails on
+  debt (unanchored/unobservable conclusions) and never turns a failed check into a pass.
+
+### Added
+
+- 3 tests: the N3 graph is `partially_verified` exit 3 with honest numbers; a graph with
+  zero anchored conclusions is `partially_verified`; `--strict` fails on debt while
+  breakage still outranks it.
+- `docs/OPERATIONS.md` verdict table gains `partially_verified`, and the bridge section
+  states why it is stricter than `healthcheck`.
+
+### Not shipped in 0.28.0 (do not assume)
+
+- `healthcheck` keeps its debt policy: 5% anchoring on the owner's own store is a
+  warning, not a failure, unless `--strict`.
+- No automatic base detection, no write-back of verified legacy digests, no `kg.py`
+  schema change.
+
 ## [0.27.0] — 2026-10-31
 
 Thin anchoring cannot pass silently, and "did not look" stops printing a percentage.

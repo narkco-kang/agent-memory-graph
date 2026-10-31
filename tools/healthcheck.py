@@ -66,13 +66,19 @@ def _utf8_console():
             pass
 
 
-def collect(path, check_evidence=True, evidence_root=None):
+def collect(path, check_evidence=True, evidence_root=None,
+            extra_evidence_nodes=None, extra_verified_nodes=None):
     """Report on the graph at `path`.
 
     `evidence_root` resolves `path:` locators against another directory. It exists for
     the snapshot bridge: an adopted copy lives in a temp dir, but its locators were
     written relative to the graph they came from, so hashing them against the copy would
     report every real file as `missing` and turn a good graph into a false alarm.
+
+    `extra_evidence_nodes` / `extra_verified_nodes` let a caller that observed evidence
+    another way (the bridge hashes legacy `path:x#sha256:h` strings) count it, so the
+    anchoring numbers describe the graph rather than the storage shape. Without this the
+    bridge said `0/20 verified, 20 unanchored` and then `healthy` (Glm仔 N3).
     """
     memory = Memory.open(path, read_only=True)
     doc = memory.doc
@@ -135,8 +141,15 @@ def collect(path, check_evidence=True, evidence_root=None):
     done_nodes = [n for n in nodes if n.get("status") == "done"]
     done_unanchored = [n for n in done_nodes if not (n.get("evidence") or [])]
     conclusions = [n for n in done_nodes if is_conclusion(n)]
-    concl_unanchored = [n for n in conclusions if not (n.get("evidence") or [])]
-    verified_node_ids = {row["node"] for row in evidence_rows if row["status"] == "ok"}
+    extra_ev = set(extra_evidence_nodes or ())
+    extra_ver = set(extra_verified_nodes or ())
+
+    def has_evidence(node):
+        return bool(node.get("evidence")) or node.get("id") in extra_ev
+
+    concl_with = [n for n in conclusions if has_evidence(n)]
+    concl_unanchored = [n for n in conclusions if not has_evidence(n)]
+    verified_node_ids = {row["node"] for row in evidence_rows if row["status"] == "ok"} | extra_ver
     concl_verified = [n for n in conclusions if n.get("id") in verified_node_ids]
     # "Did not look" must not be printed as "looked and found zero": with --no-evidence
     # no conclusion can be *verified*, so the ratio is unknown, not 0% (`issue.mem-arch-
@@ -144,8 +157,7 @@ def collect(path, check_evidence=True, evidence_root=None):
     concl_verified_count = len(concl_verified) if check_evidence else None
     anchor_coverage = (round(concl_verified_count / len(conclusions), 4)
                        if (conclusions and check_evidence) else None)
-    unobservable = ((len(conclusions) - len(concl_unanchored) - concl_verified_count)
-                    if check_evidence else None)
+    unobservable = ((len(concl_with) - concl_verified_count) if check_evidence else None)
     if coverage_state == "not_checked":
         # A report that did not look must not pass a --strict run silently: keying only
         # on the exit code is the documented failure mode this flag invites.
@@ -182,8 +194,7 @@ def collect(path, check_evidence=True, evidence_root=None):
                      "missing": unconfirmed["missing"],
                      "not_a_file": unconfirmed["not_a_file"],
                      "unreadable": unconfirmed["unreadable"]},
-        "conclusions": {"total": len(conclusions), "with_evidence":
-                        len(conclusions) - len(concl_unanchored),
+        "conclusions": {"total": len(conclusions), "with_evidence": len(concl_with),
                         "verified": concl_verified_count,
                         "unanchored_conclusions": len(concl_unanchored),
                         "unobservable": unobservable,
@@ -196,21 +207,44 @@ def collect(path, check_evidence=True, evidence_root=None):
     }
 
 
-def verdict_of(report, strict=False, allow_unverified=False):
+def verdict_of(report, strict=False, allow_unverified=False, observed_verified=None,
+               require_full_anchoring=False):
     """One word for the state of the store, and the exit code that matches it.
+
+    `observed_verified` lets a caller that observed evidence another way (the snapshot
+    bridge hashes legacy `path:x#sha256:h` strings) state how many items it confirmed;
+    it defaults to the report's own `evidence.verified`.
 
     `--allow-unverified` relaxes the exit code, never the verdict: a store with no
     observable evidence is still described as `unverified` when its owner accepted it.
     `--no-evidence` never yields `healthy`: it yields `not_checked`, because a report
     that did not look must not read as one that looked and found nothing
     (`issue.mem-arch-no-evidence-verdict-green`).
+
+    `partially_verified` is the v0.28.0 boundary: **something** verified, but the `done`
+    conclusions are not all anchored. A bridge that verified one legacy string and printed
+    `healthy` while its own report said `0/20 verified, 20 unanchored` (Glm仔's N3) is
+    exactly this state, so it gets its own word and exit 3 rather than a pass.
+
+    `require_full_anchoring` is the bridge's posture, not the health report's: an operator
+    running `healthcheck` on their own store gets the debt policy (thin anchoring warns,
+    `--strict` fails), while a snapshot of a graph another tool wrote is being *verified*,
+    so "healthy" there means every done conclusion is anchored. One implementation, two
+    documented postures (`REATTACK-V0270-GLM.md`, Hermes §2).
     """
     if report["problems"] or (strict and report["warnings"]):
         return "needs_attention", EXIT_PROBLEM
     if report["evidence"]["coverage_state"] == "not_checked":
         return "not_checked", 0
-    if report["evidence"]["coverage_state"] == "none":
+    observed = (report["evidence"]["verified"] if observed_verified is None
+                else observed_verified)
+    if observed == 0:
         return "unverified", (0 if allow_unverified else EXIT_UNVERIFIED)
+    conclusions = report.get("conclusions") or {}
+    coverage = conclusions.get("anchor_coverage") or 0.0
+    if conclusions.get("total") and coverage < 1:
+        if coverage == 0 or require_full_anchoring:
+            return "partially_verified", EXIT_UNVERIFIED
     return "healthy", 0
 
 
@@ -298,6 +332,7 @@ def main(argv=None):
         verdict = report["verdict"]
         label = {"needs_attention": "NEEDS ATTENTION", "unverified": "UNVERIFIED",
                  "not_checked": "NOT CHECKED (evidence hashing skipped)",
+                 "partially_verified": "PARTIALLY VERIFIED (no conclusion anchored)",
                  }.get(verdict, "healthy")
         accepted = report["unverified_accepted"]
         print("  verdict: " + label

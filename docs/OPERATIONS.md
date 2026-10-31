@@ -56,6 +56,7 @@ a human reads the line:
 | `needs_attention` | 1 | `check` errors, or evidence that mismatches / is missing / is a directory / cannot be read / is outside the graph root, or archive verification failed (stale work and unanchored nodes too, with `--strict`) | the `x` line above the verdict names the command to run |
 | `unverified` | 3 | nothing is broken, but **zero** evidence items could be observed: no evidence at all, or only `cmd:`/`url:`/`sha256:` anchors, which carry no local bytes | write `path:` evidence for claims that matter, or accept the gap explicitly |
 | `not_checked` | 0 | `--no-evidence` was passed: negative findings are about `check`/`audit`/`archive` only. It is also a **warning**, so `--strict` fails on it | re-run without `--no-evidence` when the answer matters |
+| `partially_verified` | 3 | something verified, but not every `done` conclusion is anchored. `healthcheck` reaches it only at 0% anchoring; the snapshot bridge reaches it at any anchoring below 100% | anchor the conclusions that matter, or read the numbers and accept the gap |
 
 `unverified` exists because "0 checked" and "0 failed" look identical in a problem list.
 v0.23.0 printed `healthy` and exited 0 on a store whose every claim was unproven (an
@@ -91,8 +92,14 @@ string shaped `path:<rel>#sha256:<hex>` is hashed read-only and counted
 a broken digest is reported malformed; any other string stays a citation and is never
 promoted to evidence. That is the only way coverage grows without fabricating a hash.
 
-Exit 0 from the bridge means "the observable invariants hold", never "this graph is
-write-gated" and never "its content is correct".
+Exit 0 from the bridge means "the observable invariants hold, **and every done
+conclusion is anchored**" — never "this graph is write-gated" and never "its content is
+correct". The bridge is stricter than `healthcheck` on purpose: a store owner gets the
+debt policy (thin anchoring warns, `--strict` fails), while a *verification* of someone
+else's graph must not call 5% anchoring healthy. Verified legacy
+`path:x#sha256:h` strings count toward anchoring, so a curated graph's coverage numbers
+describe the graph rather than the storage shape (`evidence` vs `legacy_evidence`);
+`--strict` additionally fails on debt.
 
 The bridge accepts **legacy-schema sources only**. Point it at an `amg/v1` graph and
 adoption refuses with `E_ALREADY_AMG` (exit 1): an `amg`-written graph is already under

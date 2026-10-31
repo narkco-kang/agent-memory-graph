@@ -146,6 +146,58 @@ class SnapshotBridgeTests(unittest.TestCase):
         text = run(self.src).stdout
         self.assertIn("mismatched", text)
 
+    def test_legacy_observations_count_toward_anchoring_not_just_the_verdict(self):
+        # Glm仔 N3: the bridge printed "0/20 verified, 20 unanchored" and then healthy.
+        # The numbers were the bug: a verified legacy string anchors the conclusion it
+        # belongs to, so this graph is 1/20 (5%) anchored, warns, and fails --strict.
+        nodes = [{"id": f"decision.d{i}", "type": "decision", "label": f"D{i}",
+                  "status": "done", "source": "group:legacy", "note": "",
+                  "evidence": ["cmd:pytest -q"],
+                  "updatedAt": "2026-10-26T10:00:00+08:00"} for i in range(19)]
+        nodes.append({"id": "decision.real", "type": "decision", "label": "real",
+                      "status": "done", "source": "group:legacy", "note": "",
+                      "evidence": [f"path:proof.txt#sha256:{sha(self.proof)}"],
+                      "updatedAt": "2026-10-26T10:00:00+08:00"})
+        doc = legacy_doc([])
+        doc["nodes"] = nodes
+        self.write(doc)
+        res = run(self.src, "--json")
+        report = json.loads(res.stdout)["graphs"][0]
+        self.assertEqual(report["snapshot"]["observed_verified"], 1)
+        self.assertEqual(report["conclusions"]["total"], 20)
+        self.assertEqual(report["conclusions"]["verified"], 1)
+        self.assertAlmostEqual(report["conclusions"]["anchor_coverage"], 0.05)
+        self.assertEqual(report["conclusions"]["unobservable"], 19)
+        self.assertTrue(any("cannot be observed" in w for w in report["warnings"]))
+        # the bridge verifies, it does not own the store: 95% unanchored is not healthy
+        self.assertEqual(report["verdict"], "partially_verified")
+        self.assertEqual(run(self.src).returncode, 3)
+
+    def test_strict_fails_on_debt_but_never_passes_a_broken_check(self):
+        self.write(legacy_doc([{"locator": "path:proof.txt",
+                                "content_sha256": sha(self.proof),
+                                "captured_at": "2026-10-27T10:00:00+08:00"}]))
+        self.assertEqual(run(self.src).returncode, 0)          # fully anchored
+        with open(self.proof, "ab") as fh:
+            fh.write(b"tampered")
+        strict = run(self.src, "--strict")
+        self.assertEqual(strict.returncode, 1, strict.stdout + strict.stderr)
+
+    def test_zero_anchored_conclusions_are_partially_verified(self):
+        # something verified, nothing anchored: the false green N3 actually described
+        doc = legacy_doc(["cmd:pytest -q"])
+        doc["nodes"].append({"id": "issue.note", "type": "issue", "label": "n",
+                             "status": "done", "source": "group:legacy", "note": "",
+                             "evidence": [f"path:proof.txt#sha256:{sha(self.proof)}"],
+                             "updatedAt": "2026-10-26T10:00:00+08:00"})
+        doc["nodes"][0]["evidence"] = []      # the conclusion carries nothing
+        self.write(doc)
+        res = run(self.src, "--json")
+        report = json.loads(res.stdout)["graphs"][0]
+        self.assertEqual(report["conclusions"]["anchor_coverage"], 0.0)
+        self.assertEqual(report["verdict"], "partially_verified")
+        self.assertEqual(res.returncode, 3, res.stdout + res.stderr)
+
     def test_json_carries_the_anchoring_numbers(self):
         self.write(legacy_doc([{"locator": "path:proof.txt",
                                 "content_sha256": sha(self.proof),
