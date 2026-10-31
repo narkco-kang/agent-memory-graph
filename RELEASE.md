@@ -19,6 +19,26 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.24.0 — 2026-10-31
+
+Status: **released**. Correctness-of-signal round: the health report stops calling
+"nothing was verified" healthy.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | The defect was reported by an adversary, reproduced, not assumed | ✅ `ATTACK-HEALTHCHECK-V023.md` §2.1–2.2 (cases B/C/D) |
+| 2 | Fixed at the cause, not at the message | ✅ third verdict `unverified` + exit `3`; evidence coverage is a number, not a footnote |
+| 3 | The wrong side of the boundary is now a failure too | ✅ `missing` / `not_a_file` / `unreadable` evidence fail; breakage outranks `unverified` |
+| 4 | An escape hatch exists and cannot lie | ✅ `--allow-unverified` relaxes the exit code only; `healthy: false` in JSON |
+| 5 | Regression tests for every case in the report | ✅ 8 new tests (16 total), including empty graph and partial coverage |
+| 6 | Re-measured on the project's own graph | ✅ adopt 302/278/334 legacy strings: healthy(0) → UNVERIFIED(3); `amg init` empty: 0 → 3 |
+| 7 | CI green on nine jobs | ✅ 309 tests ×4 + `package` ×5 |
+| 8 | Documentation↔code gates | ✅ 16 documents; `DECISIONS` #34 added with detail moved out of #12/#17 (24569/24576 B) |
+| 9 | The limits of the new verdict are stated | ✅ `OPERATIONS.md` verdict table; `healthy` ≠ correct content |
+| 10 | Clean install from the tag | ✅ `git+...@v0.24.0` |
+
+---
+
 ## v0.23.1 — 2026-10-31
 
 Status: **released**. Patch for the Windows red that v0.23.0 shipped.

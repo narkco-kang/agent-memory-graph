@@ -114,6 +114,107 @@ class HealthcheckTests(unittest.TestCase):
     def test_missing_graph_is_usage_error(self):
         self.assertEqual(run(os.path.join(self.g.dir, "nope")).returncode, 2)
 
+    # -- v0.24.0: "nothing was verified" is not "healthy" (ATTACK-HEALTHCHECK-V023) --
+
+    def only_unverifiable_evidence(self):
+        """A graph whose single evidence item is a `cmd:` anchor: nothing local to hash."""
+        self.g.m.add_node("decision.cmd", "decision", "run the command", source="group:t",
+                          status="done",
+                          evidence=[{"locator": "cmd:python3 -m pytest",
+                                     "content_sha256": "c" * 64,
+                                     "captured_at": "2026-10-31T00:00:00+08:00"}])
+
+    def unprovable_graph(self):
+        """A fresh graph whose every evidence item is unobservable (no `path:` at all)."""
+        g = TempGraph()
+        g.m.add_node("decision.cmd", "decision", "run the command", source="group:t",
+                     status="done",
+                     evidence=[{"locator": "cmd:python3 -m pytest",
+                                "content_sha256": "c" * 64,
+                                "captured_at": "2026-10-31T00:00:00+08:00"}])
+        return g
+
+    def test_nothing_verifiable_is_unverified_not_healthy(self):
+        # v0.23 exited 0 with "verdict: healthy" here: every claim was unproven.
+        g = self.unprovable_graph()
+        try:
+            res = run(g.dir)
+            self.assertEqual(res.returncode, 3, res.stdout + res.stderr)
+            self.assertIn("0 verified", res.stdout)
+            self.assertIn("verdict: UNVERIFIED", res.stdout)
+        finally:
+            g.close()
+
+    def test_empty_graph_is_unverified(self):
+        empty = TempGraph()
+        try:
+            res = run(empty.dir)
+            self.assertEqual(res.returncode, 3, res.stdout + res.stderr)
+            self.assertIn("verdict: UNVERIFIED", res.stdout)
+        finally:
+            empty.close()
+
+    def test_allow_unverified_accepts_an_unprovable_store(self):
+        g = self.unprovable_graph()
+        try:
+            res = run(g.dir, "--allow-unverified")
+            self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+            # the verdict still says what the store is; only the exit code is relaxed
+            self.assertIn("verdict: UNVERIFIED (accepted with --allow-unverified)",
+                          res.stdout)
+            report = json.loads(run(g.dir, "--json", "--allow-unverified").stdout)
+            self.assertEqual(report["verdict"], "unverified")
+            self.assertFalse(report["healthy"])
+        finally:
+            g.close()
+
+    def test_partial_coverage_is_reported_but_healthy(self):
+        self.only_unverifiable_evidence()
+        res = run(self.g.dir, "--json")
+        report = json.loads(res.stdout)
+        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        self.assertEqual(report["evidence"]["declared"], 2)
+        self.assertEqual(report["evidence"]["verified"], 1)
+        self.assertEqual(report["evidence"]["coverage_state"], "partial")
+        self.assertAlmostEqual(report["evidence"]["coverage"], 0.5, places=4)
+        self.assertEqual(report["verdict"], "healthy")
+
+    def test_missing_evidence_file_is_a_problem(self):
+        os.remove(self.proof)  # declared proof is gone: the claim cannot be confirmed
+        res = run(self.g.dir)
+        self.assertEqual(res.returncode, 1, res.stdout + res.stderr)
+        self.assertIn("missing", res.stdout)
+        self.assertIn("verdict: NEEDS ATTENTION", res.stdout)
+
+    def test_directory_as_evidence_is_a_problem(self):
+        target = os.path.join(self.g.dir, "proofdir")
+        os.mkdir(target)
+        self.g.m.add_node("decision.dir", "decision", "directory", source="group:t",
+                          status="done",
+                          evidence=[{"locator": "path:proofdir",
+                                     "content_sha256": "d" * 64,
+                                     "captured_at": "2026-10-31T00:00:00+08:00"}])
+        res = run(self.g.dir)
+        self.assertEqual(res.returncode, 1, res.stdout + res.stderr)
+        self.assertIn("not_a_file", res.stdout)
+
+    def test_no_evidence_flag_says_it_did_not_look(self):
+        res = run(self.g.dir, "--json", "--no-evidence")
+        self.assertEqual(res.returncode, 0, res.stderr)
+        report = json.loads(res.stdout)
+        self.assertEqual(report["evidence"]["coverage_state"], "not_checked")
+        text = run(self.g.dir, "--no-evidence").stdout
+        self.assertIn("evidence: skipped (--no-evidence) - NOT VERIFIED", text)
+
+    def test_problems_win_over_unverified(self):
+        # an unprovable store that is also broken reports breakage (exit 1), not exit 3
+        self.only_unverifiable_evidence()
+        with open(self.proof, "ab") as fh:
+            fh.write(b"tampered")
+        res = run(self.g.dir)
+        self.assertEqual(res.returncode, 1, res.stdout + res.stderr)
+        self.assertIn("verdict: NEEDS ATTENTION", res.stdout)
+
 
 if __name__ == "__main__":
     unittest.main()

@@ -3,6 +3,51 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.24.0] — 2026-10-31
+
+The health report stops calling "nothing was verified" healthy.
+
+### Fixed
+
+- `tools/healthcheck.py` classified `unverifiable` evidence (`cmd:`/`url:`/`sha256:`
+  locators, which carry no local bytes) as neither a problem nor debt. A store with
+  **zero** verifiable evidence — an `adopt`ed graph, whose evidence layer is emptied by
+  design, or a `cmd:`-only graph — printed `verdict: healthy` and exited `0`, and
+  `--strict` could not catch it: a dashboard said "fine" about "unknown". The report now
+  carries a third verdict `unverified` with its own exit code `3`, counts coverage
+  (`declared` / `verified` / `coverage` / `coverage_state` = `full|partial|none|not_checked`),
+  and the text line reads `N declared, M verified (P%)`.
+- Evidence that cannot be confirmed is a problem, not silence: `missing` (the declared
+  file is gone), `not_a_file` (a directory) and `unreadable` (permission/IO) now fail the
+  report the same way `mismatch` and `outside_root` already did.
+- `--allow-unverified` accepts an unprovable store (exit `0`) for stores whose evidence
+  is intentionally remote — the verdict still says `unverified`, and `--json` keeps
+  `healthy: false`; only the exit code is relaxed, so `healthy` never describes an
+  unproven store. `--no-evidence` prints `evidence: skipped (--no-evidence) - NOT
+  VERIFIED` and never claims verification; it does not force `unverified` because the
+  operator explicitly chose not to look.
+
+### Added
+
+- 8 tests for the new semantics (16 in `tests/test_healthcheck.py`): nothing verifiable
+  is `unverified`, an empty graph is `unverified`, `--allow-unverified` relaxes only the
+  exit code, partial coverage is reported and still `healthy`, `missing` and `not_a_file`
+  evidence fail, `--no-evidence` says it did not look, and breakage outranks
+  `unverified` (exit `1`, not `3`).
+- Measured on the project's own graph through `amg adopt` (302 nodes / 278 edges, 334
+  legacy evidence strings moved out): before the fix `verdict: healthy`, exit `0`; after,
+  `evidence: 0 declared, 0 verified (0%)`, `verdict: UNVERIFIED`, exit `3`. An `amg init`
+  store with nothing written: exit `3` instead of `0`.
+
+### Not shipped in 0.24.0 (do not assume)
+
+- `healthy` still does not mean the *content* is correct: it means the invariants this
+  report checks hold, and the report prints what it could not observe.
+- No automatic repair and no change to `check`/`audit` semantics; `--strict` still means
+  "stale work fails", not "everything is verified".
+- No gate that the project's own group graph (`group-kg/v1`, written by `kg.py`) is
+  covered by `amg`'s write gate — that is an open decision, not a shipped capability.
+
 ## [0.23.1] — 2026-10-31
 
 Patch: the health report survives a legacy Windows console code page.

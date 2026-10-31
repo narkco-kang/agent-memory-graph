@@ -9,15 +9,34 @@ were measured. Unmeasured things are marked as such — that is the house rule.
 python3 tools/healthcheck.py ./mem          # one-page, read-only
 python3 tools/healthcheck.py ./mem --json   # same, machine-readable
 python3 tools/healthcheck.py ./mem --strict # stale work items also fail
+python3 tools/healthcheck.py ./mem --allow-unverified  # accept "nothing to verify"
 ```
 
 It reports store size, `check` errors and hints, audit conflicts, evidence that was
-actually hashed against its declared `content_sha256`, and archive integrity. Exit
-codes: `0` healthy, `1` a problem (structural error, evidence mismatch, evidence path
-outside the graph root, archive verification failure), `2` usage. **Debt is not
-breakage**: stale work items and legacy unanchored nodes are printed but only fail with
-`--strict`, because paging someone for a three-day-old task trains them to ignore the
-report.
+actually hashed against its declared `content_sha256`, and archive integrity. **Debt is
+not breakage**: stale work items and legacy unanchored nodes are printed but only fail
+with `--strict`, because paging someone for a three-day-old task trains them to ignore
+the report.
+
+### Verdicts and exit codes
+
+The last line is a verdict, and the exit code matches it — a scheduler keys on the code,
+a human reads the line:
+
+| verdict | exit | meaning | first action |
+|---|---|---|---|
+| `healthy` | 0 | no problem, and at least one `path:` evidence file hashed to its declared digest | nothing |
+| `needs_attention` | 1 | `check` errors, or evidence that mismatches / is missing / is a directory / cannot be read / is outside the graph root, or archive verification failed (stale work too, with `--strict`) | the `x` line above the verdict names the command to run |
+| `unverified` | 3 | nothing is broken, but **zero** evidence items could be observed: no evidence at all, or only `cmd:`/`url:`/`sha256:` anchors, which carry no local bytes | write `path:` evidence for claims that matter, or accept the gap explicitly |
+
+`unverified` exists because "0 checked" and "0 failed" look identical in a problem list.
+v0.23.0 printed `healthy` and exited 0 on a store whose every claim was unproven (an
+`adopt`ed graph empties the evidence layer by design, and a `cmd:`-only graph has nothing
+local to hash) — that is a dashboard saying "fine" about "unknown"
+(`ATTACK-HEALTHCHECK-V023.md` §2.1–2.2). `--allow-unverified` keeps the verdict honest
+and relaxes only the exit code, for stores whose evidence is intentionally remote.
+`--no-evidence` skips hashing for speed and reports `evidence: skipped … NOT VERIFIED`;
+the verdict then rests on `check`/`audit`/`archive` alone and never claims verification.
 
 ## 1. What is already enforced (do not re-implement it)
 
@@ -97,6 +116,8 @@ and never invents one.
 | `E_EVIDENCE_MISMATCH` | a `path:` evidence file's bytes are not what the node declared | `amg verify-evidence ./mem`; fix the claim or the evidence, do not re-declare the hash to silence it |
 | `E_ARCHIVE_VERIFY` | the archive move could not be proven; the pre-move snapshot was written back | inspect the snapshot, then `amg archive --verify` |
 | audit conflicts | stale `in_progress`/`blocked` work | close or re-date the work items; do not widen the threshold to hide them |
+| `verdict: UNVERIFIED` (exit 3) | no evidence item could be observed — nothing is broken, nothing is proven | add `path:` evidence for the claims that matter, or pass `--allow-unverified` once you accept the gap; do not "fix" it by declaring hashes you did not compute |
+| evidence `missing` / `not_a_file` / `unreadable` | a declared `path:` proof is gone, is a directory, or cannot be read | restore the file or correct the claim: the gate rejects a re-declared hash that does not match the bytes |
 
 ## 7. What this runbook is not
 

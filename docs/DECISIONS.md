@@ -69,18 +69,14 @@ Each entry states the decision, the evidence behind it, and what it costs.
     *Signed 2026-10-30.*
 
 12. **Prior art is verified in full text, and our two "design commitments" are
-    conceded.** MAP-Graph (arXiv:2608.10509) was cited from a second-hand summary
-    for months. A full-text check (14 pages, quoted in `docs/PRIOR-ART.md`) found
-    that it already implements and ablates both ideas this project listed as its
-    own direction — hard authorization separated from graded trust, and evidence
-    requirements scaling with action risk. So they move from "design only, ours"
-    to "prior art, not implemented here". It also confirmed the useful boundary:
-    the paper states it has "no generic supersession or conflict-resolution state
-    machine", and a keyword scan finds no expiry mechanism at all. That is what we
-    are allowed to point at — a scope difference, not a superiority claim.
-    Consequence: no document may say or imply "no precedent" for the
-    task/evidence/authorization combination; the README's "closest prior work"
-    line now names what that work does.
+    conceded.** MAP-Graph (arXiv:2608.10509) was cited from a second-hand summary for
+    months. The full text (14 pages, quoted in `docs/PRIOR-ART.md`) shows it already
+    implements and ablates both ideas we listed as our own direction — authorization
+    separated from graded trust, and evidence requirements scaling with action risk —
+    so they are "prior art, not implemented here". It also fixes the one boundary we
+    may point at: the paper says it has "no generic supersession or
+    conflict-resolution state machine", and no expiry mechanism appears at all — a
+    scope difference, not a superiority claim. No document may imply "no precedent".
     *Signed 2026-10-30.*
 
 13. **No authentication, no authorization, no multi-tenancy — decided, not
@@ -137,20 +133,16 @@ Each entry states the decision, the evidence behind it, and what it costs.
     *Signed 2026-10-30.*
 
 17. **History sidecar: rejected. Segmented compression: the sanctioned direction, not
-    yet built.** The sidecar (state in `graph.json`, history appended to a second
-    file) measured −82% write cost (147 ms → ~27 ms) and was rejected anyway:
-    `changes[]` records are `{at, by, op, target, rev, note}` — descriptions, not
-    replayable operations — so a split store has a crash window that can only be
-    *detected*, never repaired, and the ledger can end up disagreeing with the state
-    it describes. That trades the one guarantee the store is built around for speed.
-    The alternative keeps one atomically replaced file and compresses history into
-    sealed zlib segments: measured −54% file size, ~60 ms writes, 11 ms to decompress
-    on read, round-trip verified. Its price is explicit — history stops being
-    text-greppable/diffable, `fingerprint` must be defined over decompressed meaning
-    rather than bytes, and it needs an `amg/v2` format bump. Deferred to the existing
-    trigger (20 MB / 250 ms p95 / 10k nodes, or a real `LockTimeout` with
-    `AMG_LOCK_TIMEOUT` already raised). Full design and build checklist:
-    `docs/DESIGN-HISTORY.md`.
+    yet built.** The sidecar measured −82% write cost (147 → ~27 ms) and was rejected
+    anyway: `changes[]` entries are descriptions, not replayable operations, so a split
+    store has a crash window that can be *detected* but never repaired, and the ledger
+    can end up disagreeing with the state it describes: trading the core guarantee for
+    speed. The alternative keeps one atomically replaced
+    file and compresses history into sealed zlib segments: −54% file size, ~60 ms
+    writes, 11 ms to decompress, round-trip verified; the price is explicit — history
+    stops being greppable/diffable, `fingerprint` must be defined over decompressed
+    meaning, and it needs an `amg/v2` bump. Deferred to the existing trigger (20 MB /
+    250 ms p95 / 10k nodes). Design: `docs/DESIGN-HISTORY.md`.
     *Signed 2026-10-30.*
 
 18. **A coverage gate must derive its own scope; a hand-written list is a claim about
@@ -337,11 +329,17 @@ Each entry states the decision, the evidence behind it, and what it costs.
     `--strict` requires the latter; `not_a_file`/`unreadable`/empty are explicit, not
     green. (c) `--include-archive` returned zero archived hits when `k` live records
     matched: from `k >= 5` it keeps `max(1, k // 5)` slots, one per file first; below 5,
-    unchanged. *Signed 2026-10-31; tests;
-    v0.21.0.*
+    unchanged. *Signed 2026-10-31; tests; v0.21.0.*
 33. **`amg migrate` folds legacy `detail` into `note`; `check` stops advising a no-op.**
     A legacy-only key (`detail`) survived `migrate`, keeping a third `changes[]` shape
     (`changes-key-shapes`). `normalize()` now moves it into `note` (never drops it) and
     reports `folded_detail` and any `non_canonical_shapes` left; `check` distinguishes a *missing* rev (run migrate) from
     a *null* rev left by migrate (unknown by design). Idempotent: a second run reports
     `changed: 0`. *Signed 2026-10-31; `tests/test_migrate.py`; v0.22.0.*
+34. **"Nothing was verified" is not "healthy".** v0.23.0's `healthcheck` treated
+    `unverifiable` as neither problem nor debt, so an `adopt`ed graph (evidence emptied
+    by design) or a `cmd:`-only graph printed `healthy`, exit 0; `--strict` missed it
+    (`ATTACK-HEALTHCHECK-V023` §2.1–2.2). v0.24.0 adds verdict `unverified` + exit `3`,
+    reports coverage (`verified/declared`), and counts `missing`/`not_a_file`/
+    `unreadable` as problems. `--allow-unverified` relaxes the exit code only.
+    *Signed 2026-10-31; `tests/test_healthcheck.py`; v0.24.0.*
