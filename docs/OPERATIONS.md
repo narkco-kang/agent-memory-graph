@@ -70,6 +70,15 @@ not read like one that looked and found nothing (`REATTACK-HEALTHCHECK-V0240.md`
 `--strict` covers debt only (stale work, unanchored nodes); it never means "all evidence
 verified", and the JSON says so in `strict_scope`.
 
+**`--strict` is an acceptance mode, not an inspection mode.** On a store that carries any
+debt it always fails — including a graph whose evidence is 100% anchored, because ten
+stale work items are ten failures under `--strict` (measured on a 10/10-anchored fixture:
+`healthy` without the flag, `NEEDS ATTENTION` with it). That is the policy working, not a
+defect: use the plain run for daily inspection (it prints the debt), and `--strict` when
+you are signing something off and the debt really has to be zero. Reading numbers from any
+run is a snapshot: the graph can change between two runs, so compare a run against the
+same commit/file digest, not against yesterday's line.
+
 ### Verifying a graph another tool wrote
 
 A graph curated by another tool (ours: `kg.py`, schema `group-kg/v1`) is **not** under

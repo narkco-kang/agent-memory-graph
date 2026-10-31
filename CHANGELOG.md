@@ -3,6 +3,24 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.29.1] — 2026-10-31
+
+Documentation-only patch: `--strict` is an acceptance mode, not an inspection mode.
+
+### Changed
+
+- `docs/OPERATIONS.md` states what the v0.29.0 re-attack made obvious: on a store with
+  any debt, `--strict` always fails — even a 100%-anchored graph, because ten stale work
+  items are ten failures under it (measured: `healthy` without the flag, `NEEDS
+  ATTENTION` with it). Daily inspection uses the plain run, which prints the debt;
+  `--strict` is for signing off when the debt must be zero.
+- It also records that a run is a snapshot: the numbers describe the graph at that
+  moment, so compare against the same file digest, not against yesterday's line.
+
+### Not shipped in 0.29.1 (do not assume)
+
+- No code change: verdicts, exit codes, counts identical to 0.29.0.
+
 ## [0.29.0] — 2026-10-31
 
 A forged legacy digest fails the run, and one ruler counts evidence everywhere.

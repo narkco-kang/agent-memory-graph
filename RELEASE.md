@@ -19,6 +19,23 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.29.1 — 2026-10-31
+
+Status: **released**. Documentation-only: what `--strict` is for.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | The confusion was observed on a real fixture | ✅ 10/10-anchored graph fails `--strict` (Glm仔 v0.29.0 re-attack) |
+| 2 | Policy, not defect, is stated as policy | ✅ `OPERATIONS.md` §Verdicts |
+| 3 | Runs are labelled as snapshots | ✅ "compare against the same file digest" |
+| 4 | No behaviour change | ✅ 0.29.0 verdicts/exit codes identical |
+| 5 | CI green on nine jobs | ✅ 337 tests ×4 + `package` ×5 |
+| 6 | Documentation↔code gates | ✅ 16 documents; `OPERATIONS.md` 12679 B |
+| 7 | Tag install verified | ✅ `git+...@v0.29.1` |
+| 8 | Architecture diagram re-rendered | ✅ v0.29.1 |
+
+---
+
 ## v0.29.0 — 2026-10-31
 
 Status: **released**. A forged legacy digest fails the run; `done` and `conclusions`
