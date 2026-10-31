@@ -3,6 +3,25 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.28.1] — 2026-10-31
+
+Patch: the bridge's report says what it means.
+
+### Fixed
+
+- The `partially_verified` verdict printed `PARTIALLY VERIFIED (no conclusion
+  anchored)` even when one conclusion *was* anchored (1/20). The parenthetical is gone;
+  the `conclusions:` line carries the numbers.
+- The bridge's `conclusions:` line omitted unobservable evidence, so a graph with 165
+  declared-but-unobservable conclusions printed only `41 unanchored`. It now prints
+  `0/206 verified (0%), 41 unanchored, 165 unobservable`, matching the warnings.
+- With no `path:` evidence at all the base line read `files found 0/0`; it now reads
+  `no path: evidence rows`.
+
+### Not shipped in 0.28.1 (do not assume)
+
+- No behaviour change: verdicts, exit codes and counts are identical to 0.28.0.
+
 ## [0.28.0] — 2026-10-31
 
 The snapshot bridge stops having a private green light, and legacy observations count

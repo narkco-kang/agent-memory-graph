@@ -332,7 +332,7 @@ def main(argv=None):
         verdict = report["verdict"]
         label = {"needs_attention": "NEEDS ATTENTION", "unverified": "UNVERIFIED",
                  "not_checked": "NOT CHECKED (evidence hashing skipped)",
-                 "partially_verified": "PARTIALLY VERIFIED (no conclusion anchored)",
+                 "partially_verified": "PARTIALLY VERIFIED (see conclusions line)",
                  }.get(verdict, "healthy")
         accepted = report["unverified_accepted"]
         print("  verdict: " + label

@@ -19,6 +19,23 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.28.1 — 2026-10-31
+
+Status: **released**. Text-only patch: the bridge's report stops contradicting itself.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | Reported by verifiers, reproduced on the tag | ✅ Glm仔/Hermes 复攻 v0.28.0 的文案毛刺 |
+| 2 | No behaviour change | ✅ verdicts, exit codes, counts identical to 0.28.0 |
+| 3 | The numbers in the line match the warnings | ✅ `41 unanchored, 165 unobservable` |
+| 4 | No more `files found 0/0` | ✅ `no path: evidence rows` |
+| 5 | CI green on nine jobs | ✅ 334 tests ×4 + `package` ×5 |
+| 6 | Documentation↔code gates | ✅ 16 documents |
+| 7 | Tag install verified | ✅ `git+...@v0.28.1` |
+| 8 | Architecture diagram re-rendered | ✅ v0.28.1 |
+
+---
+
 ## v0.28.0 — 2026-10-31
 
 Status: **released**. The bridge's verdict stops disagreeing with its own report.

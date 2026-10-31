@@ -238,14 +238,18 @@ def main(argv=None):
         if conclusions["total"]:
             anchor = ("n/a" if conclusions["anchor_coverage"] is None
                       else f"{conclusions['anchor_coverage']:.0%}")
+            unobservable = conclusions.get("unobservable") or 0
+            extra = f", {unobservable} unobservable" if unobservable else ""
             print(f"  conclusions: {conclusions['verified']}/{conclusions['total']} "
                   f"verified ({anchor}), "
-                      f"{conclusions['unanchored_conclusions']} unanchored")
+                  f"{conclusions['unanchored_conclusions']} unanchored{extra}")
         snapshot_meta = report["snapshot"]
         rate = snapshot_meta["exists_rate"]
-        print(f"  evidence base: {snapshot_meta['resolve_root']} "
-              f"(files found {snapshot_meta['files_found']}/{snapshot_meta['path_rows']}"
-              + ("" if rate is None else f", {rate:.0%}") + ")")
+        rows = snapshot_meta["path_rows"]
+        found = ("no path: evidence rows" if not rows else
+                 f"files found {snapshot_meta['files_found']}/{rows}"
+                 + ("" if rate is None else f", {rate:.0%}"))
+        print(f"  evidence base: {snapshot_meta['resolve_root']} ({found})")
         legacy = snapshot_meta["legacy_strings"]
         if legacy["checked"] or legacy["malformed"]:
             print(f"  legacy strings: {legacy['checked']} with #sha256, "
@@ -258,7 +262,7 @@ def main(argv=None):
         for warning in report["warnings"]:
             print(f"  ! {warning}")
         label = {"needs_attention": "NEEDS ATTENTION", "unverified": "UNVERIFIED",
-                 "partially_verified": "PARTIALLY VERIFIED (no conclusion anchored)",
+                 "partially_verified": "PARTIALLY VERIFIED (see conclusions line)",
                  }.get(report["verdict"], "healthy")
         accepted = report["unverified_accepted"]
         print("  verdict: " + label
