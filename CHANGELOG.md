@@ -3,6 +3,46 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.36.0] — 2026-10-31
+
+Anchoring stops being a gate and becomes a tie-breaker, and the tests that guard it are proven to
+fail when the old key comes back.
+
+### Changed
+
+- `retrieval.rank_key` is now `(round(raw_score, 3), anchored, node_id)` — anchoring moved from the
+  **first** component to the **second**. As the first key it was not a preference: any anchored node
+  outranked any unanchored one whatever the scores, so on the team's own graph (474–478 nodes,
+  296–300 anchored) an unanchored node could not reach the top 50 for its own label at all
+  (`rank@50 = None`). Measured 40 stratified queries per stratum, three seeds: anchored **40/40**,
+  unanchored **0/40** before; **40/40** and **40/40** after. The sharper pair: an anchored node
+  scoring 1.313 beat an unanchored node scoring 3.527 under the old key. See
+  [DECISIONS #55](docs/decisions/55-anchor-is-a-tie-breaker.md).
+- `DECISIONS #3` is amended: "degrades, never hides" was true of the `--strict` filter and false of
+  the ranking, which was hiding. Its status is `amended (#31, #55)`.
+- `docs/RANKING.md` and the `rank_key` docstring now state the new rule, and say plainly that rank
+  position is no longer an evidence signal: use `anchor_state` or `--strict` for that.
+
+### Added
+
+- `tools/glm-mutation-check.py` makes the acceptance for this change a command rather than a claim:
+  it re-applies the old key and exits 0 only if **at least two** tests fail under it. Currently 3
+  (`test_anchor_decides_only_an_exact_tie`, `test_key_prefers_score_over_anchoring`,
+  `test_unanchored_target_beats_partly_matching_anchored_noise`).
+- `tests/conftest.py` puts `src/` on `sys.path` once, so `pytest tests` and the CI path
+  (`PYTHONPATH=src` + `unittest discover`) agree. Scope is honest: `unittest` does not load
+  `conftest.py`, so the CI path is unchanged and still relies on `PYTHONPATH=src`.
+- `tests/test_tie_break.py` gained a judgement-style test on the measured pair (3.527 unanchored must
+  outrank 1.313 anchored), and its unanchored-reachability fixture now uses partly-matching anchored
+  noise — the earlier zero-match fixture passed under the old key and guarded nothing.
+
+### Fixed
+
+- The first delivery of this change shipped four new tests of which **three still passed under the
+  old key**: an acceptance that could not fail. Found by mutating `rank_key` back in an isolated
+  worktree; fixed, then re-mutated. Documented because "a test that cannot fail" is the same defect
+  class as "a gate that cannot see".
+
 ## [0.35.0] — 2026-10-31
 
 The evaluation corpus is frozen, and the ranking rule says what it does when scores tie.

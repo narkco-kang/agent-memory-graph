@@ -38,12 +38,19 @@ WEIGHTS = {"id": 3.0, "label": 2.0, "note": 1.0, "source": 0.5, "owner": 0.5}
 def rank_key(raw, anchor_present, node_id):
     """The single ordering key for L3/L4 hits (highest first).
 
-    Anchored hits first, then the pre-normalization score rounded to the displayed precision,
+    The pre-normalization score rounded to the displayed precision first, then anchored-ness,
     then the node id **reversed**. The id component is what breaks exact ties, so at a tie the
     rank is decided by the identifier, not by relevance: results are reproducible, but a tie is
     not a relevance judgement. Callers reading `hits[i]["score"]` see the same 3-dp rounding.
+
+    v0.36.0 moved the anchor from *first* to *second* (DECISIONS #3, amended by #55). As the
+    first key it was not a preference but a gate: on the team's own graph an unanchored node
+    could not reach the top 50 for its own label, whatever it scored — measured 40/40 anchored
+    against 0/40 unanchored before the change, 40/40 against 40/40 after. Anchoring is still
+    reported on every hit (`anchor_state`) and `--strict` still returns anchored hits only; it
+    no longer outranks relevance.
     """
-    return (bool(anchor_present), round(raw, 3), node_id or "")
+    return (round(raw, 3), bool(anchor_present), node_id or "")
 
 
 def _tokens(query: str):

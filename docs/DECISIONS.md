@@ -37,7 +37,7 @@ split: the previous single file could hold 34 decisions and then stopped.
 |---|---|---|---|
 | [1](decisions/01-write-gate-forward-only.md) | Write gate is forward-only. | active | preamble |
 | [2](decisions/02-conclusion-typed-gate.md) | Gate triggers on conclusion-typed content, not on status. | active | preamble |
-| [3](decisions/03-anchor-filter-degrades.md) | Anchor filter degrades, never hides. | amended (#31) | preamble |
+| [3](decisions/03-anchor-filter-degrades.md) | Anchor filter degrades, never hides. | amended (#31, #55) | preamble |
 | [4](decisions/04-no-shared-field-semantics.md) | Two different things never share one field. | active | preamble |
 | [5](decisions/05-bi-temporal-minimal.md) | Bi-temporal, minimally. | active | preamble |
 | [6](decisions/06-semantic-gates-may-not-reject.md) | Semantic gates may not reject. | active | preamble |
@@ -89,3 +89,4 @@ split: the previous single file could hold 34 decisions and then stopped.
 | [52](decisions/52-real-noise-also-misses.md) | The 0.70 target is missed under realistic noise too. | active | ✓ |
 | [53](decisions/53-arm-name-must-match-code.md) | An arm is described by its implementation, not the idea it resembles. | active | ✓ |
 | [54](decisions/54-decisions-need-a-discussion.md) | A decision entry must name the group discussion that produced it. | active | ✓ |
+| [55](decisions/55-anchor-is-a-tie-breaker.md) | Anchoring is a tie-breaker, not a gate. | active | ✓ |

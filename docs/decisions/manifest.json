@@ -1,6 +1,6 @@
 {
  "schema": "amg-decision-pages/v1",
- "count": 54,
+ "count": 55,
  "pages": [
   {
    "n": 1,
@@ -24,7 +24,7 @@
    "n": 3,
    "slug": "03-anchor-filter-degrades.md",
    "title": "Anchor filter degrades, never hides.",
-   "status": "amended (#31)",
+   "status": "amended (#31, #55)",
    "signed": false,
    "body_sha256": "bbd41269d66a619a2d06ef6af302ed64f7364b5b98e371be1c1e9a1640db4b67",
    "body_bytes": 219
@@ -487,6 +487,15 @@
    "signed": true,
    "body_sha256": "15f9e668db797803c9b0f52880a3b7e8c508c3035c1a58b51b1cff01c0de475a",
    "body_bytes": 2235
+  },
+  {
+   "n": 55,
+   "slug": "55-anchor-is-a-tie-breaker.md",
+   "title": "Anchoring is a tie-breaker, not a gate.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "36ef3d9ab3416810d1eaeb9b345efb7ec1982d8906b9420c3b0492a480747d73",
+   "body_bytes": 2511
   }
  ]
 }
