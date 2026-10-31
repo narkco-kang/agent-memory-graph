@@ -6,7 +6,9 @@ because the distractor prose is taken from this repository's live `README.md` an
 Nothing failed then, because nothing checked. These tests check.
 """
 import hashlib
+import contextlib
 import importlib.util
+import io
 import json
 import os
 import pathlib
@@ -181,6 +183,90 @@ class PairedFalsifierTest(unittest.TestCase):
                          "the length sweep was measured on a different corpus; re-run it")
         self.assertEqual(sweep_corpus["files"], main_corpus["files"])
 
+
+class DecouplingAcceptanceTest(unittest.TestCase):
+    """The four gates agreed in the group discussion for decoupling the corpus from live docs."""
+
+    def test_corpus_src_reproduces_the_pin_digests(self):
+        """Gate 1: concatenate corpus_src in `files[]` order and match the pin, order included."""
+        import hashlib
+
+        with open(ART / "corpus_pin.json", encoding="utf-8") as fh:
+            pin = json.load(fh)
+        names = [entry["path"] for entry in pin["files"]]
+        concat = b""
+        paragraphs = []
+        for name in names:
+            data = (ART / "corpus_src" / name).read_bytes()
+            concat += data.replace(b"\r\n", b"\n")
+            paragraphs.extend(block.split()
+                              for block in re.split(r"\n\s*\n", data.decode("utf-8")))
+        self.assertEqual(hashlib.sha256(concat).hexdigest(), pin["source_sha256"],
+                         "corpus_src and pin.text disagree; the two copies have drifted")
+        text = "\n\n".join(" ".join(words) for words in paragraphs if len(words) >= 6)
+        self.assertEqual(hashlib.sha256(text.encode("utf-8")).hexdigest(),
+                         pin["extracted_sha256"],
+                         "paragraph extraction from corpus_src does not reproduce the pin")
+
+    def test_representativeness_is_required_not_merely_documented(self):
+        """Gate 2: deleting the declaration must fail a check, not a comment."""
+        result = load("result.json")
+        declaration = result["representativeness"]
+        for key in ("kind", "measures", "does_not_measure", "known_leak", "comparability",
+                    "corpus_version"):
+            self.assertIn(key, declaration)
+        self.assertEqual(declaration["kind"], "same-domain regression set")
+        self.assertEqual(declaration["corpus_version"], result["inputs"]["corpus"]["corpus_version"])
+
+        def validate(payload):
+            payload = dict(payload)
+            decl = payload.get("representativeness")
+            if not decl:
+                raise ValueError("result.json without a representativeness declaration")
+            missing = {"kind", "measures", "does_not_measure", "known_leak",
+                       "comparability"} - set(decl)
+            if missing:
+                raise ValueError(f"representativeness missing {sorted(missing)}")
+
+        validate(result)
+        mutated = dict(result)
+        mutated.pop("representativeness")
+        with self.assertRaises(ValueError):
+            validate(mutated)
+        partial = dict(result)
+        partial["representativeness"] = {"kind": "same-domain regression set"}
+        with self.assertRaises(ValueError):
+            validate(partial)
+
+    def test_check_corpus_is_an_audit_that_never_fails(self):
+        """Gate 3: drift is reported with an age and exit 0; a red gate would always be red."""
+        spec = importlib.util.spec_from_file_location("run_realtext", ART / "run_realtext.py")
+        module = importlib.util.module_from_spec(spec)
+        sys.modules["run_realtext"] = module
+        spec.loader.exec_module(module)
+        with tempfile.TemporaryDirectory() as tmp:
+            live = pathlib.Path(tmp) / "live.md"
+            live.write_text("# changed\n\nthis prose is not in the frozen corpus at all\n",
+                            encoding="utf-8")
+            module.live_paths = lambda: [live]
+            buffer = io.StringIO()
+            with contextlib.redirect_stdout(buffer):
+                code = module.check_corpus([])
+            output = buffer.getvalue()
+        self.assertEqual(code, 0, "check-corpus must not fail a build for documentation drift")
+        self.assertIn("changed", output)
+        self.assertIn("day(s) old", output)
+
+    def test_frozen_corpus_is_a_fixture_outside_the_documentation_budget(self):
+        """Gate 4: corpus_src is a fixture: in the sdist, out of the docs size gate."""
+        self.assertNotIn("docs", (ART / "corpus_src").relative_to(REPO).parts,
+                         "the frozen corpus must not live under docs/ (that is the doc budget scope)")
+        source = (REPO / "tools" / "check_dist.py").read_text(encoding="utf-8")
+        self.assertIn("retrieval_noise_realtext/corpus_src/manifest.json", source,
+                      "check_dist must require the frozen corpus in the sdist")
+        scope_source = (REPO / "tools" / "doc_scope.py").read_text(encoding="utf-8")
+        self.assertNotIn("experiments", scope_source,
+                         "the documentation budget must not scan experiments/ fixtures")
 
 
 if __name__ == "__main__":

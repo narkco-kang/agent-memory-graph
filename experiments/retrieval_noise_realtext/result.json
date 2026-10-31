@@ -209,6 +209,8 @@
   },
   "inputs": {
     "corpus": {
+      "corpus_version": "v2",
+      "created_at": "2026-10-31T14:59:43+08:00",
       "extracted_bytes": 217680,
       "extracted_sha256": "5ad5b00aea5495b9df1b32504869820e789bbb6f3270cceba3d9139953d82d6c",
       "extractor": "prose_pool/1",
@@ -499,13 +501,22 @@
         }
       ],
       "paragraphs": 635,
-      "schema": "realtext-corpus/1"
+      "schema": "realtext-corpus/1",
+      "source_sha256": "b7b904dfcd659d15a250bbee111be3c010d01cfa6e91a9c179e2c0b6b738c019"
     },
     "deep_k": 100,
     "nodes": 10000,
     "paragraphs": 635,
     "seed": 20261031,
     "window_words": 8
+  },
+  "representativeness": {
+    "comparability": "numbers are comparable within one corpus_version, never across versions",
+    "corpus_version": "v2",
+    "does_not_measure": "the distribution of user queries, or retrieval quality on any other domain; the 26 queries, the gold nodes and the distractor prose all come from the same documentation",
+    "kind": "same-domain regression set",
+    "known_leak": "distractor paragraphs and gold nodes share one vocabulary: an independent review found 20/20 sampled rare gold tokens also occur in the corpus, so a gain here may be a gain at matching this repository's prose style",
+    "measures": "lexical retrieval over this repository's own prose, frozen at the corpus version recorded here"
   },
   "verdicts": {
     "Q1_recall_at_least_0.75": false,

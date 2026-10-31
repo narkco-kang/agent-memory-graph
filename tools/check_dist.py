@@ -114,6 +114,9 @@ def check_sdist(path):
             "experiments/retrieval_eval/run_eval.py",
             "experiments/valid_from_bias/run_experiment.py",
             "experiments/concurrency/run_stress.py",
+            # fixture, not documentation: the frozen evaluation corpus (v0.34.x decoupling)
+            "experiments/retrieval_noise_realtext/corpus_src/manifest.json",
+            "experiments/retrieval_noise_realtext/corpus_pin.json",
         ]
     )
     with tarfile.open(path) as tf:

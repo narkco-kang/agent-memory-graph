@@ -76,3 +76,15 @@ configuration is therefore 0.70 − 0.654 = **0.046** at the pinned state, not 0
 carries the per-query rows (1-based `best_gold_rank`, matched tokens, out-of-reach set), and
 `paired_test.py` compares two ledgers as a falsifier — pass means zero regressions, and no p value is
 reported as significance at n=26.
+
+**Decoupled corpus, and the claim it can support (2026-10-31, after the group discussion).**
+The distractor prose is no longer read from the live `README.md`/`docs/**`. It is a frozen copy under
+`experiments/retrieval_noise_realtext/corpus_src/` carrying a `corpus_version` (v2 at this writing):
+documentation edits cannot move a published number, and refreshing it is an explicit version bump
+(`--refresh-corpus`) that requires re-quoting every number. `--check-corpus` is an audit — it prints
+the drift and the pin's age and never fails a build. This corpus is a **same-domain regression set,
+not an independent validation set**: distractors and gold nodes share one vocabulary (an independent
+review found 20/20 sampled rare gold tokens also occur in the corpus), and 81 of 635 paragraphs
+(12.8%) are the documentation talking about evaluation itself. `result.json` states this under
+`representativeness`, and a test fails if that declaration is removed. Numbers are comparable within
+one `corpus_version`, never across versions.
