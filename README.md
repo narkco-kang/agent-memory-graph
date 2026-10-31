@@ -127,7 +127,7 @@ evidence and exits 1 on a mismatch (v0.20.0).
 Matching is word-aware: ASCII matches whole words and their regular inflections (a
 single letter matches nothing), and a query containing `.` `:` `/` `_` is treated as one
 identifier lookup. The precision/recall trade is measured in
-`experiments/retrieval_precision/` and recorded as DECISIONS #25.
+`experiments/retrieval_precision/` and recorded as [DECISIONS #25](docs/decisions/25-word-aware-matching.md).
 
 **Not implemented** — measured against a pre-registered bar and rejected for the
 default path, or simply out of scope; do not assume them: vector / embedding search

@@ -5,9 +5,10 @@ were written into this one file from 2026-10-29 to 2026-10-31; at #34 it had 7 B
 so decisions went unrecorded for seven versions. Since v0.32.0 **this file is the index** and
 every decision has its own page (DECISIONS #43).
 
-**How to read a reference.** `DECISIONS #N` means entry N in the table below; follow the
-link. There are no anchors into the old single file, and no other file depends on the
-layout — 27 references across the repository are all bare numbers.
+**How to read a reference.** `DECISIONS #N` means entry N in the table below. In the
+shipped documentation every reference is a link straight to that decision's page, and a test
+asserts that a link labelled `#N` resolves to the page numbered N (`CHANGELOG.md` and
+`RELEASE.md` keep bare numbers: they are append-only logs, not reading material).
 
 **Status.** `active` = still the rule. `amended (#N)` = the rule stands but a later entry
 changed part of it. `superseded` = replaced (none yet). `archived` = kept for history only

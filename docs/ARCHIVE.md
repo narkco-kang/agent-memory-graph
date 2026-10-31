@@ -35,7 +35,7 @@ A **prefix** of `changes[]`, and only that:
 Taking a prefix is what keeps rev numbers contiguous after the move. The cutoff is a
 policy, not a constant: `--older-than-days N` or `AMG_ARCHIVE_DAYS`
 (`0 < N <= 3650`, nonsense falls back to 30 — never to 0, same ruling as
-`AMG_STALE_DAYS`, DECISIONS #21).
+`AMG_STALE_DAYS`, [DECISIONS #21](decisions/21-staleness-threshold-policy.md)).
 
 ## The proof (runs on every `--apply`)
 
@@ -135,5 +135,5 @@ cp ./mem/archive/snapshots/graph-r<rev>-<stamp>.json ./mem/graph.json
 
 ## Related decisions
 
-`DECISIONS.md` #24 (why the ledger, not nodes) and #21 (thresholds are policy).
+[DECISIONS #24](decisions/24-archive-ledger-not-nodes.md) (why the ledger, not nodes) and #21 (thresholds are policy).
 Write-cost background and the cold-archive trigger line: `docs/WRITE-COST.md`.

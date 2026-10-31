@@ -163,7 +163,7 @@ Two conclusions, the second less comfortable:
    long-lived by nature — a group marked `in_progress` stays that way for the life of
    the group, and its `updatedAt` does not move when its children change. The rule
    assumes a short-lived work item, so `group`, `env` and `member` (registrations, not
-   work) are now exempt (DECISIONS #20). The refusal to change it quietly is the
+   work) are now exempt ([DECISIONS #20](decisions/20-staleness-applies-to-work.md)). The refusal to change it quietly is the
    point: audit output is a contract, so the change came with a decision, four tests
    and this note.
 

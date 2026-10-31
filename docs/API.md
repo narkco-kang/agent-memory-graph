@@ -57,7 +57,7 @@ write costs the full rewrite, so 5 s covers roughly 34 queued writes.
 `AMG_STALE_DAYS` (days, `0 < x <= 365`, invalid values fall back to 3) is the age at
 which `audit` calls an `in_progress`/`blocked` work item stale. `amg audit
 --stale-days N` overrides it for one run. The threshold is a property of the team's
-cadence, not of the tool (DECISIONS #21); node types that register something
+cadence, not of the tool ([DECISIONS #21](decisions/21-staleness-threshold-policy.md)); node types that register something
 long-lived (`group`, `env`, `member`) are never reported as stale.
 
 `--include-archive` (search only) extends an **L2** query to the cold archive
@@ -190,7 +190,7 @@ git add ./mem/graph.json ./witness.json && git commit -m "memory: <fingerprint>"
 ```
 
 Because of that, there is deliberately **no** in-file hash chain over `changes[]`
-(see DECISIONS.md #11): it would look stronger than the external digest while
+(see [DECISIONS #11](decisions/11-tamper-evidence-outside-file.md)): it would look stronger than the external digest while
 providing less, since an attacker regenerates the whole chain in one pass.
 
 ## Read-side audit (opt-in, v0.3)
@@ -375,8 +375,8 @@ Matching is lexical and, as of v0.14.0, word-aware:
   characters remain searchable.
 - The ASCII inflection table is English; other languages get word-boundary matching
   only. `experiments/retrieval_precision/` measures this behaviour and
-  `docs/DECISIONS.md` #25 records the recall that changing it costs.
-- **Scoring is rarity-aware (v0.18.0, DECISIONS #28)**: a matched term contributes
+  [DECISIONS #25](decisions/25-word-aware-matching.md) records the recall that changing it costs.
+- **Scoring is rarity-aware (v0.18.0, [DECISIONS #28](decisions/28-idf-term-weights.md))**: a matched term contributes
   `WEIGHTS[field] × idf(term)` with `idf = ln(1 + N/(1+df))` over the visible nodes, so
   fields still order (`id` 3.0, `label` 2.0, `note` 1.0, `source`/`owner` 0.5) but a
   word that is everywhere cannot outvote the answering term. Measured on the frozen 26
@@ -384,7 +384,7 @@ Matching is lexical and, as of v0.14.0, word-aware:
   noise at 10k 0.712 → 0.865. Uniform query-vocabulary noise stays **0.538** (r@10
   0.538 → 0.577) because every token in it is equally common, so IDF has no signal
   (`experiments/retrieval_idf/`).
-- **Scores are bounded and labelled (v0.19.0, DECISIONS #30)**: the IDF is divided by
+- **Scores are bounded and labelled (v0.19.0, [DECISIONS #30](decisions/30-bounded-scores-labelled.md))**: the IDF is divided by
   its own maximum `ln(1 + N)`, so a hit score is in `(0, 7.0 × matched terms]` and does
   not grow without limit as the graph grows; the same match at 10 000 nodes scores
   ≈1.4× its 27-node value instead of ≈3.8× (residual drift published, issue
@@ -429,4 +429,4 @@ data is unsupported or the result would not pass `check`; `2` wrong input
 ## Deliberately absent
 
 No `delete`, no in-place note edit, no vector index, no auth, no network. See
-[DECISIONS.md](DECISIONS.md) for why.
+[DECISIONS #11](decisions/11-tamper-evidence-outside-file.md) for why.

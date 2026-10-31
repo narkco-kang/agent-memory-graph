@@ -52,7 +52,7 @@ and checks the size. Here the handover is a **node**, which buys three things fo
   one without reading first.
 
 `handoff` nodes are registrations, not work items, so they are exempt from the
-staleness rule (DECISIONS #20): a card does not become stale at three days, it becomes
+staleness rule ([DECISIONS #20](decisions/20-staleness-applies-to-work.md)): a card does not become stale at three days, it becomes
 stale when the work moves and nobody rewrites it.
 
 ## When to write one

@@ -169,7 +169,7 @@ than patched over:
    in `WRITE-COST.md` would take a write from ~150 ms to ~30 ms, which moves the
    same 5 s budget from 34 queued writes to ~170.
 
-Both are consistent with DECISIONS #15/#16: build the expensive thing when a real
+Both are consistent with [DECISIONS #15](decisions/15-lock-retry-backoff.md)/#16: build the expensive thing when a real
 workflow needs it, and say so with these numbers instead of "locks are slow".
 
 ## At 10,000 nodes: same arithmetic, bigger queue
@@ -198,7 +198,7 @@ in the tail; and the worst wait was 13.5 s, not < 5 s.
 Operationally: size the timeout to the burst, not to a feeling.
 `AMG_LOCK_TIMEOUT ≥ writers × writes × per_write_cost` is the safe form; for the
 200-write, 10k-node case that is ≥ 18 s, so 30–60 s is a sane setting. The default
-stays 5 s for interactive use (DECISIONS #26), and the error already names the knob.
+stays 5 s for interactive use ([DECISIONS #26](decisions/26-lock-timeout-stays-5s.md)), and the error already names the knob.
 
 ## A real bug the Windows burst test found
 

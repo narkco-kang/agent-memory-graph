@@ -3,6 +3,29 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.32.2] — 2026-10-31
+
+Documentation patch: a reference now lands on the decision, not on the index.
+
+### Changed
+
+- The shipped documentation referenced decisions as bare text (`DECISIONS #20`,
+  `` `DECISIONS.md` #24 ``), so reading one meant opening the index and clicking again. All
+  eleven such references in `README.md` and `docs/*.md` are now links straight to
+  `docs/decisions/NN-slug.md`, including the one the independent verifier flagged
+  (`docs/API.md` ended with "[DECISIONS.md](DECISIONS.md) for why", pointing at the index).
+- `docs/DECISIONS.md`'s reference paragraph now says what is true after the change: shipped
+  docs link directly; `CHANGELOG.md` and `RELEASE.md` keep bare numbers because they are
+  append-only logs.
+
+### Tests
+
+- `tests/test_decisions_log.py` gains two assertions: every `[DECISIONS #N](…)` link resolves
+  to a file whose name starts with that number, and no bare `DECISIONS #N` remains in the
+  shipped documents. The index's promise ("references resolve by number") is now machine-checked
+  instead of stated.
+- 350 tests.
+
 ## [0.32.1] — 2026-10-31
 
 v0.32.0's sdist was incomplete; the artifact check could not see it.

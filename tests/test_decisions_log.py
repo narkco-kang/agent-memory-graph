@@ -126,5 +126,52 @@ class DecisionPageGateCoverageTests(unittest.TestCase):
         self.assertEqual(pages - symbols, set(), "pages escape the symbol gate")
 
 
+class ReferenceResolutionTests(unittest.TestCase):
+    """`DECISIONS #N` must land on decision N, not on the index (v0.32.2).
+
+    The index says references resolve by number; that promise is only real if a link
+    reaches the page. Before this test, `docs/API.md` pointed at the index and a reader
+    needed a second click to reach the decision (reported by the independent verifier).
+    """
+
+    REF_RE = re.compile(r"\[DECISIONS #(\d+)\]\(([^)]+)\)")
+    BARE_RE = re.compile(r"(?<!\]\()DECISIONS(?:\.md)? #\d+")
+
+    def shipped_docs(self):
+        files = ["README.md"]
+        for current, _dirs, names in os.walk(os.path.join(ROOT, "docs")):
+            for name in sorted(names):
+                if not name.endswith(".md"):
+                    continue
+                rel = os.path.relpath(os.path.join(current, name), ROOT).replace(os.sep, "/")
+                if rel.startswith("docs/decisions/") or rel == "docs/DECISIONS.md":
+                    continue
+                files.append(rel)
+        return files
+
+    def test_every_reference_link_reaches_its_own_page(self):
+        seen = 0
+        for rel in self.shipped_docs():
+            with open(os.path.join(ROOT, rel), encoding="utf-8") as fh:
+                text = fh.read()
+            for number, target in self.REF_RE.findall(text):
+                seen += 1
+                resolved = os.path.normpath(os.path.join(os.path.dirname(rel), target))
+                self.assertTrue(os.path.isfile(os.path.join(ROOT, resolved)),
+                                f"{rel}: link to DECISIONS #{number} does not resolve: {target}")
+                self.assertRegex(os.path.basename(resolved), rf"^{int(number):02d}-",
+                                 f"{rel}: link labelled DECISIONS #{number} points at {target}")
+        self.assertGreater(seen, 5, "expected the shipped docs to reference the log")
+
+    def test_no_bare_reference_is_left_behind(self):
+        leftovers = []
+        for rel in self.shipped_docs():
+            with open(os.path.join(ROOT, rel), encoding="utf-8") as fh:
+                for line_no, line in enumerate(fh, 1):
+                    if self.BARE_RE.search(self.REF_RE.sub("", line)):
+                        leftovers.append(f"{rel}:{line_no}: {line.strip()[:80]}")
+        self.assertEqual(leftovers, [], "bare DECISIONS #N references (make them page links)")
+
+
 if __name__ == "__main__":
     unittest.main()
