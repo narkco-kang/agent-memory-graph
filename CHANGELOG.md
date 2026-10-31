@@ -3,6 +3,37 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.29.0] — 2026-10-31
+
+A forged legacy digest fails the run, and one ruler counts evidence everywhere.
+
+### Fixed
+
+- A legacy string `path:x#sha256:h` whose file does **not** hash to `h` only lowered the
+  verified count: the bridge exited 3 ("nothing verified"), the same code as "no digest
+  was ever declared", and only `--strict` promoted it. A declared proof that fails is a
+  violation, exactly as it is for an evidence object, so it is now a **problem** (exit 1,
+  `NEEDS ATTENTION`). A malformed `#sha256` is reported as a warning
+  (`issue.mem-arch-legacy-mismatch-not-problem`, Glm仔 N4).
+- `done` and `conclusions` disagreed about the same node: `conclusions` counted a
+  verified legacy string as evidence while `done` counted only `evidence[]`, so a node
+  read as "verified" on one line and "carries no evidence" on the next (Glm仔 N6). Both
+  use the same ruler now; on the project's own graph `done without evidence` drops from
+  292 to 108 because legacy declarations are real declarations.
+- The bridge's text also prints the `done nodes:` line, so the two rulers can be compared
+  in one look.
+
+### Added
+
+- 3 tests: a forged legacy digest exits 1 without `--strict`; done-vs-conclusions agree on
+  a legacy-verified graph; the conclusions field stays `unanchored_conclusions`.
+
+### Not shipped in 0.29.0 (do not assume)
+
+- A malformed `#sha256` is a warning, not a failure: it declares nothing verifiable, so
+  it is debt, not a violation.
+- No change to `healthcheck`'s debt policy or to any verdict/exit code it already had.
+
 ## [0.28.1] — 2026-10-31
 
 Patch: the bridge's report says what it means.

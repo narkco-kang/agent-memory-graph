@@ -19,6 +19,26 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.29.0 — 2026-10-31
+
+Status: **released**. A forged legacy digest fails the run; `done` and `conclusions`
+finally use the same ruler.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | Both defects found by the attacker, reproduced on the tag | ✅ Glm仔 N4 / N6 (`REATTACK-V0280-GLM.md`) |
+| 2 | Falsified declaration and untested claim are separated by exit code | ✅ legacy mismatch → 1, never claimed → 3 |
+| 3 | One ruler for evidence in every line | ✅ `done` uses `has_evidence` too |
+| 4 | The fix is visible in the project's own numbers | ✅ `done without evidence` 292 → 108 |
+| 5 | Malformed digests classified, not conflated | ✅ warning (debt), not failure |
+| 6 | CI green on nine jobs | ✅ 337 tests ×4 + `package` ×5 |
+| 7 | Documentation↔code gates | ✅ 16 documents |
+| 8 | Nothing else changed | ✅ healthcheck verdicts/exit codes unchanged |
+| 9 | Tag install verified | ✅ `git+...@v0.29.0` |
+| 10 | Architecture diagram re-rendered | ✅ v0.29.0 |
+
+---
+
 ## v0.28.1 — 2026-10-31
 
 Status: **released**. Text-only patch: the bridge's report stops contradicting itself.

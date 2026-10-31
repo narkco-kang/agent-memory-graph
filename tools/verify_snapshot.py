@@ -132,6 +132,15 @@ def snapshot(source, keep=False, evidence_root=None):
     path_rows = sum(counts.get(name, 0) for name in
                     ("ok", "mismatch", "missing", "not_a_file", "unreadable", "outside_root"))
     found = counts.get("ok", 0) + counts.get("mismatch", 0)
+    if legacy["mismatched"]:
+        report["problems"].append(
+            f"{len(legacy['mismatched'])} legacy evidence string(s) declare a sha256 that "
+            f"does not match the file - a declared proof that fails is a violation, not "
+            f"an untested claim")
+    if legacy["malformed"]:
+        report["warnings"].append(
+            f"{len(legacy['malformed'])} legacy evidence string(s) carry a malformed "
+            f"#sha256 and cannot be verified")
     report["snapshot"] = {
         "resolve_root": root,
         "exists_rate": (round(found / path_rows, 4) if path_rows else None),
@@ -243,6 +252,10 @@ def main(argv=None):
             print(f"  conclusions: {conclusions['verified']}/{conclusions['total']} "
                   f"verified ({anchor}), "
                   f"{conclusions['unanchored_conclusions']} unanchored{extra}")
+        done = report.get("done") or {}
+        if done:
+            print(f"  done nodes: {done.get('total', 0)} total, "
+                  f"{done.get('unanchored', 0)} without evidence")
         snapshot_meta = report["snapshot"]
         rate = snapshot_meta["exists_rate"]
         rows = snapshot_meta["path_rows"]

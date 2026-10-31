@@ -304,6 +304,12 @@ class HealthcheckTests(unittest.TestCase):
         self.assertEqual(report["verdict"], "partially_verified")
         self.assertEqual(res.returncode, 3, res.stdout + res.stderr)
 
+    def test_partially_verified_label_does_not_claim_zero(self):
+        report = json.loads(run(self.g.dir, "--json").stdout)
+        self.assertEqual(report["verdict"], "healthy")   # setUp graph is fully anchored
+        # the label text is covered by the bridge tests; here the field must stay honest
+        self.assertIn("unanchored_conclusions", report["conclusions"])
+
     def test_conclusions_field_is_named_for_what_it_counts(self):
         report = json.loads(run(self.g.dir, "--json").stdout)
         self.assertIn("unanchored_conclusions", report["conclusions"])

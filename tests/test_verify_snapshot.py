@@ -146,6 +146,28 @@ class SnapshotBridgeTests(unittest.TestCase):
         text = run(self.src).stdout
         self.assertIn("mismatched", text)
 
+    def test_legacy_mismatch_is_a_problem_not_an_unverified_claim(self):
+        # Glm仔 N4: a forged legacy sha exited 3 (same as "never claimed"), not 1
+        self.write(legacy_doc([f"path:proof.txt#sha256:{'a' * 64}"]))
+        res = run(self.src)          # no --strict: the violation itself must fail the run
+        self.assertEqual(res.returncode, 1, res.stdout + res.stderr)
+        self.assertIn("does not match the file", res.stdout)
+        self.assertIn("NEEDS ATTENTION", res.stdout)
+
+    def test_done_and_conclusions_use_the_same_ruler(self):
+        # Glm仔 N6: one node must not be "verified" above and "no evidence" below
+        digest = sha(self.proof)
+        nodes = [{"id": f"decision.d{i}", "type": "decision", "label": f"D{i}",
+                  "status": "done", "source": "group:legacy", "note": "",
+                  "evidence": [f"path:proof.txt#sha256:{digest}"],
+                  "updatedAt": "2026-10-26T10:00:00+08:00"} for i in range(3)]
+        doc = legacy_doc([])
+        doc["nodes"] = nodes
+        self.write(doc)
+        out = run(self.src).stdout
+        self.assertIn("conclusions: 3/3 verified (100%)", out)
+        self.assertIn("done nodes: 3 total, 0 without evidence", out)
+
     def test_legacy_observations_count_toward_anchoring_not_just_the_verdict(self):
         # Glm仔 N3: the bridge printed "0/20 verified, 20 unanchored" and then healthy.
         # The numbers were the bug: a verified legacy string anchors the conclusion it

@@ -139,7 +139,6 @@ def collect(path, check_evidence=True, evidence_root=None,
     # and neither is called coverage on its own.
     nodes = doc.get("nodes") or []
     done_nodes = [n for n in nodes if n.get("status") == "done"]
-    done_unanchored = [n for n in done_nodes if not (n.get("evidence") or [])]
     conclusions = [n for n in done_nodes if is_conclusion(n)]
     extra_ev = set(extra_evidence_nodes or ())
     extra_ver = set(extra_verified_nodes or ())
@@ -149,6 +148,9 @@ def collect(path, check_evidence=True, evidence_root=None,
 
     concl_with = [n for n in conclusions if has_evidence(n)]
     concl_unanchored = [n for n in conclusions if not has_evidence(n)]
+    # `done` must use the same ruler as `conclusions`, or one node reads as "verified" on
+    # one line and "carries no evidence" on the next (Glm仔 N6).
+    done_unanchored = [n for n in done_nodes if not has_evidence(n)]
     verified_node_ids = {row["node"] for row in evidence_rows if row["status"] == "ok"} | extra_ver
     concl_verified = [n for n in conclusions if n.get("id") in verified_node_ids]
     # "Did not look" must not be printed as "looked and found zero": with --no-evidence
