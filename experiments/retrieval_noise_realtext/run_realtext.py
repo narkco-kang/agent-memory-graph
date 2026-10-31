@@ -106,6 +106,16 @@ def prose_pool(rebuild=False):
     return extract_paragraphs()
 
 
+def _normalised_sha256(data):
+    """Hash text bytes with CRLF folded to LF.
+
+    A checkout's line ending is not corpus content: the same repository produces `\\r\\n` on Windows
+    and `\\n` elsewhere, so hashing raw bytes made a clean Windows run report *stale corpus* (CI
+    windows-latest, v0.34.0). Folding first keeps the digest a property of the text.
+    """
+    return hashlib.sha256(data.replace(b"\r\n", b"\n")).hexdigest()
+
+
 def corpus_snapshot(paragraphs):
     """Pin the prose input so a re-run can say *stale corpus* instead of quietly changing numbers.
 
@@ -116,12 +126,12 @@ def corpus_snapshot(paragraphs):
     files = []
     for path in corpus_paths():
         files.append({"path": path.relative_to(ROOT).as_posix(),
-                      "sha256": hashlib.sha256(path.read_bytes()).hexdigest()})
+                      "sha256": _normalised_sha256(path.read_bytes())})
     text = "\n\n".join(" ".join(words) for words in paragraphs)
     encoded = text.encode("utf-8")
     return {"schema": CORPUS_SCHEMA, "extractor": "prose_pool/1",
             "paragraphs": len(paragraphs), "files": files,
-            "extracted_sha256": hashlib.sha256(encoded).hexdigest(),
+            "extracted_sha256": _normalised_sha256(encoded),
             "extracted_bytes": len(encoded)}
 
 

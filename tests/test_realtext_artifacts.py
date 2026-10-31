@@ -5,6 +5,7 @@ committed at one corpus state and re-ran to different numbers (whole paragraphs 
 because the distractor prose is taken from this repository's live `README.md` and `docs/*.md`.
 Nothing failed then, because nothing checked. These tests check.
 """
+import hashlib
 import importlib.util
 import json
 import os
@@ -79,6 +80,19 @@ class CorpusPinTest(unittest.TestCase):
                     committed = fh.read()
                 self.assertEqual(committed, rerun,
                                  f"{name} does not reproduce; the committed artifact is stale")
+
+
+    def test_corpus_digest_ignores_line_endings(self):
+        """A Windows checkout must not report stale corpus for the same text (CI windows-latest)."""
+        sys.path.insert(0, str(ART))
+        import run_realtext as rt
+
+        lf = b"first paragraph here\nsecond paragraph here\n"
+        crlf = lf.replace(b"\n", b"\r\n")
+        self.assertEqual(rt._normalised_sha256(lf), rt._normalised_sha256(crlf),
+                         "the digest must be a property of the text, not of the checkout")
+        self.assertNotEqual(hashlib.sha256(lf).hexdigest(), hashlib.sha256(crlf).hexdigest(),
+                            "this test is vacuous unless raw hashing actually differs")
 
 
 class LedgerTest(unittest.TestCase):
@@ -166,6 +180,7 @@ class PairedFalsifierTest(unittest.TestCase):
         self.assertEqual(sweep_corpus["extracted_sha256"], main_corpus["extracted_sha256"],
                          "the length sweep was measured on a different corpus; re-run it")
         self.assertEqual(sweep_corpus["files"], main_corpus["files"])
+
 
 
 if __name__ == "__main__":
