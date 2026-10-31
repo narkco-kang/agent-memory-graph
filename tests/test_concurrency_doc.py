@@ -48,15 +48,39 @@ class TailTableProvenanceTests(unittest.TestCase):
             rows.append(cells)
         return rows
 
-    def test_every_row_names_a_run_and_a_job(self):
+    RUN_RE = re.compile(r"^(\d{9,12})(?: \(([^)]*)\))?$")
+    JOB_RE = re.compile(r"^([a-z]+(?:-[a-z]+)*) \((\d{9,12})\)$")
+
+    def test_every_row_names_a_run_in_column_one_and_a_job_beside_its_platform(self):
+        """Which id is which is part of the claim, not decoration.
+
+        v0.32.4's version only required two long numbers somewhere in the row, so a job id
+        pasted into the run column would still pass (reported by the independent verifier as
+        a loose criterion). This pins the shape: column 1 is the run, the parenthesised number
+        beside the platform is the job, and each run appears exactly once per platform.
+        """
         rows = self.data_rows()
         self.assertGreaterEqual(len(rows), 3, "expected at least three measured rows")
+        runs, jobs = {}, set()
         for cells in rows:
-            joined = " | ".join(cells)
-            ids = RUN_ID_RE.findall(joined)
-            self.assertGreaterEqual(len(ids), 2,
-                                    f"row has no run id + job id: {joined[:90]}")
-            self.assertIn("(", joined, f"row does not name the job it came from: {joined[:90]}")
+            self.assertGreaterEqual(len(cells), 3, f"row is too short: {cells}")
+            run_match = self.RUN_RE.match(cells[0])
+            self.assertIsNotNone(run_match, f"column 1 is not a run id: {cells[0]!r}")
+            job_match = self.JOB_RE.match(cells[1])
+            self.assertIsNotNone(job_match,
+                                 f"column 2 is not '<platform> (<job id>)': {cells[1]!r}")
+            run_id, platform, job_id = run_match.group(1), job_match.group(1), job_match.group(2)
+            self.assertNotEqual(run_id, job_id, "the run id and its job id cannot be the same number")
+            self.assertNotIn(job_id, jobs, f"job id {job_id} appears twice")
+            jobs.add(job_id)
+            runs.setdefault(run_id, []).append(platform)
+        platforms_per_run = {run: sorted(ps) for run, ps in runs.items()}
+        for run_id, platforms in platforms_per_run.items():
+            self.assertEqual(len(platforms), len(set(platforms)),
+                             f"run {run_id} lists a platform twice: {platforms}")
+            self.assertEqual(len(platforms), 3,
+                             f"run {run_id} should cover three platforms, has {platforms}")
+        self.assertEqual(sum(len(p) for p in platforms_per_run.values()), len(rows))
 
     def test_the_section_still_states_what_is_not_measured(self):
         lowered = self.section.lower()

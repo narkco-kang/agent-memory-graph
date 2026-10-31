@@ -3,6 +3,26 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.32.5] — 2026-10-31
+
+Test tightening: the provenance check now pins *which* id is which.
+
+### Changed
+
+- v0.32.4's `test_every_row_names_a_run_and_a_job` only required two long numbers to appear
+  anywhere in a row, so a job id pasted into the run column would still have passed — the
+  verifier reported it as a loose criterion. It now parses the row shape: **column 1 is the run
+  id**, **the parenthesised number beside the platform is that platform's job id**, a run id and
+  its job id can never be the same number, job ids are unique, and **each run appears exactly
+  once per platform (three rows)**.
+- Mutation-tested: swapping a run id with its job id now fails with
+  `run 124431735505 should cover three platforms, has ['ubuntu']`; the unmutated table passes.
+
+### Not changed
+
+- No document text and no product code. The table it guards was verified cell by cell against
+  the CI logs (nine cells, three runs, 0.5% tolerance) and that verification is unchanged.
+
 ## [0.32.4] — 2026-10-31
 
 v0.32.3 published a performance table that could not be traced to any run, and the index's
