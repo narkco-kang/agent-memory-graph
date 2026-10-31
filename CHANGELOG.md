@@ -3,6 +3,31 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.32.1] — 2026-10-31
+
+v0.32.0's sdist was incomplete; the artifact check could not see it.
+
+### Fixed
+
+- `docs/decisions/manifest.json` — the file `tests/test_decisions_log.py` reads — was not in
+  the sdist: `MANIFEST.in` shipped `recursive-include docs *.md`, and the manifest is JSON. The
+  sdist's own test suite failed with five `FileNotFoundError`s on the only job that unpacks it
+  (ubuntu-latest / 3.12); the four other `package` jobs printed a green artifact check, because
+  `tools/check_dist.py` derived its "what the sdist must contain" list with one `listdir`
+  **filtered to `.md`** — the same shape as the documentation gates before v0.30.0/v0.31.0.
+- Both are fixed at the source of the assumption: `MANIFEST.in` ships every `docs/` file type
+  the working tree has (`*.md *.json`), and `expected_docs()` now walks `docs/` recursively with
+  no suffix filter, so a file added for the tests must be shipped or the build fails. The
+  checker reports "sdist has all 61 documents" derived from the tree (16 documents + 44
+  decision pages + the manifest), not from a hand list.
+- DECISIONS **#44** records it: this is the fourth appearance of one failure shape (#18, #19,
+  #40/#41), which is why it is written down instead of assumed fixed.
+
+### Not shipped
+
+- v0.32.0's tag still exists and its sdist is still incomplete; v0.32.1 supersedes it and is the
+  version to install. No GitHub release was published for v0.32.0.
+
 ## [0.32.0] — 2026-10-31
 
 The decision log is an index plus one page per decision — and the seven versions of

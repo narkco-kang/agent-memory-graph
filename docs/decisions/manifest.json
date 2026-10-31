@@ -1,6 +1,6 @@
 {
  "schema": "amg-decision-pages/v1",
- "count": 43,
+ "count": 44,
  "pages": [
   {
    "n": 1,
@@ -388,6 +388,15 @@
    "signed": true,
    "body_sha256": "ad0c5e4399eadf1c1ac2dde763965caad7e864d4c573296fc97a4a1886844290",
    "body_bytes": 965
+  },
+  {
+   "n": 44,
+   "slug": "44-derived-artifact-expectation.md",
+   "title": "A derived expectation must derive the same way it checks.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "7e9299a87f0b7b5a06ba7e483362f21e29705850693d9ec280697614c747089e",
+   "body_bytes": 1013
   }
  ]
 }

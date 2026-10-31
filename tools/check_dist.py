@@ -43,8 +43,20 @@ def expected_modules():
 
 
 def expected_docs():
-    docs = os.path.join(ROOT, "docs")
-    return sorted("docs/" + name for name in os.listdir(docs) if name.endswith(".md"))
+    """Derived, not listed: every file under docs/, at any depth, whatever it is named.
+
+    v0.32.1: this was one `listdir` level filtered to `.md` — the same shape as the two
+    documentation gates before v0.30.0/v0.31.0, and it hid the same way: v0.32.0's sdist
+    shipped the 43 decision pages but not `docs/decisions/manifest.json`, the file the new
+    test suite reads, so the artifact was broken while four of the five package jobs
+    reported success (only the ubuntu/3.12 sentinel runs the sdist's own suite).
+    """
+    files = []
+    for current, _dirs, names in os.walk(os.path.join(ROOT, "docs")):
+        for name in sorted(names):
+            rel = os.path.relpath(os.path.join(current, name), ROOT)
+            files.append(rel.replace(os.sep, "/"))
+    return sorted(files)
 
 
 def find_one(dist, suffix):
