@@ -3,6 +3,37 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.32.7] — 2026-10-31
+
+A mechanism claim published two days* ago was falsified by an attack, and is corrected.
+
+\* same calendar day, two releases apart.
+
+### Corrected
+
+- **#47's explanation was wrong.** It said coverage reranking loses recall on query-vocabulary noise
+  because the feature becomes *anti-correlated* with the answer. An attack tested that with four
+  arms and falsified it: rewriting the distractors with 78 **foreign** words of comparable length
+  (same corpus, same seed, asserted disjoint from the query vocabulary) produces the *same* loss,
+  **−0.057**, so the damage does not depend on the distractors being query words; gold coverage
+  averages **0.610 against the distractors' 0.376**, i.e. positively associated.
+- **#48 records the corrected mechanism**: the loss follows the *shape* of the two distributions.
+  Gold is bimodal (7 of 22 queries fully covered, 8 of 22 at or below 0.33), distractors cluster
+  (64% between 0.25 and 0.5), and the failing case is a true answer matching one content word while
+  a distractor matches three function words (`q04`: gold pushed from rank 1 to 79; `q26`: 77
+  places). `#47` is now `amended` by `#48`, and the experiment README states the corrected
+  explanation with the wrong one preserved in the decision log.
+- The next direction is therefore **content-word weighting or stop-word stripping**, not
+  "separating source tokens from injected ones". The attacker's content-word-only arm returned N2
+  to **0.615 (+0.077)**, which would be the first arm to pass the +0.05 criterion — but it is a
+  selective construction, so it is a candidate for a fresh pre-registration and is **not** recorded
+  as a result.
+
+### Not changed
+
+- `src/amg/retrieval.py` untouched; N2 remains 0.538 in the shipped scorer and its 0.70 target
+  remains unmet.
+
 ## [0.32.6] — 2026-10-31
 
 Next attempt at query-vocabulary noise, rejected — with the mechanism recorded.

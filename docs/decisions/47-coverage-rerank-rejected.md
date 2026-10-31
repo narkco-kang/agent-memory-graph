@@ -1,6 +1,6 @@
 # Decision #47
 
-[← decision log](../DECISIONS.md) · status: active
+[← decision log](../DECISIONS.md) · status: amended (#48)
 
 **Coverage reranking is rejected: it is anti-correlated with the answer under query noise.**
 The shipped scorer leaves query-vocabulary noise (N2) at recall@5 0.538 against a 0.70 target,

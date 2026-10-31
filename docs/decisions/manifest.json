@@ -1,6 +1,6 @@
 {
  "schema": "amg-decision-pages/v1",
- "count": 47,
+ "count": 48,
  "pages": [
   {
    "n": 1,
@@ -420,10 +420,19 @@
    "n": 47,
    "slug": "47-coverage-rerank-rejected.md",
    "title": "Coverage reranking is rejected: it is anti-correlated with the answer under query noise.",
-   "status": "active",
+   "status": "amended (#48)",
    "signed": true,
    "body_sha256": "5828f16f84fdba1210ac6b24f299b7a5d62387c97481672a59239d4071f51128",
    "body_bytes": 1301
+  },
+  {
+   "n": 48,
+   "slug": "48-coverage-loss-is-distribution-mismatch.md",
+   "title": "The coverage loss is distribution mismatch, not anti-correlation.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "337da723456f5ab144b118e2bb0293330608fca1e8c3509b8c9109afb285590b",
+   "body_bytes": 1799
   }
  ]
 }
