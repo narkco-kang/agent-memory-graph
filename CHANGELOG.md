@@ -3,6 +3,44 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.34.0] — 2026-10-31
+
+The evaluation harness is pinned, and the numbers it produces can be reproduced byte for byte. This
+release also carries the correction that prompted it — commit `390c942` was tagged "v0.33.6" in its
+message but never got a version bump, a changelog entry or a release; it is recorded here instead of
+being rewritten, because a version that only exists in a commit message is not a release.
+
+### Fixed
+
+- **The real-text corpus is data, not a live read.** `experiments/retrieval_noise_realtext/` used to
+  build its distractors from `README.md` and `docs/**` at run time, so a docs edit silently changed a
+  published number (whole paragraphs r@5 **0.673 → 0.654**) with nothing failing. `corpus_pin.json`
+  now freezes the 623 extracted paragraphs (223 KB), `result.json` records per-file `sha256` for all 70
+  corpus files plus an `extracted_sha256`, and `--check-corpus` exits 1 on drift instead of quietly
+  recomputing.
+- **I ruled that the independent verifier had misread a column, and that ruling was wrong.** He had
+  re-run the harness and seen the drifted corpus; the committed artefact was the outlier.
+  DECISIONS #52 carries the retraction on the page, then the pinned re-measurement.
+
+### Added
+
+- `ledger.json` — 26 per-query rows with `rank_base: 1`, `best_gold_rank`, matched tokens and the
+  out-of-reach set, plus **both** metric conventions: `fractional_r5` **0.692** and `hit_or_miss`
+  **0.7308 (19/26)**. The two disagree about the 0.70 target and both are now published.
+- `paired_test.py` — a paired **falsifier**: pass means zero regressions and reports integer pairs;
+  `significance_claimed: false`, because at n=26 no p value is evidence. Held-out splitting was cut
+  (structurally cannot reach p<0.05 at 13/13); single-arm comparisons need no correction, multi-arm
+  forces Holm.
+- `tests/test_realtext_artifacts.py` — 391 tests total; asserts both metric conventions recompute to
+  the stored values, that the out-of-reach set stays {q06,q08,q10,q18} with ceiling 22/26, and that a
+  corpus digest mismatch reports `stale corpus` rather than a new number.
+
+### Not changed
+
+- No `src/amg/` change. The 0.70 target stays attached to **N2** and stays **unmet** (0.538); the
+  realistic corpora are reported as their own measurements with both conventions, never as the target
+  being met.
+
 ## [0.33.5] — 2026-10-31
 
 The group-authority rule the user stated twice is now a mechanical gate, not a promise.
