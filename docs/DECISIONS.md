@@ -88,3 +88,4 @@ split: the previous single file could hold 34 decisions and then stopped.
 | [51](decisions/51-calibrate-what-competes.md) | A synthetic noise model must be calibrated on what competes. | active | ✓ |
 | [52](decisions/52-real-noise-also-misses.md) | The 0.70 target is missed under realistic noise too. | active | ✓ |
 | [53](decisions/53-arm-name-must-match-code.md) | An arm is described by its implementation, not the idea it resembles. | active | ✓ |
+| [54](decisions/54-decisions-need-a-discussion.md) | A decision entry must name the group discussion that produced it. | active | ✓ |

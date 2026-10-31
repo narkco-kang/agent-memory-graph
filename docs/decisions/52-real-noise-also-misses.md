@@ -36,3 +36,14 @@ and needs its own pre-registration (tokenisation, phrase adjacency), not another
 Cost: one pre-registration and two 10-second runs, to replace a hypothesis with two numbers and to
 correct the direction the previous two decisions were leaning.
 *Signed 2026-10-31; `experiments/retrieval_noise_realtext/`; v0.33.3.*
+
+**Scope note 2026-10-31, after independent verification (Hermes仔, `docs/memory-arch/VERIFY-REALGAP-HERMES.md`).**
+Two limits of this entry, stated rather than left implicit: (1) the calibration check that passed
+(competing share 0.476) holds **in the pre-registered configuration only** — at 20-word windows the
+same construction gives 0.589 and at whole paragraphs 0.827, so "the corpus is calibrated" is a
+statement about window = 8, not about the corpus in general; (2) the length sweep's two numbers are
+r@5 **0.692 → 0.673** and r@1 0.558 → 0.654, with r@10 0.731 → 0.673 — the first version of this
+paragraph paired them loosely, and the per-length table in
+`experiments/retrieval_noise_realtext/sensitivity_window.json` is the authority. The reported
+shortfall is therefore **0.027 at recall@5** (0.70 − 0.673), not 0.008, once the most realistic
+configuration is the reference.

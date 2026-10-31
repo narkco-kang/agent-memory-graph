@@ -3,6 +3,26 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.33.5] — 2026-10-31
+
+The group-authority rule the user stated twice is now a mechanical gate, not a promise.
+
+### Added
+
+- DECISIONS **#54**: a decision page numbered above it must carry a `**Discussed:**` line naming at
+  least **two distinct members** and at least one evidence path — one proposed a variant or an attack,
+  one verified it independently; the CEO signs and writes the page.
+- `tests/test_group_authority_gate.py` enforces that on every later page, and the rule function is
+  itself tested against four synthetic bodies (missing line / one name / two names without a path /
+  valid), so the gate cannot pass by being vacuous.
+- The five entries that motivated the rule (#49–#53) stay published as pre-rule with their
+  verification reports; they are not retro-written, and the gate does not ask them to be.
+
+### Not changed
+
+- No retrieval code, no numbers. `src/amg/` untouched; N2 stays 0.538 and the 0.70 target stays unmet
+  on both corpora. The next technical candidate is under group discussion and is **not** decided here.
+
 ## [0.33.4] — 2026-10-31
 
 Independent verification of v0.33.0–v0.33.2 reproduced every published number and caught one arm whose

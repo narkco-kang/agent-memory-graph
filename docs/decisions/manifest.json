@@ -1,6 +1,6 @@
 {
  "schema": "amg-decision-pages/v1",
- "count": 53,
+ "count": 54,
  "pages": [
   {
    "n": 1,
@@ -467,8 +467,8 @@
    "title": "The 0.70 target is missed under realistic noise too.",
    "status": "active",
    "signed": true,
-   "body_sha256": "9e6502554dbdf4fb2dc6effa6f71381a2832835592d7915f47ebd0ebb9bb61be",
-   "body_bytes": 2484
+   "body_sha256": "41f7973bacdea8b8f0e64a1d9f7333b383b369da623d1ea974fc0cf006506dab",
+   "body_bytes": 3385
   },
   {
    "n": 53,
@@ -478,6 +478,15 @@
    "signed": true,
    "body_sha256": "fb37138d764d774a9628953aaebf84ceb8be3524021956c2b8a96754cffdad6c",
    "body_bytes": 3036
+  },
+  {
+   "n": 54,
+   "slug": "54-decisions-need-a-discussion.md",
+   "title": "A decision entry must name the group discussion that produced it.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "15f9e668db797803c9b0f52880a3b7e8c508c3035c1a58b51b1cff01c0de475a",
+   "body_bytes": 2235
   }
  ]
 }
