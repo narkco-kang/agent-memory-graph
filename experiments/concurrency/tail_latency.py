@@ -13,6 +13,13 @@ It measures two things the plain burst numbers cannot separate:
   * **wait in the lock** under a burst (`Store.lock_stats`): worst wait, how many polls it
     took, and how many waiters saw more than 100 ms.
 
+The burst runs with `AMG_LOCK_TIMEOUT` raised on purpose. The default 5 s is a documented
+policy (DECISIONS #26), and on a slow CI runner 8 writers x 10 writes at 5,000 nodes costs
+more than 5 s of serialised writing, so the default fails by arithmetic rather than by a
+defect — measured on ubuntu-latest, first run of this script: `LockTimeout after 5.0s`. The
+timeout changes when a run stops, not what a waiter waited; `worst_wait_ms` is recorded by
+the lock itself, so raising it does not flatter the numbers.
+
 Usage:
     PYTHONPATH=src python3 experiments/concurrency/tail_latency.py                 # 5,000 nodes, 8x10
     PYTHONPATH=src python3 experiments/concurrency/tail_latency.py --nodes 2000 --writers 8 --writes 5
@@ -68,8 +75,11 @@ def run_burst(path, writers, writes):
     script = os.path.join(HERE, "run_stress.py")
     cmd = [sys.executable, script, "--writers", str(writers), "--writes", str(writes),
            "--graph", path, "--json"]
+    # Raise the timeout for the burst only (see the module docstring): the measurement is
+    # the wait, and the default would abort the run before the distribution is observed.
     res = subprocess.run(cmd, capture_output=True, text=True,
-                         env={**os.environ, "PYTHONPATH": os.path.join(ROOT, "src")})
+                         env={**os.environ, "AMG_LOCK_TIMEOUT": "180",
+                              "PYTHONPATH": os.path.join(ROOT, "src")})
     if res.returncode != 0:
         raise SystemExit(f"burst failed ({res.returncode}):\n{res.stdout}\n{res.stderr}")
     # run_stress prints its report pretty-printed, so parse the whole stdout.
@@ -106,6 +116,7 @@ def main(argv):
                   "changes_for_writes": report["changes_for_stress_writes"],
                   "p50_ms": contended["p50_ms"], "p95_ms": contended["p95_ms"],
                   "max_ms": contended["max_ms"], "writes_per_s": contended["writes_per_s"]},
+        "lock_timeout_used_s": 180,
         "lock": {"acquisitions": lock["acquisitions"], "timeouts": lock["timeouts"],
                  "worst_wait_ms": lock["worst_wait_ms"],
                  "worst_wait_polls": lock["worst_wait_polls"],

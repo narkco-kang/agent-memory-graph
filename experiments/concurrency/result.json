@@ -1,11 +1,11 @@
 {
   "lock": {
     "acquisitions": 88,
-    "polls_total": 968,
-    "worst_wait_ms": 2252.661,
-    "worst_wait_polls": 160,
+    "polls_total": 685,
+    "worst_wait_ms": 2456.782,
+    "worst_wait_polls": 150,
     "timeouts": 0,
-    "waits_over_100ms": 8
+    "waits_over_100ms": 7
   },
   "writers": 8,
   "writes_per_writer": 10,
@@ -20,21 +20,21 @@
   "targets_with_wrong_change_count": 0,
   "rev": 5096,
   "contended": {
-    "wall_ms": 2805.8,
-    "burst_window_ms": 2732.7,
-    "writes_per_s": 29.3,
-    "p50_ms": 31.2,
-    "p95_ms": 879.05,
-    "max_ms": 2284.43,
+    "wall_ms": 2866.9,
+    "burst_window_ms": 2778.8,
+    "writes_per_s": 28.8,
+    "p50_ms": 31.07,
+    "p95_ms": 157.52,
+    "max_ms": 832.63,
     "total_writes": 80
   },
   "serial": {
-    "wall_ms": 384.7,
-    "burst_window_ms": 318.7,
-    "writes_per_s": 31.4,
-    "p50_ms": 31.0,
-    "p95_ms": 38.18,
-    "max_ms": 38.18,
+    "wall_ms": 386.9,
+    "burst_window_ms": 320.7,
+    "writes_per_s": 31.2,
+    "p50_ms": 30.76,
+    "p95_ms": 37.41,
+    "max_ms": 37.41,
     "total_writes": 10
   },
   "passed": true
