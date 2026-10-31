@@ -11,7 +11,7 @@ important — **which ones are contracts and which are proposals**.
 | **Measured** | A script in this repo produces the numbers; CI runs the safety-critical ones. | `BENCHMARKS.md`, `REAL-WORLD.md`, `WRITE-COST.md`, `CONCURRENCY.md`, `ARCHIVE.md` |
 | **Contract** | Enforced by code; the doc gate or a test fails when they disagree. | `API.md`, `THREAT-MODEL.md`, and the size budget below |
 | **Proposal — not built** | Design work only. Nothing behind it ships. Do not quote it as a feature. | `DESIGN-HISTORY.md` |
-| **Decision record** | Why something is the way it is, including what it costs and when to revisit. | `DECISIONS.md`, `PRIOR-ART.md` |
+| **Decision record** | Why something is the way it is, including what it costs and when to revisit. | `DECISIONS.md` (index) + `decisions/`, `PRIOR-ART.md` |
 | **Operational guide** | How to run it, not what it does. | `SCHEDULING.md`, `OPERATIONS.md` |
 
 ## If you are deciding whether to depend on this
@@ -81,16 +81,18 @@ Read in this order; each one narrows the next:
 5. **[`DESIGN-HISTORY.md`](DESIGN-HISTORY.md)** — the design for cheaper writes,
    and the reason the obvious version (history sidecar) is rejected. **Proposal:
    not implemented.**
-6. **[`DECISIONS.md`](DECISIONS.md)** — the signed record, including decisions later
-   reversed and the trigger conditions for revisiting each one.
+6. **[`DECISIONS.md`](DECISIONS.md)** — the **index** of the signed record: number,
+   decision, status, signature, link. Each decision has its own page under
+   [`decisions/`](decisions/), including the trigger conditions for revisiting it, and
+   the eight early entries that carry only the log's preamble signature.
 
 ## If you want to audit the claims
 
 - **[`PRIOR-ART.md`](PRIOR-ART.md)** — five systems, what was verified in full text,
   what we take credit for and what we gave back. Quotes with page numbers; hit
   counts are used as index, not as proof.
-- **[`DECISIONS.md`](DECISIONS.md)** — every entry states evidence and cost, and
-  several record the author being wrong.
+- **[`DECISIONS.md`](DECISIONS.md)** and its [pages](decisions/) — every entry states its
+  evidence, most state a cost, and several record the author being wrong.
 - **`../RELEASE.md`** — each release's checklist, so "we verified it" has a shape.
 
 ## Every document, one line each
@@ -108,7 +110,8 @@ Read in this order; each one narrows the next:
 | [`SCHEDULING.md`](SCHEDULING.md) | How to expire on a timer without a daemon | operational |
 | [`HANDOFF.md`](HANDOFF.md) | The bounded handover card: four questions, one 4 KB answer | operational |
 | [`PRIOR-ART.md`](PRIOR-ART.md) | What others did first, verified in full text | verified reference |
-| [`DECISIONS.md`](DECISIONS.md) | Decisions, their evidence, their cost — including reversals | decision record |
+| [`DECISIONS.md`](DECISIONS.md) | Index of the 43 decisions: status, signature, link to each page | decision record |
+| [`decisions/`](decisions/) | One page per decision — evidence, cost, and reversals | decision record |
 
 Root-level documents: **[`../CHANGELOG.md`](../CHANGELOG.md)**, **`../RELEASE.md`**,
 **[`../CONTRIBUTING.md`](../CONTRIBUTING.md)**, **[`../SECURITY.md`](../SECURITY.md)**.

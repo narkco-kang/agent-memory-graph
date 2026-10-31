@@ -1,345 +1,74 @@
-# Design decisions (signed 2026-10-29)
+# Design decisions
 
-Each entry states the decision, the evidence behind it, and what it costs.
+Each entry states the decision, the evidence behind it, and what it costs. Entries #1–#34
+were written into this one file from 2026-10-29 to 2026-10-31; at #34 it had 7 B of headroom,
+so decisions went unrecorded for seven versions. Since v0.32.0 **this file is the index** and
+every decision has its own page (DECISIONS #43).
 
-1. **Write gate is forward-only.** A real graph already had 629 of 869 `done`
-   nodes without evidence (72%). Hard-failing them on day one would make `check`
-   permanently red. So: new writes are gated; legacy nodes are exempted via a
-   frozen pin of the sorted id list (not a file hash — that changes every write),
-   and `audit` reports the ratio `629/869` as a convergence metric. Any change in
-   the pin set must be explained explicitly.
+**How to read a reference.** `DECISIONS #N` means entry N in the table below; follow the
+link. There are no anchors into the old single file, and no other file depends on the
+layout — 27 references across the repository are all bare numbers.
 
-2. **Gate triggers on conclusion-typed content, not on status.** A conclusion can
-   be finished while its status still says `in_progress`; status-only gating
-   misses exactly the dangerous case.
+**Status.** `active` = still the rule. `amended (#N)` = the rule stands but a later entry
+changed part of it. `superseded` = replaced (none yet). `archived` = kept for history only
+(none yet). The column is maintained by hand: nothing in the prose is structured enough to
+derive it, so it is asserted by a human judgement per entry, not computed.
 
-3. **Anchor filter degrades, never hides.** Only 22–36% of lexical hits carry
-   evidence. Default returns unanchored hits with `anchor_state: "none"`;
-   `--strict` is the only filter. Ranking puts anchored hits first.
+**Signature.** 26 of the 34 original entries carry a `*Signed …*` line; the eight without
+one are #1–#8, signed only by this log's preamble (DECISIONS #42), marked `preamble` here.
+No signature was invented during the split.
 
-4. **Two different things never share one field.** `anchor_state` = retrieval
-   quality; `evidence_grade` = how strongly the cited evidence was verified.
+**Cost.** Not every entry prices itself: a keyword search for *cost*, *price* or *pays*
+hits 8 of the 34 original entries; the rest state the decision and its evidence without a
+numbered cost. A pre-split attack report counted 11 with a looser criterion — both counts
+describe keyword classes, and neither is a completeness judgement.
 
-5. **Bi-temporal, minimally.** Validity time (`valid_from`/`valid_until`) is
-   separate from transaction time (`recorded_at`/`superseded_at`). Never
-   back-fill `valid_from` from the change log: `changes[].at` is *when it was
-   written*, not *when the fact became true*.
+**Budget.** The 24 KiB documentation budget applies per page here, not to this file as a
+whole, so the log's capacity grows with the number of decisions. That is the point of the
+split: the previous single file could hold 34 decisions and then stopped.
 
-6. **Semantic gates may not reject.** A synchronous near-duplicate gate can fire
-   before an asynchronous contradiction detector and wrongly reject a write
-   (documented in arXiv:2606.24535). Only the evidence gate may reject, and it
-   must raise explicitly — never return `None` silently (the CrewAI
-   `read_only → return None` case).
-
-7. **Consolidation keeps pointers only.** Digest output references node ids and
-   evidence counts; it never copies evidence payloads, and it is bounded by
-   `--max-bytes` with an explicit `[truncated N items]` marker. The digest is not
-   a second store, so it must stay auditable.
-
-8. **Documentation must equal reality.** CI fails if a documented capability has
-   no corresponding symbol. The check only verifies symbol existence — it makes
-   no claim about semantics, because a fake semantic check would be worse than
-   none.
-
-9. **Adoption never fabricates evidence.** Legacy graphs store evidence as bare locator
-   strings; turning them into objects would require inventing `content_sha256` — the lie
-   the gate exists to prevent. `amg adopt` preserves them in `legacy_evidence`, leaves
-   `evidence` empty, stamps the placeholder source as `adopted:<schema>:<sha12>`, infers
-   `superseded_at` from `updatedAt` with a flag, and leaves `valid_from` null. Cost:
-   adopted history is *labelled* unverified, not retro-verified. Details:
-   `docs/ADOPTION.md`. *Signed 2026-10-29.*
-
-10. **Unknown validity time can never be auto-expired.** Adopted nodes carry
-    `valid_time_known: false`; an expired `valid_until` on such a node is a hint, not a
-    conflict, `expiry_eligible()` refuses it, and `audit` counts the class. Expiring on a
-    timestamp we never had would delete a fact on a guess. Details: `docs/API.md`
-    §Expiry. *Signed 2026-10-29.*
-
-11. **Tamper evidence lives outside the file, not inside it.** The obvious design
-    is a hash chain over `changes[]` (`changes[i].prev`). It was rejected: anyone
-    who can write `graph.json` recomputes the chain in one pass, so it buys
-    nothing against the only threat that matters while costing a schema migration
-    and inviting misplaced trust. What ships instead is `amg fingerprint`
-    (canonical `state_sha256` + `history_sha256`) and `amg verify`, whose value
-    comes entirely from storing the digest elsewhere — git, a CI log, a ticket.
-    The split digest does detect the cheap attacks: a node edited in place moves
-    state while history stays put, and that mismatch is reported as a fact about
-    the bytes. The limits are tabulated in `docs/THREAT-MODEL.md` §7a rather than
-    left to the reader's optimism.
-    *Signed 2026-10-30.*
-
-12. **Prior art is verified in full text, and our two "design commitments" are
-    conceded.** MAP-Graph (arXiv:2608.10509) was cited from a second-hand summary for
-    months. The full text (14 pages, quoted in `docs/PRIOR-ART.md`) shows it already
-    implements and ablates both ideas we listed as our own direction — authorization
-    separated from graded trust, and evidence requirements scaling with action risk —
-    so they are "prior art, not implemented here". It also fixes the one boundary we
-    may point at: the paper says it has "no generic supersession or
-    conflict-resolution state machine", and no expiry mechanism appears at all — a
-    scope difference, not a superiority claim. No document may imply "no precedent".
-    *Signed 2026-10-30.*
-
-13. **No authentication, no authorization, no multi-tenancy — decided, not
-    deferred.** The alternative was a token check in front of a file the caller
-    can already open, which proves only that they have the file; in practice the
-    token lives in a config file they can also read. All the isolation that would
-    actually hold (users, containers, ACLs, read-only mounts) is enforced by the
-    OS underneath. So the boundary stays where it works, and the project moves its
-    effort to (a) `--read-only` bounding one session's blast radius, (b)
-    `amg doctor --strict` failing when the permission boundary does not hold
-    (`SEC_WORLD_WRITABLE`, network mounts, symlinked graph), and (c)
-    `fingerprint`/`verify` for tamper detection. What would reopen this: a network
-    transport, multi-writer concurrency, or a multi-tenant deployment — each of
-    which invalidates the reasoning rather than merely making auth nicer.
-    *Signed 2026-10-30.*
-
-14. **Write cost: measure the bytes before optimising, and do not trade atomicity
-    for 20 MB.** Measured on a live 15.6 MB graph: `changes[]` is 79.1% of the
-    file, and one write is 148 ms split as parse 75 / render 50 / `fsync` 23 —
-    moving the bytes through the process twice, not the disk. Options evaluated in
-    `docs/WRITE-COST.md`: cold-archiving nodes reclaims nothing today (oldest node
-    is 6 days old, so 0 candidates); compact JSON saves 2.4% and costs
-    diffability; incremental writes abandon the "reader sees old or new, never a
-    mix" guarantee. The only option with a real payoff is moving old history to a
-    sidecar (−80% write), and its price is that the graph stops being one atomic
-    copyable file — so it waits for the existing trigger (write p95 > 250 ms, file
-    > 20 MB, nodes > 10k) instead of being built speculatively. No `--no-history`
-    escape hatch: if history ever moves, it moves for everyone and the guarantees
-    are restated with it.
-    *Signed 2026-10-30.*
-
-15. **Lock retry backs off; lock fairness is not implemented.** The burst test showed
-    one write per 200 waiting ~200 ms. Instrumenting the lock (`Store.lock_stats`)
-    showed the worst waiter failed only ~15 polls while seven others completed the
-    burst, and shortening the poll interval (flat 20 ms → jittered 1 ms doubling to
-    16 ms) raised throughput ~20% (700 → 870 writes/s) **without moving the tail**.
-    So the cause is starvation from non-FIFO `flock` wakeups, and faster polling was
-    not the fix. The backoff is kept for the throughput; a ticket lock or waiter
-    queue is not built, because it changes the one component that must never be
-    wrong and there is no evidence yet that the tail harms a real workflow. Trigger
-    to build it: repeated ~200 ms stalls observed in use, or a lock timeout in the
-    field — not a benchmark.
-    *Signed 2026-10-30.*
-
-16. **The lock timeout is a policy knob, not a constant — and fairness is not the
-    fix for bursts.** Measured on the real 15.6 MB graph: a write costs ~147 ms, so
-    a 5 s default covers ~34 queued writes; 8 writers × 5 writes (40 writes) hits
-    `LockTimeout` even though nothing is broken, because the queue needs ~6 s to
-    drain. So `AMG_LOCK_TIMEOUT` was added (clamped to `(0, 3600]`, invalid values
-    fall back to 5 s) and the default stays 5 s for interactive single-agent use.
-    A FIFO lock would not help this case: the last writer still waits for the whole
-    queue. The lever that does help is a cheaper write (history sidecar, priced in
-    `WRITE-COST.md`: ~150 ms → ~30 ms, i.e. 34 → ~170 queued writes per 5 s).
-    *Signed 2026-10-30.*
-
-17. **History sidecar: rejected. Segmented compression: the sanctioned direction, not
-    yet built.** The sidecar measured −82% write cost (147 → ~27 ms) and was rejected
-    anyway: `changes[]` entries are descriptions, not replayable operations, so a split
-    store has a crash window that can be *detected* but never repaired, and the ledger
-    can end up disagreeing with the state it describes: trading the core guarantee for
-    speed. The alternative keeps one atomically replaced
-    file and compresses history into sealed zlib segments: −54% file size, ~60 ms
-    writes, 11 ms to decompress, round-trip verified; the price is explicit — history
-    stops being greppable/diffable, `fingerprint` must be defined over decompressed
-    meaning, and it needs an `amg/v2` bump. Deferred to the existing trigger (20 MB /
-    250 ms p95 / 10k nodes). Design: `docs/DESIGN-HISTORY.md`.
-    *Signed 2026-10-30.*
-
-18. **A coverage gate must derive its own scope; a hand-written list is a claim about
-    the past.** From v0.3.0 the documentation↔code gate ran on a hand-written list of
-    files (CI: two; release checklists: six or seven). Documents kept being added and
-    the list did not, so every release was greener about a smaller share of the docs
-    than its checklist implied — the checklists said "six documents" while `docs/`
-    held eight. The gate now scans `README.md` plus every `docs/*.md`, a test asserts
-    the default covers every document, and the success line names the files it
-    checked. The same reasoning produced two companions: `docs/README.md` must link
-    every document (tested), and every CLI command must appear in `docs/API.md`
-    (tested) — a command can otherwise exist and be documented nowhere.
-    *Signed 2026-10-30.*
-
-19. **The artifact is a claim: build it, inspect it, and run the tests inside it.**
-    Every check until v0.7.1 used `pip install -e .` against a checkout, so the
-    published sdist had never been executed. Built and unpacked, it exposed the
-    problem: `src/` and `tests/` shipped without `docs/`, `tools/` or
-    `experiments/`, so its own suite gave 17 errors and 4 failures, all
-    file-not-found. The wheel was complete, which is why installing the artifact
-    (added as a criterion in v0.7.0) did not catch it — **an install check proves
-    the code imports, not that the artifact is complete.** From v0.7.1: `MANIFEST.in`
-    ships what the tests read, `tools/check_dist.py` inspects both artifacts with
-    expectations derived from the working tree, and the CI `package` job installs
-    the wheel and runs the sdist's shipped suite. Same rule as #18, applied one
-    level out: a check that cannot name what it covered is not a check.
-    *Signed 2026-10-30, after v0.7.1.*
-
-20. **Staleness applies to work, not to registrations.** The audit rule "an
-    `in_progress` or `blocked` node untouched for 3 days is stale" assumed every node
-    is a short-lived work item. On the first live graph it flagged a `group` node
-    that had been `in_progress` for 7 days — correct by the letter, noise in
-    practice: a group registration is long-lived, and its `updatedAt` does not move
-    when its children change. `group`, `env` and `member` are now exempt
-    (`LONG_LIVED_TYPES`), while an unknown type is still checked: exemptions are
-    explicit so that a new kind of work cannot become invisible by omission. Three of
-    the four original conflicts were genuine work items and remain reported.
-    *Signed 2026-10-30; four tests in `tests/test_audit.py`.*
-
-21. **The staleness threshold is policy, not a constant.** `STALE_DAYS = 3` was a
-    guess baked into the code; on the first live graph it produced three conflicts at
-    3 days, one at 7 and none at 14. A weekly-sync team sees false alarms at the
-    default, a monthly team none. So the default stays 3 (the original rule, no
-    surprise for existing users) and the threshold becomes `AMG_STALE_DAYS` (integer,
-    `0 < x <= 365`, invalid falls back to 3) plus `audit --stale-days N` for a single
-    run. Fallback rather than "disable": a typo must not silently turn the check off.
-    Same shape as DECISIONS #16 for the lock timeout, for the same reason — the
-    library serves teams with different cadences and cannot infer them.
-    *Signed 2026-10-31; three tests in `tests/test_audit.py`.*
-
-22. **One source of truth for audit output: structured findings, human strings
-    derived.** `audit` used to build display strings directly, so any consumer that
-    wanted the node or the owner had to parse them. Now each finding is recorded once
-    as a dict (severity, kind, detail, node/edge/owner/age) and the `conflicts` and
-    `hints` lists are generated from it, which makes drift between text and `--json`
-    impossible by construction rather than by discipline. The string lists stay, in
-    the same order, because they are the existing contract; `findings` is additive.
-    A test asserts the two views match exactly.
-    *Signed 2026-10-31.*
-
-23. **Handover discipline is borrowed, credited, and adapted — not reinvented.**
-    A public workbench (MIT) documents the same problem with three rules that survived
-    real use: overwrite rather than append, a fixed size (4 KB), pointers not
-    transcripts. We adopt them, credit them (`docs/PRIOR-ART.md`) and adapt them into a
-    `handoff` node: one active, supersede-on-write into the same audited ledger, budget
-    refused by the writer and re-checked by `audit` (`multiple_active_handoffs` is a
-    conflict, not a convention). Registrations are exempt from staleness (#20). Details:
-    `docs/HANDOFF.md`. *Signed 2026-10-31; `tests/test_handoff.py`.*
-
-24. **Archive the ledger, not the nodes — and prove the move on every run.** Of the four
-    byte-reclaim options priced in `docs/WRITE-COST.md`, this is the one that ships: on
-    the 15.7 MB real graph **79% of the file is change records**, nothing points at them,
-    and moving a cold prefix cut a write 226.1 → 72.7 ms. Archiving *nodes* is
-    deliberately not done: edges cross the boundary. The borrowed shrink protocol
-    ("snapshot first, move second, prove nothing was lost") becomes five checks on every
-    `--apply`, with a snapshot written back on failure (`E_ARCHIVE_VERIFY`); an undated
-    record stops the prefix. Details: `docs/ARCHIVE.md`. *Signed 2026-10-31;
-    `tests/test_archive.py`.*
-
-25. **Lexical matching is word-aware; the recall it costs is recorded, not hidden.**
-    The substring matcher answered queries that cannot distinguish anything: on the
-    real 1,289-node graph, `a`, `e`, `i` and `x` each returned the full `k=10`, and an
-    identifier for a node that does not exist (`task.a`) returned ten unrelated
-    `task.*` ids. The fix is word-boundary matching plus a 14-entry English inflection
-    table (`rank`/`ranking`), identifier queries treated as lookups, and one-character
-    ASCII tokens dropped. Measured (`experiments/retrieval_precision/`): single-letter
-    queries 10 → **0** hits, nonexistent identifiers 10 → **0**, identifier lookups
-    **20/20** top-1, kw recall@5 0.938 → **0.969**, MRR 0.744 → **0.763**. The cost is
-    real and is published: overall recall@5 0.865 → **0.808** on the frozen eval,
-    because two of 26 queries had been reached only through substrings *inside* other
-    words (`i` in `high-risk`, `one` in `gone`); recall@1 is unchanged at 0.654. The
-    pre-registration failed C4 (recall must not drop) and C5 (no pinned numbers may
-    move) — both failures are recorded in its outcome section with the per-query
-    analysis, and this decision overrides them on the evidence, because raising
-    `k`-many answers to "anything with this letter" is not a retrieval feature.
-    `tests/test_retrieval_eval.py` pins the **new** numbers and keeps the old ones in
-    its comment for audit.
-    *Signed 2026-10-31; `tests/test_search_precision.py`, `experiments/retrieval_precision/`.*
-
-26. **The 5 s lock timeout stays; the 10k burst is documented, not papered over.**
-    Pre-registered run (`experiments/concurrency/PREREGISTRATION-10k.md`): 8 writers ×
-    25 writes on a 10,000-node graph, default timeout. It **failed** with
-    `LockTimeout after 5.0s` — and the arithmetic says it had to: a write at 10k costs
-    **86.2 ms**, so 200 writes are ~17 s of serialised work (measured burst window
-    17.95 s), and the last writer waits ~13.5 s (measured) before it gets the lock.
-    With an adequate timeout the invariant held exactly (200/200 nodes, 0 duplicates,
-    0 missing, 200 change records, `check` clean, 11.1 writes/s contended vs 11.3/s
-    serial). Two pre-registered predictions were wrong and are recorded as wrong:
-    contended p50 did not inflate (1.0× serial), and the worst wait was not < 5 s.
-    Decision: keep the 5 s default. An interactive CLI that silently blocks for 30 s
-    is worse than a fast, explicit `LockTimeout` that names `AMG_LOCK_TIMEOUT`; and a
-    larger default would hide the real finding, which is that the *write cost* is the
-    limit, not the lock (`WRITE-COST.md`). Burst users are told the safe sizing rule:
-    timeout ≥ writers × writes × per-write cost.
-    *Signed 2026-10-31; `docs/CONCURRENCY.md` §"At 10,000 nodes", `result-10k*.{json,txt}`.*
-
-27. **Scale does not dilute lexical recall; vocabulary overlap does, and the scorer is
-    why.** At 10k, unrelated noise changed nothing (0.654/0.808/0.865/0.763);
-    query-vocabulary noise cost **r@5 0.808 → 0.538** (no IDF). Measurement, reasoning
-    and wrong predictions: `experiments/retrieval_10k/README.md`. *Signed 2026-10-31.*
-
-28. **IDF term weights ship — and they do not fix query-vocabulary noise.** Pre-registered
-    (`experiments/retrieval_idf/PREREGISTRATION.md`) with four corpora and the v0.17.0
-    scorer frozen as `baseline.py`, run in the same process so the comparison cannot be
-    machine noise. The change: a matched term contributes `WEIGHTS[field] × idf(term)`
-    with `idf = ln(1 + N/(1+df))` over the visible nodes, instead of a constant field
-    weight; weights, matchers, filters and ordering are unchanged, and a repeated query
-    word counts once. All four criteria passed: frozen 27-node recall@5 **0.808 → 0.865**
-    (r@1 0.654 → 0.731), N1 unchanged, frequent-word noise at 10k **0.712 → 0.865**, and
-    query-vocabulary noise **0.538 → 0.538** with deep ranks improved (r@10 0.538 →
-    0.577). The task's `N2 r@5 ≥ 0.70` target was **missed**, and the reason was
-    predicted before the run and is structural: N2 draws every distractor token
-    *uniformly* from the queries' own vocabulary, so `df` is the same for every query
-    term and IDF has no signal to use. That noise model is now known to be invariant to
-    document-frequency statistics; beating it needs a signal outside that family (id/type
-    priors, phrase proximity). Cost: p50 +3.0 ms at 10k (+4%), one bookkeeping pass, no
-    second scan. Two predictions were wrong and are recorded: the small-corpus gain
-    (+0.057, expected flat) and the N3 baseline (0.712, predicted 0.45–0.65).
-    *Signed 2026-10-31; `experiments/retrieval_idf/`, `result.json`; v0.18.0.*
-
-29. **Field-specific document frequency is rejected: the noise gain is paid for by
-    note-only queries.** Pre-registered in `experiments/retrieval_field_df/`; one
-    variable (df counted per (field, term)). Measured against the frozen v0.18.0 scorer
-    in one process: N2 query-vocabulary noise **0.538 → 0.596**, N3 held 0.865, p95
-    0.991× — but the frozen 26-query recall@5 **0.865 → 0.827**, because exactly one
-    query moved (q18 `3 → 6`, a note-only match paying note's lower IDF). C1/C2 failed;
-    the pre-registered rule (frozen drop >0.01 kills the direction) was honoured: **no
-    release, `src/amg/retrieval.py` reverted** to v0.18.0, no tuning. C6 ("hit sets
-    unchanged") failed **as written** and is recorded as my pre-registration error (at
-    10k it compared top-100 membership, which any reordering moves; no match is
-    dropped). Two predictions recorded wrong. Open policy question, pre-registered
-    before any future round may act on it: is `frozen −0.038` a fair price for
-    `N2 +0.058`? *Signed 2026-10-31; experiment README + `result.json`.*
-
-30. **Scores are bounded and labelled; the normalization changes no rank.** Defect round
-    for R1 (`idf-live-df-drift`) and R2 (`l2-fixed-score`), pre-registered in
-    `experiments/score_scale/` with Amendment A for two of my own arithmetic errors.
-    R1: IDF divided by `ln(1 + N)` bounds a score at `Σ WEIGHTS = 7.0` per matched term
-    instead of growing with graph size; verified that **every ranked id list and every
-    metric on all four corpora is identical** to v0.18.0 (common divisor), residual
-    27→10k drift published as 1.375× against 3.799×, so the issue stays open as
-    "bounded, not invariant". R2: hits carry **`score_kind`** — `idf` (L1/L3/L4),
-    `recency` (L2; the 1.0 is not a match score), `expansion` (0.0) — and docs forbid
-    comparing across kinds; no field changed type. Amendment A: my bound used `3.0`
-    where five fields can match (7.0), and I predicted ≤5% drift where measurement is
-    +37%; both recorded as wrong, not rescued in code. No cache: 100 ms p50 at 10k is a
-    documented limit. *Signed 2026-10-31; `experiments/score_scale/`; v0.19.0.*
-31. **Evidence hashes are declared, not proven — disclose and make them observable.**
-    `content_sha256` is caller-supplied; the gate checks shape only, so a fabricated hash
-    is accepted and wins the `anchor_state == "present"` sort key
-    (`issue.mem-arch-evidence-sha-forgeable`). v0.20.0 ships disclosure (`docs/API.md`,
-    `docs/THREAT-MODEL.md`: `present` means *declared*) and `amg verify-evidence`:
-    re-hashes `path:` locators, exit 1 on mismatch, `cmd:`/`url:`/`sha256:` reported
-    `unverifiable`, never a pass. Not shipped: per-read verification, an `anchor_state`
-    verified/claimed split, any claim `--strict` means verified.
-    *Signed 2026-10-31; `tests/test_evidence_verify.py`; v0.20.0.*
-
-32. **v0.20.0's verifier leaked the graph root; `--include-archive` starved.** Fixed
-    in v0.21.0 with tests. (a) `path:` evidence could leave the graph root
-    (absolute/`..`/symlink), making a public store a content oracle: it must now resolve
-    inside, escapes are `outside_root` and never hashed.
-    (b) `--strict` ignored `unverifiable` and JSON said `ok: true` on a strict exit 1: the
-    report separates `ok` (nothing violated) from `all_verified` (all matched);
-    `--strict` requires the latter; `not_a_file`/`unreadable`/empty are explicit, not
-    green. (c) `--include-archive` returned zero archived hits when `k` live records
-    matched: from `k >= 5` it keeps `max(1, k // 5)` slots, one per file first; below 5,
-    unchanged. *Signed 2026-10-31; tests; v0.21.0.*
-33. **`amg migrate` folds legacy `detail` into `note`; `check` stops advising a no-op.**
-    A legacy-only key (`detail`) survived `migrate`, keeping a third `changes[]` shape
-    (`changes-key-shapes`). `normalize()` now moves it into `note` (never drops it) and
-    reports `folded_detail` and any `non_canonical_shapes` left; `check` distinguishes a *missing* rev (run migrate) from
-    a *null* rev left by migrate (unknown by design). Idempotent: a second run reports
-    `changed: 0`. *Signed 2026-10-31; `tests/test_migrate.py`; v0.22.0.*
-34. **"Nothing was verified" is not "healthy".** v0.23.0's `healthcheck` treated
-    `unverifiable` as neither problem nor debt, so an `adopt`ed graph (evidence emptied
-    by design) or a `cmd:`-only graph printed `healthy`, exit 0; `--strict` missed it
-    (`ATTACK-HEALTHCHECK-V023` §2.1–2.2). v0.24.0 adds verdict `unverified` + exit `3`,
-    reports coverage (`verified/declared`), and counts `missing`/`not_a_file`/
-    `unreadable` as problems. `--allow-unverified` relaxes the exit code only.
-    *Signed 2026-10-31; `tests/test_healthcheck.py`; v0.24.0.*
+| # | Decision | Status | Signed |
+|---|---|---|---|
+| [1](decisions/01-write-gate-forward-only.md) | Write gate is forward-only. | active | preamble |
+| [2](decisions/02-conclusion-typed-gate.md) | Gate triggers on conclusion-typed content, not on status. | active | preamble |
+| [3](decisions/03-anchor-filter-degrades.md) | Anchor filter degrades, never hides. | amended (#31) | preamble |
+| [4](decisions/04-no-shared-field-semantics.md) | Two different things never share one field. | active | preamble |
+| [5](decisions/05-bi-temporal-minimal.md) | Bi-temporal, minimally. | active | preamble |
+| [6](decisions/06-semantic-gates-may-not-reject.md) | Semantic gates may not reject. | active | preamble |
+| [7](decisions/07-consolidation-pointers-only.md) | Consolidation keeps pointers only. | active | preamble |
+| [8](decisions/08-docs-equal-reality.md) | Documentation must equal reality. | active | preamble |
+| [9](decisions/09-adoption-never-fabricates.md) | Adoption never fabricates evidence. | active | ✓ |
+| [10](decisions/10-unknown-validity-never-auto-expired.md) | Unknown validity time can never be auto-expired. | active | ✓ |
+| [11](decisions/11-tamper-evidence-outside-file.md) | Tamper evidence lives outside the file, not inside it. | active | ✓ |
+| [12](decisions/12-prior-art-verified-in-full-text.md) | Prior art is verified in full text, and our two "design commitments" are  conceded. | active | ✓ |
+| [13](decisions/13-no-auth-no-multitenant.md) | No authentication, no authorization, no multi-tenancy — decided, not  deferred. | active | ✓ |
+| [14](decisions/14-write-cost-measure-first.md) | Write cost: measure the bytes before optimising, and do not trade atomicity  for 20 MB. | active | ✓ |
+| [15](decisions/15-lock-retry-backoff.md) | Lock retry backs off; lock fairness is not implemented. | active | ✓ |
+| [16](decisions/16-lock-timeout-policy.md) | The lock timeout is a policy knob, not a constant — and fairness is not the  fix for bursts. | active | ✓ |
+| [17](decisions/17-history-sidecar-rejected.md) | History sidecar: rejected. Segmented compression: the sanctioned direction, not  yet built. | amended (#24) | ✓ |
+| [18](decisions/18-coverage-gate-derives-scope.md) | A coverage gate must derive its own scope; a hand-written list is a claim about  the past. | active | ✓ |
+| [19](decisions/19-artifact-is-a-claim.md) | The artifact is a claim: build it, inspect it, and run the tests inside it. | active | ✓ |
+| [20](decisions/20-staleness-applies-to-work.md) | Staleness applies to work, not to registrations. | active | ✓ |
+| [21](decisions/21-staleness-threshold-policy.md) | The staleness threshold is policy, not a constant. | active | ✓ |
+| [22](decisions/22-one-source-of-truth-findings.md) | One source of truth for audit output: structured findings, human strings  derived. | active | ✓ |
+| [23](decisions/23-handoff-borrowed.md) | Handover discipline is borrowed, credited, and adapted — not reinvented. | active | ✓ |
+| [24](decisions/24-archive-ledger-not-nodes.md) | Archive the ledger, not the nodes — and prove the move on every run. | active | ✓ |
+| [25](decisions/25-word-aware-matching.md) | Lexical matching is word-aware; the recall it costs is recorded, not hidden. | amended (#28) | ✓ |
+| [26](decisions/26-lock-timeout-stays-5s.md) | The 5 s lock timeout stays; the 10k burst is documented, not papered over. | active | ✓ |
+| [27](decisions/27-scale-does-not-dilute.md) | Scale does not dilute lexical recall; vocabulary overlap does, and the scorer is  why. | active | ✓ |
+| [28](decisions/28-idf-term-weights.md) | IDF term weights ship — and they do not fix query-vocabulary noise. | active | ✓ |
+| [29](decisions/29-field-df-rejected.md) | Field-specific document frequency is rejected: the noise gain is paid for by  note-only queries. | active | ✓ |
+| [30](decisions/30-bounded-scores-labelled.md) | Scores are bounded and labelled; the normalization changes no rank. | active | ✓ |
+| [31](decisions/31-evidence-hashes-declared.md) | Evidence hashes are declared, not proven — disclose and make them observable. | active | ✓ |
+| [32](decisions/32-verifier-root-and-starvation.md) | v0.20.0's verifier leaked the graph root; `--include-archive` starved. | active | ✓ |
+| [33](decisions/33-migrate-folds-detail.md) | `amg migrate` folds legacy `detail` into `note`; `check` stops advising a no-op. | active | ✓ |
+| [34](decisions/34-nothing-verified-is-not-healthy.md) | "Nothing was verified" is not "healthy". | active | ✓ |
+| [35](decisions/35-coverage-two-denominators.md) | A coverage rate needs two denominators, and “not checked” is not a rate. | active | ✓ |
+| [36](decisions/36-evidence-root-explicit.md) | An evidence base is a policy, not an implicit directory. | active | ✓ |
+| [37](decisions/37-unobservable-anchoring-reported.md) | Thin anchoring is reported, never silent. | active | ✓ |
+| [38](decisions/38-bridge-requires-full-anchoring.md) | The verification bridge may not have its own green light. | active | ✓ |
+| [39](decisions/39-forged-digest-is-a-failure.md) | A forged digest is a failure, not an untested claim. | active | ✓ |
+| [40](decisions/40-doc-gates-walk-subdirectories.md) | A gate that cannot see a subdirectory is not a gate. | active | ✓ |
+| [41](decisions/41-doc-gates-select-by-directory.md) | Select documents by directory, not by file suffix. | active | ✓ |
+| [42](decisions/42-entries-1-8-signed-by-preamble.md) | Entries 1–8 are signed by the preamble; no signature is invented. | active | ✓ |
+| [43](decisions/43-decision-log-is-an-index.md) | The decision log is an index plus one page per decision. | active | ✓ |

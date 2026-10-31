@@ -3,6 +3,54 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.32.0] — 2026-10-31
+
+The decision log is an index plus one page per decision — and the seven versions of
+decisions it had no room to record are backfilled.
+
+### Changed
+
+- `docs/DECISIONS.md` (24,569/24,576 B, 7 B of headroom) is now the **index**: number,
+  decision, status, signature, link. Each decision lives on its own page under
+  `docs/decisions/`, cut mechanically from the old file with a reconstruction check
+  (`preamble + entries == the original bytes`, sha256 compared) and a per-entry
+  byte-for-byte assertion. Bodies are copied, never retyped.
+- The 24 KiB budget now applies **per page** instead of to the whole log, so capacity grows
+  with the number of decisions. That is stated in the index rather than left to be
+  discovered: the old single file could hold 34 decisions and then stopped, which is
+  exactly what happened.
+- The index carries a hand-maintained `status` column (`active`, `amended (#N)`,
+  `superseded`, `archived` — nothing is superseded or archived yet). Three entries are
+  `amended`: #3 by #31, #17 by #24, #25 by #28. The column is human judgement per entry;
+  nothing in the prose is structured enough to derive it, and the index says so.
+
+### Fixed (a gap this split uncovered)
+
+- **Decisions v0.25.0–v0.31.0 were made, shipped and never logged.** With 7 B left, entry
+  #34 was the last one writable, so nine rounds of decisions — coverage denominators, an
+  explicit evidence base, thin anchoring, the bridge's full-anchoring rule, a forged digest
+  as failure, recursive gates, directory-scoped gates — had no record. Entries **#35–#43**
+  are backfilled in this release, each with the evidence it was made on and its cost.
+- Entries **#1–#8** have no per-entry `*Signed …*` line (26 of 34 do). Their only signature
+  is the log's preamble, so their pages say exactly that and the index marks them
+  `preamble`. No signature was invented, and DECISIONS #42 records the fact.
+
+### Documentation
+
+- The four places in `docs/README.md` that described `DECISIONS.md` as the single signed
+  record now describe the index-and-pages structure; all 27 `DECISIONS #N` references in the
+  repository are bare numbers and resolve through the index.
+- `docs/decisions/manifest.json` records each page's body hash and size, so "the cut lost
+  nothing" is checkable after the fact, not only during the cut.
+
+### Tests
+
+- `tests/test_decisions_log.py` (6 tests): one page per number with no gaps or repeats, body
+  hashes matching the manifest, every index link resolving on disk, status values in the
+  allowed set, #1–#8 claiming the preamble and no invented signature, and every page inside
+  both documentation gates.
+- 348 tests; the gates now cover 59 documents (16 + 43 pages).
+
 ## [0.31.0] — 2026-10-31
 
 The documentation gates select documents by **directory**, not by `.md` suffix.

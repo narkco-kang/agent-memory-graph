@@ -1,0 +1,393 @@
+{
+ "schema": "amg-decision-pages/v1",
+ "count": 43,
+ "pages": [
+  {
+   "n": 1,
+   "slug": "01-write-gate-forward-only.md",
+   "title": "Write gate is forward-only.",
+   "status": "active",
+   "signed": false,
+   "body_sha256": "70c7f6a34ee235dda2a2ee676a1b1f17b8f35ea47198328633f1f74f35eb4f87",
+   "body_bytes": 445
+  },
+  {
+   "n": 2,
+   "slug": "02-conclusion-typed-gate.md",
+   "title": "Gate triggers on conclusion-typed content, not on status.",
+   "status": "active",
+   "signed": false,
+   "body_sha256": "f3442c852584fc27c5505d3ad5cd409f1b1869f66bb88922c5f2ec68535a4029",
+   "body_bytes": 194
+  },
+  {
+   "n": 3,
+   "slug": "03-anchor-filter-degrades.md",
+   "title": "Anchor filter degrades, never hides.",
+   "status": "amended (#31)",
+   "signed": false,
+   "body_sha256": "bbd41269d66a619a2d06ef6af302ed64f7364b5b98e371be1c1e9a1640db4b67",
+   "body_bytes": 219
+  },
+  {
+   "n": 4,
+   "slug": "04-no-shared-field-semantics.md",
+   "title": "Two different things never share one field.",
+   "status": "active",
+   "signed": false,
+   "body_sha256": "66a41c45b7c839a38faf8e3f910685830b2bb953f176cc5eec424854eb226cb7",
+   "body_bytes": 152
+  },
+  {
+   "n": 5,
+   "slug": "05-bi-temporal-minimal.md",
+   "title": "Bi-temporal, minimally.",
+   "status": "active",
+   "signed": false,
+   "body_sha256": "e5b59e986114ae5132d5bde98da52d4f31232881e77903911e0b0eecc3794a55",
+   "body_bytes": 271
+  },
+  {
+   "n": 6,
+   "slug": "06-semantic-gates-may-not-reject.md",
+   "title": "Semantic gates may not reject.",
+   "status": "active",
+   "signed": false,
+   "body_sha256": "e26faf9aada6613a5ec310938d510da5747b08344c5244b700ccfb00793985ab",
+   "body_bytes": 341
+  },
+  {
+   "n": 7,
+   "slug": "07-consolidation-pointers-only.md",
+   "title": "Consolidation keeps pointers only.",
+   "status": "active",
+   "signed": false,
+   "body_sha256": "4055e667ecf678a94bb055775dbe7cb27a83dd19c4b60f201d600b0345e5651a",
+   "body_bytes": 281
+  },
+  {
+   "n": 8,
+   "slug": "08-docs-equal-reality.md",
+   "title": "Documentation must equal reality.",
+   "status": "active",
+   "signed": false,
+   "body_sha256": "abaa3448774dda3cb8df405ed728de027df695263af21659707f6d625fad7952",
+   "body_bytes": 248
+  },
+  {
+   "n": 9,
+   "slug": "09-adoption-never-fabricates.md",
+   "title": "Adoption never fabricates evidence.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "b8d42ef0d6d721ce6734072552415d0a2e3373d21a74b29bdd04a9cfae0d0371",
+   "body_bytes": 555
+  },
+  {
+   "n": 10,
+   "slug": "10-unknown-validity-never-auto-expired.md",
+   "title": "Unknown validity time can never be auto-expired.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "216a995d39f5cbb62bc8807a4421cb49934cc1f73f43991fe04c0ee6a53ad03f",
+   "body_bytes": 368
+  },
+  {
+   "n": 11,
+   "slug": "11-tamper-evidence-outside-file.md",
+   "title": "Tamper evidence lives outside the file, not inside it.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "44e952f15275123a4ea511d85710d0bfb3602a32872a78c738ae67a969637365",
+   "body_bytes": 859
+  },
+  {
+   "n": 12,
+   "slug": "12-prior-art-verified-in-full-text.md",
+   "title": "Prior art is verified in full text, and our two \"design commitments\" are  conceded.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "536575bde123073298d34fae2e616728e7d7658f13f69d745ed3cc2c3f42b1e7",
+   "body_bytes": 769
+  },
+  {
+   "n": 13,
+   "slug": "13-no-auth-no-multitenant.md",
+   "title": "No authentication, no authorization, no multi-tenancy — decided, not  deferred.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "33adeed8fbfabab5005f2907d2e03a13424de1033563a1a92c6ec756648048bc",
+   "body_bytes": 963
+  },
+  {
+   "n": 14,
+   "slug": "14-write-cost-measure-first.md",
+   "title": "Write cost: measure the bytes before optimising, and do not trade atomicity  for 20 MB.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "6f377a16774eef54ef0bc8085d9ceaca241458ce3ca888b9752bc663fe9bb82f",
+   "body_bytes": 1021
+  },
+  {
+   "n": 15,
+   "slug": "15-lock-retry-backoff.md",
+   "title": "Lock retry backs off; lock fairness is not implemented.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "15e9d04f20aac4c2cb4a75906ae2f8eb1f9d3045e6f82bc70d1c03e92a183e6b",
+   "body_bytes": 889
+  },
+  {
+   "n": 16,
+   "slug": "16-lock-timeout-policy.md",
+   "title": "The lock timeout is a policy knob, not a constant — and fairness is not the  fix for bursts.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "7ff5a70054836ec587dfd4c265df167fa1576af9c438c8f12a5e913e4ec92e8d",
+   "body_bytes": 767
+  },
+  {
+   "n": 17,
+   "slug": "17-history-sidecar-rejected.md",
+   "title": "History sidecar: rejected. Segmented compression: the sanctioned direction, not  yet built.",
+   "status": "amended (#24)",
+   "signed": true,
+   "body_sha256": "76e2858c0aaa63ef72297a4e1d3e6991715e8426b5546b0dc7c23369d97b6ae2",
+   "body_bytes": 921
+  },
+  {
+   "n": 18,
+   "slug": "18-coverage-gate-derives-scope.md",
+   "title": "A coverage gate must derive its own scope; a hand-written list is a claim about  the past.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "4afe1cc54a1edfce79df3caf37e97d62120a3ed04f42a56f57308af6e4ac63e4",
+   "body_bytes": 854
+  },
+  {
+   "n": 19,
+   "slug": "19-artifact-is-a-claim.md",
+   "title": "The artifact is a claim: build it, inspect it, and run the tests inside it.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "91a2bb586223f2e77decc2e0ee948158286273207b39bffe6c8055c9edde5051",
+   "body_bytes": 988
+  },
+  {
+   "n": 20,
+   "slug": "20-staleness-applies-to-work.md",
+   "title": "Staleness applies to work, not to registrations.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "33c793c5c76fbe4c2d0910c80ddd44b13f2bcb829b0ee55d476f322fe8b91aa1",
+   "body_bytes": 782
+  },
+  {
+   "n": 21,
+   "slug": "21-staleness-threshold-policy.md",
+   "title": "The staleness threshold is policy, not a constant.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "27ae37af96dbbf7d33aa8ca89aa3bc951ec1cca4efd8680dfe83e4f70dc4fe5c",
+   "body_bytes": 800
+  },
+  {
+   "n": 22,
+   "slug": "22-one-source-of-truth-findings.md",
+   "title": "One source of truth for audit output: structured findings, human strings  derived.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "513680324a8816cb3dbe149bd4d8f5d58df9826c37e381af851a45946cb1804a",
+   "body_bytes": 655
+  },
+  {
+   "n": 23,
+   "slug": "23-handoff-borrowed.md",
+   "title": "Handover discipline is borrowed, credited, and adapted — not reinvented.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "c4005ff794fb26428290529bb660f71748a4b855b2c1cbba387fa6d04eca7148",
+   "body_bytes": 663
+  },
+  {
+   "n": 24,
+   "slug": "24-archive-ledger-not-nodes.md",
+   "title": "Archive the ledger, not the nodes — and prove the move on every run.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "b854fd9f10be5a74936b03b911c9907d6c39c6de5a854a6bb4c542e128deb643",
+   "body_bytes": 712
+  },
+  {
+   "n": 25,
+   "slug": "25-word-aware-matching.md",
+   "title": "Lexical matching is word-aware; the recall it costs is recorded, not hidden.",
+   "status": "amended (#28)",
+   "signed": true,
+   "body_sha256": "61f8961dd00bd52c84fe3a7f2ae5f4225aeddab2867bb2c634c454215f151315",
+   "body_bytes": 1562
+  },
+  {
+   "n": 26,
+   "slug": "26-lock-timeout-stays-5s.md",
+   "title": "The 5 s lock timeout stays; the 10k burst is documented, not papered over.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "cbb66f050b6ef94042ef916ba118ce60f87da61a989416f5bd19b73882d80fd6",
+   "body_bytes": 1323
+  },
+  {
+   "n": 27,
+   "slug": "27-scale-does-not-dilute.md",
+   "title": "Scale does not dilute lexical recall; vocabulary overlap does, and the scorer is  why.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "d5a6f58a18ea05b7b2b95601d9bb8feb9dba4c57536c733eb7bedf7a650d69ae",
+   "body_bytes": 337
+  },
+  {
+   "n": 28,
+   "slug": "28-idf-term-weights.md",
+   "title": "IDF term weights ship — and they do not fix query-vocabulary noise.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "7f29ada04178483b357767da3597f88a044b736102c5251d88180c2e6bc767f8",
+   "body_bytes": 1557
+  },
+  {
+   "n": 29,
+   "slug": "29-field-df-rejected.md",
+   "title": "Field-specific document frequency is rejected: the noise gain is paid for by  note-only queries.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "a2ff18f4d5649f7b4242ff40bd41441b140f27440ddc083c6b36d385b333fa35",
+   "body_bytes": 1090
+  },
+  {
+   "n": 30,
+   "slug": "30-bounded-scores-labelled.md",
+   "title": "Scores are bounded and labelled; the normalization changes no rank.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "30d3586ef42f9b69ec871c1d4e828af9a1bb1469727b5faa5976c43ca71c1ecb",
+   "body_bytes": 1104
+  },
+  {
+   "n": 31,
+   "slug": "31-evidence-hashes-declared.md",
+   "title": "Evidence hashes are declared, not proven — disclose and make them observable.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "50170a6907a7256a93be0a886c3c518e78b270268b5d20fbdf9ef5f1411b9d26",
+   "body_bytes": 716
+  },
+  {
+   "n": 32,
+   "slug": "32-verifier-root-and-starvation.md",
+   "title": "v0.20.0's verifier leaked the graph root; `--include-archive` starved.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "c14b2d89ffe3409ea02767c1a9be8a4ad4aec89c4b1c851b533870640fe2a9ea",
+   "body_bytes": 785
+  },
+  {
+   "n": 33,
+   "slug": "33-migrate-folds-detail.md",
+   "title": "`amg migrate` folds legacy `detail` into `note`; `check` stops advising a no-op.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "6885c1b05d0c4b38e64a960d0fdc5383805a6ff71a74b946273cf32dacd55e17",
+   "body_bytes": 542
+  },
+  {
+   "n": 34,
+   "slug": "34-nothing-verified-is-not-healthy.md",
+   "title": "\"Nothing was verified\" is not \"healthy\".",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "b86fece4fc333b479d2ccc0e5f469c5dfbf083079e11f545b94abf631605471f",
+   "body_bytes": 563
+  },
+  {
+   "n": 35,
+   "slug": "35-coverage-two-denominators.md",
+   "title": "A coverage rate needs two denominators, and “not checked” is not a rate.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "0ed8783146df97fac2447d44704028d64a7e4e5e80bcae4b865415a1a4da60b6",
+   "body_bytes": 659
+  },
+  {
+   "n": 36,
+   "slug": "36-evidence-root-explicit.md",
+   "title": "An evidence base is a policy, not an implicit directory.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "c8237e9f7688f1c6fc99b195acc1fccea673758ff618969610ac446e8ca10d6d",
+   "body_bytes": 655
+  },
+  {
+   "n": 37,
+   "slug": "37-unobservable-anchoring-reported.md",
+   "title": "Thin anchoring is reported, never silent.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "2e279af975b75d8f7ac93674b92cdcc81fda6889700da5c3b34ba8fb474f5415",
+   "body_bytes": 624
+  },
+  {
+   "n": 38,
+   "slug": "38-bridge-requires-full-anchoring.md",
+   "title": "The verification bridge may not have its own green light.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "2d8c05d27eca21f6f842e574d22aa0030e87fc9e45fc5327bdaa64bffa85a079",
+   "body_bytes": 877
+  },
+  {
+   "n": 39,
+   "slug": "39-forged-digest-is-a-failure.md",
+   "title": "A forged digest is a failure, not an untested claim.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "d5f8430d23b5078f28bcb09c3e6a36283828a18187c8eace5007f750d1cd4d71",
+   "body_bytes": 706
+  },
+  {
+   "n": 40,
+   "slug": "40-doc-gates-walk-subdirectories.md",
+   "title": "A gate that cannot see a subdirectory is not a gate.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "624e875821dff4f4da04a074620d0f70df05702b7bcc060bce78b65d786af412",
+   "body_bytes": 659
+  },
+  {
+   "n": 41,
+   "slug": "41-doc-gates-select-by-directory.md",
+   "title": "Select documents by directory, not by file suffix.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "cb65b8133f2d514f908eb8b64ff4662d436e51e2fef6de3cc096ef5c1c360bfa",
+   "body_bytes": 1178
+  },
+  {
+   "n": 42,
+   "slug": "42-entries-1-8-signed-by-preamble.md",
+   "title": "Entries 1–8 are signed by the preamble; no signature is invented.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "2d877921ea226b43dec0ae6e5b1a17574ab3c307c9815da9dcf0fedb6ae71af9",
+   "body_bytes": 712
+  },
+  {
+   "n": 43,
+   "slug": "43-decision-log-is-an-index.md",
+   "title": "The decision log is an index plus one page per decision.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "ad0c5e4399eadf1c1ac2dde763965caad7e864d4c573296fc97a4a1886844290",
+   "body_bytes": 965
+  }
+ ]
+}
