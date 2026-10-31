@@ -3,6 +3,41 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.33.2] — 2026-10-31
+
+An attempt to answer #50's open question failed its own pre-registered check. The failure is the
+finding.
+
+### Measured
+
+- On the candidates that actually compete (top-100, gold excluded), a quarter of the query is
+  reached by **14.4%** of the real corpus's distractors against **91.8%** of N2's — the 6.4× contrast
+  #50 assumed is real and now measured.
+- A pre-registered `N2-cal` corpus tried to reproduce the real 14.4% by drawing each node's
+  query-token count from the per-pair coverage distribution. It produced **60.6%**, missed the ±0.10
+  tolerance, and by the rule fixed beforehand was **rejected** — its `recall@5` of **0.654** is a
+  rejected-run diagnostic, not a result.
+- Probing an explicit token-count mix shows the base rate cannot repair it: 0.55/0.43/0.02 → 0.537,
+  0.70/0.28/0.02 → 0.516, 0.80/0.19/0.01 → **0.497**. With ~2,000 nodes carrying two query tokens,
+  those nodes own the top-100 however rare they are: the pool is selected by the quantity being
+  calibrated.
+- n1 and n3 are unchanged (0.865 each), so their generators are untouched.
+
+### Added
+
+- DECISIONS **#51**: synthetic noise corpora must be calibrated and checked **on the competing
+  subset**, with that check run before any recall number is reported; the next design samples
+  distractor text from real notes instead of token soup.
+- `experiments/retrieval_noise_representativeness/` — pre-registration (with the two preliminary
+  scans disclosed), the rejected run, and the probe ladder, all with machine-readable output.
+- `tests/test_noise_calibration.py` pins the page to `result.json` and `probes.json`, and requires
+  the rejected recall to stay labelled as such.
+
+### Not changed
+
+- N2 stays the hardest corpus, the shipped number stays **0.538**, and the 0.70 target stays
+  **unmet**. `src/amg/` untouched.
+
 ## [0.33.1] — 2026-10-31
 
 The direction #49 left open was measured and closed, with its failed predictions on record.

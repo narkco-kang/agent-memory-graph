@@ -1,6 +1,6 @@
 {
  "schema": "amg-decision-pages/v1",
- "count": 50,
+ "count": 51,
  "pages": [
   {
    "n": 1,
@@ -451,6 +451,15 @@
    "signed": true,
    "body_sha256": "e291f1c316ea69562297997cc19922f23a247b9b94981277484a3e1564b08b7f",
    "body_bytes": 3057
+  },
+  {
+   "n": 51,
+   "slug": "51-calibrate-what-competes.md",
+   "title": "A synthetic noise model must be calibrated on what competes.",
+   "status": "active",
+   "signed": true,
+   "body_sha256": "0bad9606adde14de8cb367522ad8c41e2388d3d2f18b355eda7897b63f15246e",
+   "body_bytes": 2437
   }
  ]
 }

@@ -1,0 +1,26 @@
+{
+  "caption": "post-hoc probes after the pre-registered corpus failed Q2",
+  "conclusion": "no mix reaches the target: the top-100 is selected by the quantity being calibrated, so the failure is a selection effect, not a base-rate error",
+  "rows": [
+    {
+      "mean": 0.2615,
+      "mix": "0.55 / 0.43 / 0.02",
+      "pairs": 2576,
+      "share_ge_0.25": 0.5373
+    },
+    {
+      "mean": 0.255,
+      "mix": "0.70 / 0.28 / 0.02",
+      "pairs": 2576,
+      "share_ge_0.25": 0.5159
+    },
+    {
+      "mean": 0.2459,
+      "mix": "0.80 / 0.19 / 0.01",
+      "pairs": 2576,
+      "share_ge_0.25": 0.4973
+    }
+  ],
+  "target_share": 0.144,
+  "tolerance": 0.1
+}
