@@ -203,8 +203,55 @@ class HealthcheckTests(unittest.TestCase):
         self.assertEqual(res.returncode, 0, res.stderr)
         report = json.loads(res.stdout)
         self.assertEqual(report["evidence"]["coverage_state"], "not_checked")
+        # v0.24.0 printed "verdict: healthy" here: not looking must not read as looking
+        self.assertEqual(report["verdict"], "not_checked")
+        self.assertFalse(report["healthy"])
         text = run(self.g.dir, "--no-evidence").stdout
         self.assertIn("evidence: skipped (--no-evidence) - NOT VERIFIED", text)
+        self.assertIn("verdict: NOT CHECKED (evidence hashing skipped)", text)
+
+    def test_declared_rows_are_not_the_denominator(self):
+        # issue.mem-arch-coverage-denominator: v0.24.0 said "1 declared, 1 verified
+        # (100%)" for a graph where ten other done nodes carried no evidence at all.
+        for i in range(10):
+            self.g.m.add_node(f"issue.bare{i}", "issue", f"bare {i}", source="group:t",
+                              status="done")
+        res = run(self.g.dir, "--json")
+        report = json.loads(res.stdout)
+        self.assertEqual(report["conclusions"]["total"], 1)   # one decision
+        self.assertEqual(report["conclusions"]["verified"], 1)
+        self.assertEqual(report["done"]["total"], 11)
+        self.assertEqual(report["done"]["unanchored"], 10)
+        text = run(self.g.dir).stdout
+        self.assertIn("conclusions: 1/1 verified (100%), 0 unanchored", text)
+        self.assertIn("done nodes: 11 total, 10 without evidence", text)
+        self.assertIn("10 other done node(s) carry no evidence", text)
+
+    def test_unanchored_done_node_is_debt_unless_strict(self):
+        # a done node with no evidence is visible debt, not a page at 3am
+        self.g.m.add_node("issue.bare", "issue", "bare", source="group:t", status="done")
+        self.assertEqual(run(self.g.dir).returncode, 0)
+        strict = run(self.g.dir, "--strict")
+        self.assertEqual(strict.returncode, 1, strict.stdout + strict.stderr)
+        self.assertIn("carry no evidence", strict.stdout)
+
+    def test_allow_unverified_is_recorded_in_json(self):
+        g = self.unprovable_graph()
+        try:
+            report = json.loads(run(g.dir, "--json", "--allow-unverified").stdout)
+            self.assertTrue(report["unverified_accepted"])
+            self.assertFalse(report["healthy"])
+            plain = json.loads(run(g.dir, "--json").stdout)
+            self.assertFalse(plain["unverified_accepted"])
+        finally:
+            g.close()
+
+    def test_strict_scope_is_declared_not_implied(self):
+        # --strict means debt, not evidence verification; the report has to say which
+        report = json.loads(run(self.g.dir, "--json").stdout)
+        self.assertIn("not evidence", report["strict_scope"])
+        self.assertIn("audit", json.loads(run(self.g.dir, "--json", "--strict")
+                                        .stdout)["strict_scope"])
 
     def test_problems_win_over_unverified(self):
         # an unprovable store that is also broken reports breakage (exit 1), not exit 3

@@ -10,13 +10,34 @@ python3 tools/healthcheck.py ./mem          # one-page, read-only
 python3 tools/healthcheck.py ./mem --json   # same, machine-readable
 python3 tools/healthcheck.py ./mem --strict # stale work items also fail
 python3 tools/healthcheck.py ./mem --allow-unverified  # accept "nothing to verify"
+python3 tools/healthcheck.py ./mem --no-evidence       # skip hashing; verdict says NOT CHECKED
+python3 tools/verify_snapshot.py ../kg/graph.json     # verify a graph another tool wrote
 ```
 
 It reports store size, `check` errors and hints, audit conflicts, evidence that was
-actually hashed against its declared `content_sha256`, and archive integrity. **Debt is
-not breakage**: stale work items and legacy unanchored nodes are printed but only fail
-with `--strict`, because paging someone for a three-day-old task trains them to ignore
-the report.
+actually hashed against its declared `content_sha256`, **conclusion anchoring**, and
+archive integrity. **Debt is not breakage**: stale work items and unanchored `done`
+nodes are printed but only fail with `--strict`, because paging someone for a
+three-day-old task trains them to ignore the report.
+
+### Coverage has two denominators, and both are printed
+
+`evidence rows: 1 declared, 1 verified (100%)` says only that every *evidence row that
+exists* was hashed. It does not say that knowledge is anchored. v0.24.0 printed that
+line alone for a graph where ten other `done` nodes carried no evidence at all
+(`issue.mem-arch-coverage-denominator`), so the report now always prints:
+
+```
+  evidence rows: 1 declared, 1 verified (100%) - ok 1
+  conclusions: 1/1 verified (100%), 0 unanchored
+  done nodes: 11 total, 10 without evidence
+```
+
+`conclusions` counts `done` nodes of conclusion type (`decision`, `artifact`, or
+`conclusion: true`) — the ones the write gate requires evidence for — and how many of
+them carry at least one *verified* item. `done nodes` counts every finished node without
+any evidence, which is what migration leaves behind. Read all three; a single percentage
+is not a health statement.
 
 ### Verdicts and exit codes
 
@@ -26,17 +47,31 @@ a human reads the line:
 | verdict | exit | meaning | first action |
 |---|---|---|---|
 | `healthy` | 0 | no problem, and at least one `path:` evidence file hashed to its declared digest | nothing |
-| `needs_attention` | 1 | `check` errors, or evidence that mismatches / is missing / is a directory / cannot be read / is outside the graph root, or archive verification failed (stale work too, with `--strict`) | the `x` line above the verdict names the command to run |
+| `needs_attention` | 1 | `check` errors, or evidence that mismatches / is missing / is a directory / cannot be read / is outside the graph root, or archive verification failed (stale work and unanchored nodes too, with `--strict`) | the `x` line above the verdict names the command to run |
 | `unverified` | 3 | nothing is broken, but **zero** evidence items could be observed: no evidence at all, or only `cmd:`/`url:`/`sha256:` anchors, which carry no local bytes | write `path:` evidence for claims that matter, or accept the gap explicitly |
+| `not_checked` | 0 | `--no-evidence` was passed: negative findings are about `check`/`audit`/`archive` only | re-run without `--no-evidence` when the answer matters |
 
 `unverified` exists because "0 checked" and "0 failed" look identical in a problem list.
 v0.23.0 printed `healthy` and exited 0 on a store whose every claim was unproven (an
 `adopt`ed graph empties the evidence layer by design, and a `cmd:`-only graph has nothing
 local to hash) — that is a dashboard saying "fine" about "unknown"
 (`ATTACK-HEALTHCHECK-V023.md` §2.1–2.2). `--allow-unverified` keeps the verdict honest
-and relaxes only the exit code, for stores whose evidence is intentionally remote.
-`--no-evidence` skips hashing for speed and reports `evidence: skipped … NOT VERIFIED`;
-the verdict then rests on `check`/`audit`/`archive` alone and never claims verification.
+and relaxes only the exit code, for stores whose evidence is intentionally remote; the
+JSON records `unverified_accepted: true` so a log can tell "verified" from "exempted".
+`--no-evidence` yields `not_checked`, never `healthy` — a report that did not look must
+not read like one that looked and found nothing (`REATTACK-HEALTHCHECK-V0240.md`).
+`--strict` covers debt only (stale work, unanchored nodes); it never means "all evidence
+verified", and the JSON says so in `strict_scope`.
+
+### Verifying a graph another tool wrote
+
+A graph curated by another tool (ours: `kg.py`, schema `group-kg/v1`) is **not** under
+`amg`'s write gate. `tools/verify_snapshot.py <graph.json>` adopts a copy into a temp
+directory, resolves `path:` evidence against the original graph's directory, and runs the
+same report above. It never writes the source, and it inherits the numbers — including
+`unverified` (exit 3), because a curated graph's evidence is usually citations, not
+hashed files. Exit 0 from the bridge means "the observable invariants hold", never "this
+graph is write-gated" and never "its content is correct".
 
 ## 1. What is already enforced (do not re-implement it)
 

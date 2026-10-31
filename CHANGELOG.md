@@ -3,6 +3,56 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.25.0] — 2026-10-31
+
+The health report stops lying about coverage, and a graph another tool wrote can now be
+verified without pretending it is gated.
+
+### Fixed
+
+- **Coverage had the wrong denominator.** v0.24.0 printed `1 declared, 1 verified (100%)`
+  for a graph where ten other `done` nodes carried no evidence: the denominator was
+  *evidence rows that exist*, not *knowledge that should be anchored*. The report now
+  prints three numbers — `evidence rows` (declared/verified), `conclusions` (done
+  conclusion-typed nodes, how many carry verified evidence, how many are unanchored) and
+  `done nodes` (all finished nodes, how many carry no evidence) — and adds a warning for
+  each unanchored group (`issue.mem-arch-coverage-denominator`,
+  `REATTACK-HEALTHCHECK-V0240.md`).
+- **`--no-evidence` read as `healthy`.** A report that did not look must not read like
+  one that looked and found nothing: its verdict is now `not_checked` (exit 0), and JSON
+  carries `verdict: "not_checked"`, `healthy: false` (`issue.mem-arch-no-evidence-verdict-green`).
+- `--allow-unverified` now records `unverified_accepted: true` in JSON, so a log can
+  tell "verified" from "exempted"; and `strict_scope` states what `--strict` covers
+  (audit conflicts + unanchored done nodes) and that it is **not** evidence verification.
+
+### Added
+
+- `tools/verify_snapshot.py <graph.json> [...] [--json] [--allow-unverified] [--keep]` —
+  the verification bridge for graphs another tool wrote (our `kg.py` graphs are
+  `group-kg/v1` and are **not** under `amg`'s write gate). It adopts a copy into a temp
+  directory, resolves `path:` evidence against the original graph's directory (a temp
+  copy has no evidence files, so hashing against it would report every real file as
+  `missing`), and runs the same report the health check runs. Exit `0` pass / `1`
+  problem / `2` usage / `3` nothing verified. It never writes the source and it inherits
+  the coverage and anchoring numbers, so a fix to the report applies here too.
+- 11 tests: 4 for the new health-report semantics (denominator, unanchored-debt vs
+  `--strict`, `not_checked`, `unverified_accepted`, `strict_scope`) and 7 for the bridge
+  (pass, evidence-root resolution, tampered evidence, bare strings = exit 3,
+  `--allow-unverified` relaxes only the code, usage, JSON shape).
+- Measured on the project's own graphs through the bridge: `记忆架构开源` (316 nodes)
+  `conclusions: 0/194 verified (0%), 194 unanchored`; `C仔指挥部` (1298 nodes)
+  `0/610 verified (0%), 610 unanchored`; both `verdict: UNVERIFIED`, exit 3 — the honest
+  number for evidence that is citations rather than hashed files.
+
+### Not shipped in 0.25.0 (do not assume)
+
+- The bridge observes; it does **not** block. `kg.py` writes are still not gated, and no
+  document may claim they are.
+- Exit 0 from the bridge is not a claim that content is correct, and not a claim that
+  every evidence item is verifiable.
+- No `path:<rel>#sha256:<hex>` evidence syntax yet: it is the agreed direction, not a
+  shipped feature.
+
 ## [0.24.1] — 2026-10-31
 
 Documentation round: "successful adoption" now has six observable criteria, and the

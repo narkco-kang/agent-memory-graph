@@ -19,6 +19,26 @@ Eight jobs per push. Each one exists because something passed without it:
 The wheel install matrix is deliberate: `test` installs editable, so without it the
 artifact users actually get had only been installed on one interpreter and one OS.
 
+## v0.25.0 — 2026-10-31
+
+Status: **released**. Two false greens in the health report closed, plus the snapshot
+bridge for graphs whose write path is another tool's.
+
+| # | Criterion | State |
+|---|---|---|
+| 1 | Both defects reported by an adversary, reproduced, not assumed | ✅ `REATTACK-HEALTHCHECK-V0240.md` (gaps A and B) |
+| 2 | The denominator is stated, not implied | ✅ `evidence rows` / `conclusions` / `done nodes` printed every run |
+| 3 | "Did not look" cannot read as "looked and found nothing" | ✅ `not_checked` verdict, `healthy: false` |
+| 4 | Exemptions are visible to logs | ✅ `unverified_accepted: true`, `strict_scope` in JSON |
+| 5 | The bridge cannot move the false green one door down | ✅ reuses `healthcheck.collect()`; exits 3 when nothing verified |
+| 6 | The bridge stays read-only on the source | ✅ test asserts `src_sha256` unchanged |
+| 7 | Evidence resolution is not broken by the temp copy | ✅ `evidence_root` + test (would report every file `missing` otherwise) |
+| 8 | CI green on nine jobs | ✅ 323 tests ×4 + `package` ×5 |
+| 9 | Documentation↔code gates | ✅ 16 documents; `OPERATIONS.md` 9572 B |
+| 10 | Clean install from the tag | ✅ `git+...@v0.25.0` |
+
+---
+
 ## v0.24.1 — 2026-10-31
 
 Status: **released**. Documentation round: "successful adoption" becomes six testable

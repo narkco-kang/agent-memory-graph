@@ -45,6 +45,7 @@ ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 sys.path.insert(0, os.path.join(ROOT, "src"))
 
 from amg import Memory  # noqa: E402
+from amg.const import is_conclusion  # noqa: E402
 from amg.gate import verify_evidence  # noqa: E402
 
 EXIT_PROBLEM = 1
@@ -65,7 +66,14 @@ def _utf8_console():
             pass
 
 
-def collect(path, check_evidence=True):
+def collect(path, check_evidence=True, evidence_root=None):
+    """Report on the graph at `path`.
+
+    `evidence_root` resolves `path:` locators against another directory. It exists for
+    the snapshot bridge: an adopted copy lives in a temp dir, but its locators were
+    written relative to the graph they came from, so hashing them against the copy would
+    report every real file as `missing` and turn a good graph into a false alarm.
+    """
     memory = Memory.open(path, read_only=True)
     doc = memory.doc
     check = memory.check()
@@ -76,7 +84,8 @@ def collect(path, check_evidence=True):
     if check_evidence:
         for node in doc.get("nodes") or []:
             evidence_rows.extend(verify_evidence(node.get("evidence") or [],
-                                                 os.path.abspath(path), node.get("id")))
+                                                 os.path.abspath(evidence_root or path),
+                                                 node.get("id")))
     counts = {}
     for row in evidence_rows:
         counts[row["status"]] = counts.get(row["status"], 0) + 1
@@ -117,9 +126,30 @@ def collect(path, check_evidence=True):
     else:
         coverage_state, coverage = "partial", round(verified / len(evidence_rows), 4)
 
+    # The declared-evidence ratio is NOT enough: v0.24.0 printed "1 declared, 1 verified
+    # (100%)" for a graph where ten other `done` nodes carried no evidence at all, because
+    # the denominator was "evidence rows that exist", not "knowledge that should be
+    # anchored" (`issue.mem-arch-coverage-denominator`). Both numbers are reported now,
+    # and neither is called coverage on its own.
+    nodes = doc.get("nodes") or []
+    done_nodes = [n for n in nodes if n.get("status") == "done"]
+    done_unanchored = [n for n in done_nodes if not (n.get("evidence") or [])]
+    conclusions = [n for n in done_nodes if is_conclusion(n)]
+    concl_unanchored = [n for n in conclusions if not (n.get("evidence") or [])]
+    verified_node_ids = {row["node"] for row in evidence_rows if row["status"] == "ok"}
+    concl_verified = [n for n in conclusions if n.get("id") in verified_node_ids]
+    anchor_coverage = (round(len(concl_verified) / len(conclusions), 4)
+                       if conclusions else None)
+    if concl_unanchored:
+        warnings.append(f"{len(concl_unanchored)} of {len(conclusions)} done conclusion(s) "
+                        f"have no evidence (unanchored)")
+    other_unanchored = len(done_unanchored) - len(concl_unanchored)
+    if other_unanchored:
+        warnings.append(f"{other_unanchored} other done node(s) carry no evidence")
+
     return {
         "path": os.path.abspath(path),
-        "store": {"nodes": len(doc.get("nodes") or []),
+        "store": {"nodes": len(nodes),
                   "edges": len(doc.get("edges") or []),
                   "changes": len(doc.get("changes") or [])},
         "check": {"ok": check["ok"], "errors": check["errors"],
@@ -133,6 +163,13 @@ def collect(path, check_evidence=True):
                      "missing": unconfirmed["missing"],
                      "not_a_file": unconfirmed["not_a_file"],
                      "unreadable": unconfirmed["unreadable"]},
+        "conclusions": {"total": len(conclusions), "with_evidence":
+                        len(conclusions) - len(concl_unanchored),
+                        "verified": len(concl_verified),
+                        "unanchored": len(concl_unanchored),
+                        "anchor_coverage": anchor_coverage},
+        "done": {"total": len(done_nodes), "unanchored": len(done_unanchored),
+                 "other_unanchored": other_unanchored},
         "archive": archive,
         "problems": problems,
         "warnings": warnings,
@@ -144,9 +181,14 @@ def verdict_of(report, strict=False, allow_unverified=False):
 
     `--allow-unverified` relaxes the exit code, never the verdict: a store with no
     observable evidence is still described as `unverified` when its owner accepted it.
+    `--no-evidence` never yields `healthy`: it yields `not_checked`, because a report
+    that did not look must not read as one that looked and found nothing
+    (`issue.mem-arch-no-evidence-verdict-green`).
     """
     if report["problems"] or (strict and report["warnings"]):
         return "needs_attention", EXIT_PROBLEM
+    if report["evidence"]["coverage_state"] == "not_checked":
+        return "not_checked", 0
     if report["evidence"]["coverage_state"] == "none":
         return "unverified", (0 if allow_unverified else EXIT_UNVERIFIED)
     return "healthy", 0
@@ -181,14 +223,22 @@ def main(argv=None):
 
     report["strict"] = bool(args.strict)
     report["allow_unverified"] = bool(args.allow_unverified)
+    # What `--strict` covers, stated in the report: it promotes debt (stale work,
+    # unanchored done nodes). It is NOT evidence verification — that is the verdict's
+    # job (`unverified`), because two tools both calling it "strict" with different
+    # meanings is what `issue.mem-arch-no-evidence-verdict-green` escalated.
+    report["strict_scope"] = "audit conflicts + unanchored done nodes (not evidence)"
     report["verdict"], code = verdict_of(report, args.strict, args.allow_unverified)
     report["healthy"] = report["verdict"] == "healthy"
+    report["unverified_accepted"] = (report["verdict"] == "unverified"
+                                     and bool(args.allow_unverified))
 
     if args.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
     else:
         store = report["store"]
         evidence = report["evidence"]
+        conclusions = report["conclusions"]
         print(f"graph {report['path']}")
         print(f"  store: {store['nodes']} nodes / {store['edges']} edges / "
               f"{store['changes']} changes")
@@ -201,9 +251,18 @@ def main(argv=None):
         else:
             counts = evidence["counts"] or {"none": 0}
             pct = "" if evidence["coverage"] is None else f" ({evidence['coverage']:.0%})"
-            print(f"  evidence: {evidence['declared']} declared, "
+            print(f"  evidence rows: {evidence['declared']} declared, "
                   f"{evidence['verified']} verified{pct} - "
                   + ", ".join(f"{name} {count}" for name, count in sorted(counts.items())))
+        if conclusions["total"]:
+            pct = ("n/a" if conclusions["anchor_coverage"] is None
+                   else f"{conclusions['anchor_coverage']:.0%}")
+            print(f"  conclusions: {conclusions['verified']}/{conclusions['total']} "
+                  f"verified ({pct}), {conclusions['unanchored']} unanchored")
+        else:
+            print("  conclusions: none")
+        done = report["done"]
+        print(f"  done nodes: {done['total']} total, {done['unanchored']} without evidence")
         archive = report["archive"]
         print(f"  archive: {'ok' if archive.get('ok') else 'FAILED'} "
               f"({archive.get('archived_records', 0)} archived record(s))")
@@ -212,9 +271,10 @@ def main(argv=None):
         for warning in report["warnings"]:
             print(f"  ! {warning}")
         verdict = report["verdict"]
-        label = ("NEEDS ATTENTION" if verdict == "needs_attention"
-                 else "UNVERIFIED" if verdict == "unverified" else "healthy")
-        accepted = verdict == "unverified" and report["allow_unverified"]
+        label = {"needs_attention": "NEEDS ATTENTION", "unverified": "UNVERIFIED",
+                 "not_checked": "NOT CHECKED (evidence hashing skipped)",
+                 }.get(verdict, "healthy")
+        accepted = report["unverified_accepted"]
         print("  verdict: " + label
               + (" (accepted with --allow-unverified)" if accepted else ""))
     return code
