@@ -22,7 +22,7 @@ import unittest
 import pathlib
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-MEMCTL = os.path.join(os.path.dirname(ROOT), "tools", "memctl")
+MEMCTL = os.path.join(ROOT, "tools", "memctl")
 
 
 def make_workspace():

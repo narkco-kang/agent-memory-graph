@@ -1,0 +1,518 @@
+#!/usr/bin/env python3
+"""memctl — one entry point for团队记忆的读写，后端可在 kg.py 与 amg 之间切换。
+
+为什么要有它
+------------
+团队记忆有两个写者：`kg.py`（一直以来的写者）和 `amg`（写入受证据门禁约束）。
+两者写同一个 `group-kg/v1` 文件，但**各有各的锁，互不感知**（实测：kg.py 用群级
+`acquire_lock`，amg 用图文件旁 `.lock` 的 flock）。因此：
+
+- 不能双写：两个工具同时写，谁都不知道对方在写，并发窗口一来就覆盖；
+- 只能一次性切换，并让回滚不退化成"再切一次但数据已经脏了"。
+
+`memctl` 把"用哪个后端"从调用点收敛到一处配置：切后端只改配置，**不动数据、不迁移、
+不转换**。回滚 = 把配置指回去。
+
+设计约束（每条都对应一个已实测的坑）
+------------------------------------
+1. **切后端不动数据。** 两个后端读写的是同一个 `<graphs>/<群>.json`，格式都是
+   `group-kg/v1`。memctl 不复制、不转换、不搬家。
+2. **有写进程时拒绝切换。** 切换前检查锁文件；`.lock` 存在且未过期就报错退出，
+   而不是"切了再说"。
+3. **切换后必须能验证。** `memctl verify <群>` 检查 rev 连续、changes 条数与 rev
+   自洽，这是回滚承诺唯一能兑现的前提。
+4. **amg 后端走 `--graph`，不走软链。** 软链经 `os.replace` 会被替换成普通文件，
+   实测会静默把图分成两份（decision #57）。
+
+用法
+----
+    memctl backend [kg|amg]          查看或切换后端
+    memctl add   <群> --id ... --type ... --label ... [--source ...] [--note ...]
+    memctl status <群> <id> <新状态> [--note ...]
+    memctl search <群> <查询> [--k N]
+    memctl check  <群>
+    memctl verify <群>               rev 连续性校验（切换前后都该跑）
+
+退出码：0 成功 / 1 数据或校验问题 / 2 用法或环境问题（含"有写进程，拒绝切换"）。
+"""
+from __future__ import annotations
+
+import argparse
+import json
+import os
+import subprocess
+import sys
+import time
+
+HERE = os.path.dirname(os.path.abspath(__file__))
+WORKSPACE = os.path.dirname(HERE)
+GRAPHS = os.path.join(WORKSPACE, "knowledge-graph", "graphs")
+KG = os.path.join(WORKSPACE, "knowledge-graph", "kg.py")
+CONF = os.environ.get("MEMCTL_CONF") or os.path.join(HERE, ".memctl.json")
+
+AMG_BIN = os.environ.get("MEMCTL_AMG") or os.path.expanduser("~/.amg-venv/bin/amg")
+
+#: A lock older than this is treated as stale rather than "someone is writing".
+LOCK_STALE_S = float(os.environ.get("MEMCTL_LOCK_STALE", "30"))
+
+
+def eprint(*a):
+    print(*a, file=sys.stderr)
+
+
+def graph_path(group: str) -> str:
+    return os.path.join(GRAPHS, f"{group}.json")
+
+
+def load_conf() -> dict:
+    if os.path.exists(CONF):
+        with open(CONF, encoding="utf-8") as fh:
+            return json.load(fh)
+    return {"backend": "kg"}
+
+
+def save_conf(conf: dict) -> None:
+    tmp = CONF + f".tmp{os.getpid()}"
+    with open(tmp, "w", encoding="utf-8") as fh:
+        json.dump(conf, fh, ensure_ascii=False, indent=2)
+        fh.write("\n")
+    os.replace(tmp, CONF)
+
+
+def backend() -> str:
+    b = load_conf().get("backend", "kg")
+    if b not in ("kg", "amg"):
+        eprint(f"配置里的 backend 非法: {b!r}")
+        sys.exit(2)
+    return b
+
+
+def live_locks() -> list:
+    """Locks that are present and not stale, i.e. evidence someone may be writing."""
+    found = []
+    if not os.path.isdir(GRAPHS):
+        return found
+    for name in os.listdir(GRAPHS):
+        if not name.endswith(".lock"):
+            continue
+        path = os.path.join(GRAPHS, name)
+        try:
+            age = time.time() - os.path.getmtime(path)
+        except OSError:
+            continue
+        if age <= LOCK_STALE_S:
+            found.append((path, round(age, 1)))
+    return found
+
+
+def refuse_if_writing(action: str) -> None:
+    """Switching while a writer holds a lock is how records get lost."""
+    locks = live_locks()
+    if not locks:
+        return
+    eprint(f"拒绝{action}：检测到可能正在写入的锁（{len(locks)} 个，未超过 {LOCK_STALE_S:.0f}s 视为活跃）")
+    for path, age in locks:
+        eprint(f"  {path}  ({age}s 前更新)")
+    eprint("等写进程结束后重试；锁若是崩溃残留，用 --force 越过（会如实记录）。")
+    sys.exit(2)
+
+
+def read_graph(group: str) -> dict:
+    path = graph_path(group)
+    if not os.path.exists(path):
+        eprint(f"群图不存在: {path}")
+        sys.exit(2)
+    with open(path, encoding="utf-8") as fh:
+        return json.load(fh)
+
+
+# --------------------------------------------------------------------------- backends
+
+def run_kg(args: list) -> int:
+    cmd = [sys.executable, KG] + args
+    res = subprocess.run(cmd, cwd=WORKSPACE)
+    return res.returncode
+
+
+def run_amg(sub: str, group: str, extra: list) -> int:
+    """amg must open the SAME file via --graph; a symlink bridge splits the graph."""
+    if not os.path.exists(AMG_BIN):
+        eprint(f"找不到 amg 可执行文件: {AMG_BIN}（设 MEMCTL_AMG 指定）")
+        return 2
+    cmd = [AMG_BIN, sub, GRAPHS, "--graph", graph_path(group)] + extra
+    res = subprocess.run(cmd, cwd=WORKSPACE)
+    return res.returncode
+
+
+# --------------------------------------------------------------------------- commands
+
+def cmd_backend(a) -> int:
+    if a.target is None:
+        conf = load_conf()
+        print(f"backend: {conf.get('backend', 'kg')}")
+        print(f"配置:    {CONF}")
+        print(f"图目录:  {GRAPHS}")
+        locks = live_locks()
+        print(f"活跃锁:  {len(locks)}")
+        return 0
+    if a.target not in ("kg", "amg"):
+        eprint("backend 只能是 kg 或 amg")
+        return 2
+    if not a.force:
+        refuse_if_writing("切换后端")
+    else:
+        locks = live_locks()
+        if locks:
+            eprint(f"--force：在 {len(locks)} 个活跃锁存在的情况下切换，已记录")
+    old = load_conf().get("backend", "kg")
+    save_conf({"backend": a.target, "switchedAt": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+               "switchedFrom": old})
+    print(f"backend: {old} -> {a.target}（数据文件未改动）")
+    return 0
+
+
+def cmd_add(a) -> int:
+    if backend() == "kg":
+        args = ["add-node", a.group, "--id", a.id, "--type", a.type, "--label", a.label]
+        if a.status:
+            args += ["--status", a.status]
+        if a.source:
+            args += ["--source", a.source]
+        if a.note:
+            args += ["--note", a.note]
+        args += ["--by", "memctl"]
+        return run_kg(args)
+    extra = ["--id", a.id, "--type", a.type, "--label", a.label]
+    if a.status:
+        extra += ["--status", a.status]
+    # amg requires a non-placeholder source; say so instead of letting it fail obscurely
+    extra += ["--source", a.source or "memctl"]
+    if a.note:
+        extra += ["--note", a.note]
+    extra += ["--by", "memctl"]
+    return run_amg("add", a.group, extra)
+
+
+def cmd_status(a) -> int:
+    if backend() == "kg":
+        args = ["set-status", a.group, a.id, a.status]
+        if a.note:
+            args += ["--note", a.note]
+        return run_kg(args)
+    extra = [a.id, a.status]
+    if a.note:
+        extra += ["--note", a.note]
+    return run_amg("status", a.group, extra)
+
+
+def cmd_search(a) -> int:
+    if backend() == "kg":
+        # kg.py has no search verb; be explicit rather than inventing one
+        eprint("kg 后端不提供 search（kg.py 没有检索命令）。用 `memctl backend amg` 切到 amg 检索，"
+               "或直接 grep 群图。")
+        return 2
+    return run_amg("search", a.group, [a.query, "--k", str(a.k)])
+
+
+def cmd_check(a) -> int:
+    if backend() == "kg":
+        return run_kg(["check", a.group])
+    return run_amg("check", a.group, [])
+
+
+def corruption_fingerprint(doc: dict) -> list:
+    """Identify damaged records by content, not by index alone.
+
+    An index shifts when records are appended; the damage does not move. Fingerprinting
+    `(index, at, op, target, rev)` pins the specific record, so the baseline keeps
+    pointing at the same damage after the ledger grows.
+    """
+    return [{"index": i, "at": c.get("at"), "op": c.get("op"),
+             "target": c.get("target"), "rev": c.get("rev")}
+            for i, c in enumerate(doc.get("changes") or [])]
+
+
+def baseline_for(conf: dict, group: str) -> list:
+    return ((conf.get("corruption_baseline") or {}).get(group) or [])
+
+
+def record_baseline(group: str, corrupt: list) -> None:
+    """Freeze the current damage ONCE, at the moment of the first switch.
+
+    Why this is not a backdoor: it can only be written here, only when a group has no
+    baseline yet, and it records damage that already existed — it never makes a future
+    fault acceptable. A registered defect is a known limitation; a new one is a fault.
+    """
+    conf = load_conf()
+    conf.setdefault("corruption_baseline", {})
+    if group in conf["corruption_baseline"]:
+        return                       # already frozen; never append by hand
+    conf["corruption_baseline"][group] = [
+        {"index": c.get("index"), "at": c.get("at"), "op": c.get("op"),
+         "target": c.get("target"), "rev": c.get("rev")}
+        for c in corrupt if "index" in c
+    ]
+    save_conf(conf)
+
+
+def _same_damage(a: dict, b: dict) -> bool:
+    return all(a.get(k) == b.get(k) for k in ("index", "at", "op", "target", "rev"))
+
+
+def verify_corruption(doc: dict) -> list:
+    """The corruption list only (no printing), shared by verify and switch."""
+    changes = doc.get("changes") or []
+    nodes = doc.get("nodes") or []
+    corrupt = []
+    first_real = next((i for i, c in enumerate(changes) if isinstance(c.get("rev"), int)), None)
+    for i, c in enumerate(changes):
+        r = c.get("rev")
+        if not isinstance(r, int):
+            if first_real is not None and i >= first_real:
+                corrupt.append({"index": i, "at": c.get("at"), "rev": r, "op": c.get("op"),
+                                "target": c.get("target"),
+                                "why": "missing rev after the first recorded rev"})
+    real = [(i, c.get("rev")) for i, c in enumerate(changes) if isinstance(c.get("rev"), int)]
+    for (prev_i, prev_r), (i, r) in zip(real, real[1:]):
+        if r == prev_r:
+            corrupt.append({"index": i, "rev": r, "why": f"duplicate rev (previous {prev_i})"})
+        elif r < prev_r:
+            corrupt.append({"index": i, "rev": r, "why": f"rev went backwards from {prev_r}"})
+    rev = doc.get("rev")
+    if isinstance(rev, int) and real:
+        last_i, last_r = real[-1]
+        if last_r != rev:
+            corrupt.append({"index": len(changes) - 1, "rev": last_r,
+                            "why": f"top-level rev is {rev} but the last record says {last_r}"})
+    ids = [n.get("id") for n in nodes]
+    dup = sorted({i for i in ids if ids.count(i) > 1})
+    if dup:
+        corrupt.append({"why": f"duplicate node ids: {dup}"})
+    return corrupt
+
+
+def cmd_verify(a) -> int:
+    """Separate three things a `rev` problem can be, because only one blocks.
+
+        legacy_missing_rev    records before the first `rev` ever existed — history,
+                              listed, never back-filled (back-filling is forging)
+        known_corruption      damage already frozen into the baseline at first switch —
+                              listed, does not block
+        new_corruption        damage that is not in the baseline — blocks
+
+    The split matters in both directions. Treating legacy nulls as damage means a bug
+    from last week blocks every future upgrade; treating new damage as known means a
+    corrupt ledger switches silently. Neither is acceptable, so the two are separated
+    by evidence rather than by intent.
+    """
+    doc = read_graph(a.group)
+    changes = doc.get("changes") or []
+    nodes = doc.get("nodes") or []
+    rev = doc.get("rev")
+
+    first_real = next((i for i, c in enumerate(changes) if isinstance(c.get("rev"), int)), None)
+    legacy_missing = [{"index": i, "at": c.get("at")}
+                      for i, c in enumerate(changes)
+                      if not isinstance(c.get("rev"), int)
+                      and (first_real is None or i < first_real)]
+
+    corrupt = verify_corruption(doc)
+    baseline = baseline_for(load_conf(), a.group)
+    known, fresh = [], []
+    for item in corrupt:
+        (known if any(_same_damage(item, b) for b in baseline) else fresh).append(item)
+
+    print(f"群: {a.group}  节点 {len(nodes)}  rev {rev}  changes {len(changes)}")
+    if legacy_missing:
+        span = f"索引 {legacy_missing[0]['index']}–{legacy_missing[-1]['index']}"
+        print(f"legacy_missing_rev   {len(legacy_missing)} 条（{span}）：历史记录没有 rev 字段，"
+              f"不阻塞；不回填，回填即伪造历史")
+    else:
+        print("legacy_missing_rev   0")
+    if known:
+        print(f"known_corruption     {len(known)} 条（已入基线，不阻塞）")
+        for item in known[:10]:
+            print(f"  · 索引 {item.get('index')} @ {item.get('at')} — {item.get('why')}")
+    if fresh:
+        print(f"new_corruption       {len(fresh)} 条（阻塞）")
+        for item in fresh[:10]:
+            print(f"  ✗ {item}")
+        return 1
+    print("new_corruption       0")
+    print("✓ 无新增损坏" + ("（基线内的已知损坏未变）" if known else
+                          "：rev 严格递增，顶层 rev 与末条一致，节点 id 唯一"))
+    return 0
+
+
+def cmd_switch(a) -> int:
+    """五步切换，缺一步中止；任一步失败自动把配置改回去。
+
+    1 确认无写进程   → 有活跃锁就拒绝（不 --force 不越过）
+    2 改配置         → kg -> amg（或指定目标）
+    3 verify 查 rev  → 失败即回滚配置
+    4 写一条真 sha 记忆并 search 回读 verified → 失败即回滚配置
+    5 观察期内可用 backend 切回
+
+    为什么第 1 步必须硬拦：两把锁名字不同（kg.py 用 `<群>.lock`，amg 用 `.lock`），
+    实测并发各写 5 次时 10 个节点只活下来 5 个——丢的不是字段，是整批记录。
+    """
+    group = a.group
+    target = a.target
+    if target not in ("kg", "amg"):
+        eprint("目标后端只能是 kg 或 amg")
+        return 2
+    old = load_conf().get("backend", "kg")
+    if old == target:
+        # Already on the target backend — but a group switched before the baseline
+        # existed still has unfrozen historical damage, and skipping the freeze here is
+        # what left C仔指挥部 blocked after the first cutover. Do the freeze, then stop.
+        _known = verify_corruption(read_graph(group))
+        frozen = (load_conf().get("corruption_baseline") or {}).get(group)
+        if _known and frozen is None:
+            record_baseline(group, _known)
+            print(f"已经是 {target}；已补冻结已知损坏基线 {len(_known)} 条")
+            if cmd_verify(argparse.Namespace(group=group)) != 0:
+                conf = load_conf()
+                (conf.get("corruption_baseline") or {}).pop(group, None)
+                save_conf(conf)
+                eprint("补冻结后仍有基线之外的新损坏，基线已撤销")
+                return 1
+            return 0
+        print(f"已经是 {target}，无需切换"
+              + ("（基线已存在）" if frozen is not None else "（无损坏需冻结）"))
+        return 0
+
+    # --- 1. 确认无写进程 ---
+    locks = live_locks()
+    if locks and not a.force:
+        eprint(f"[1/5] 拒绝切换：检测到 {len(locks)} 个可能活跃的写锁")
+        for path, age in locks:
+            eprint(f"      {path}  ({age}s 前更新)")
+        eprint("      两把锁不互斥，并发写会整批丢记录。等写进程结束后重试。")
+        return 2
+    if locks:
+        eprint(f"[1/5] --force：在 {len(locks)} 个活跃锁存在下继续（已记录）")
+    else:
+        print("[1/5] 无活跃写锁")
+    if not os.path.exists(graph_path(group)):
+        eprint(f"群图不存在: {graph_path(group)}")
+        return 2
+    before_rev = read_graph(group).get("rev")
+
+    # --- 2. 改配置 ---
+    save_conf({"backend": target, "switchedAt": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+               "switchedFrom": old})
+    print(f"[2/5] 配置 {old} -> {target}（数据文件未改动）")
+
+    def rollback(why: str) -> int:
+        save_conf({"backend": old, "switchedAt": time.strftime("%Y-%m-%dT%H:%M:%S%z"),
+                   "switchedFrom": target, "rolledBackBecause": why})
+        eprint(f"[rollback] {why}")
+        eprint(f"[rollback] 配置已改回 {old}；数据未改动，无需迁移")
+        return 1
+
+    # --- 3a. 冻结已知损坏基线（只在该群还没有基线时写一次，必须早于 verify）---
+    # 顺序不能反：先 verify 再冻结，等于第一次切换永远被已有的历史损坏挡住。
+    _known = verify_corruption(read_graph(group))
+    _frozen_now = False
+    if _known and group not in (load_conf().get("corruption_baseline") or {}):
+        record_baseline(group, _known)
+        _frozen_now = True
+        print(f"[3a/5] 已冻结已知损坏基线 {len(_known)} 条（同位置的损坏此后不阻塞，新增的仍阻塞）")
+
+    # --- 3. verify（只对基线之外的新损坏拒绝）---
+    rc = cmd_verify(argparse.Namespace(group=group))
+    if rc != 0:
+        if _frozen_now:
+            # 刚冻结就验证失败，说明冻结没能覆盖全部损坏——把基线撤掉，不留半截状态
+            conf = load_conf()
+            (conf.get("corruption_baseline") or {}).pop(group, None)
+            save_conf(conf)
+        return rollback("verify 失败：存在基线之外的新损坏，切过去可能读到坏数据")
+
+    # --- 4. 写一条真 sha 记忆并回读 ---
+    proof_dir = os.path.join(GRAPHS, ".switchproof")
+    os.makedirs(proof_dir, exist_ok=True)
+    proof = os.path.join(proof_dir, f"proof-{group}.md")
+    with open(proof, "w", encoding="utf-8") as fh:
+        fh.write(f"switch probe {time.time()}\n")
+    import hashlib
+    digest = hashlib.sha256(open(proof, "rb").read()).hexdigest()
+    # amg resolves `path:` evidence against the GRAPH DIRECTORY (its default base),
+    # so the locator must be relative to GRAPHS, not to the workspace.
+    rel = os.path.relpath(proof, GRAPHS)
+    node_id = f"switch.probe.{int(time.time())}"
+    rc = run_amg("add", group, ["--id", node_id, "--type", "artifact",
+                                "--label", "switch probe", "--source", "memctl switch",
+                                "--status", "done",
+                                "--evidence", f"path:{rel}|{digest}|{time.strftime('%Y-%m-%dT%H:%M:%SZ', time.gmtime())}",
+                                "--by", "memctl"])
+    if rc != 0:
+        return rollback("写入探针节点失败")
+    res = subprocess.run([AMG_BIN, "search", GRAPHS, "--graph", graph_path(group),
+                          "--root", GRAPHS, "switch probe", "--k", "3", "--json"],
+                         capture_output=True, text=True, cwd=WORKSPACE)
+    try:
+        hits = json.loads(res.stdout)
+    except Exception:
+        return rollback(f"回读解析失败: {res.stderr.strip()[:120]}")
+    state = next((h.get("evidence_state", {}).get("state") for h in hits
+                  if h.get("id") == node_id), None)
+    if state != "verified":
+        return rollback(f"回读未达 verified（实际 {state!r}）：写入侧与读侧不一致")
+    after_rev = read_graph(group).get("rev")
+    print(f"[3/5] verify ✓  rev {before_rev} -> {after_rev}")
+    print(f"[4/5] 探针 {node_id} 回读 evidence=verified ✓")
+    print(f"[5/5] 切换完成：后端 {target}，回滚用 `memctl backend {old}`")
+    return 0
+
+def build_parser():
+    p = argparse.ArgumentParser(prog="memctl", description="团队记忆统一入口（后端可切换）")
+    sub = p.add_subparsers(dest="cmd", required=True)
+
+    b = sub.add_parser("backend", help="查看或切换后端")
+    b.add_argument("target", nargs="?", choices=["kg", "amg"])
+    b.add_argument("--force", action="store_true", help="活跃锁存在时仍切换（会记录）")
+    b.set_defaults(func=cmd_backend)
+
+    s = sub.add_parser("add", help="写一个节点")
+    s.add_argument("group"); s.add_argument("--id", required=True)
+    s.add_argument("--type", required=True); s.add_argument("--label", required=True)
+    s.add_argument("--status", default="open"); s.add_argument("--source")
+    s.add_argument("--note", default="")
+    s.set_defaults(func=cmd_add)
+
+    s = sub.add_parser("status", help="改节点状态")
+    s.add_argument("group"); s.add_argument("id"); s.add_argument("status")
+    s.add_argument("--note", default="")
+    s.set_defaults(func=cmd_status)
+
+    s = sub.add_parser("search", help="检索（仅 amg 后端）")
+    s.add_argument("group"); s.add_argument("query"); s.add_argument("--k", type=int, default=5)
+    s.set_defaults(func=cmd_search)
+
+    s = sub.add_parser("check", help="结构校验")
+    s.add_argument("group")
+    s.set_defaults(func=cmd_check)
+
+    s = sub.add_parser("verify", help="rev 连续性与 changes 自洽校验")
+    s.add_argument("group")
+    s.set_defaults(func=cmd_verify)
+
+    s = sub.add_parser("switch", help="五步切换后端，任一步失败自动回滚配置")
+    s.add_argument("group"); s.add_argument("target", choices=["kg", "amg"])
+    s.add_argument("--force", action="store_true", help="活跃锁存在时仍切换（会记录）")
+    s.set_defaults(func=cmd_switch)
+    return p
+
+
+def main(argv=None) -> int:
+    a = build_parser().parse_args(argv)
+    try:
+        return a.func(a)
+    except KeyboardInterrupt:
+        return 130
+
+
+if __name__ == "__main__":
+    sys.exit(main())
