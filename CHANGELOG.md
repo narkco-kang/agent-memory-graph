@@ -3,6 +3,57 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.38.4] — 2026-11-01
+
+Adoption laundered evidence it could not verify, and the first fix laundered findings.
+
+### The defect
+
+`_keep_evidence_object` called `validate_evidence`, which checks shape only. A `cmd:` or
+`url:` object carrying an invented `content_sha256` passed that check and survived as
+first-class evidence — while `amg verify-evidence` calls the same item `unverifiable` and
+prints "no bytes observed; not a pass". Adoption claimed to be stricter than the verifier
+it feeds. Measured before the change:
+
+```
+{"locator": "url:https://k8s.io/docs", "content_sha256": "bbbb…"}  →  kept
+                                                                      legacy_evidence []
+                                                                      not counted as debt
+```
+
+### The first fix was wrong, and an attacker found out why
+
+v0.38.4's first cut kept an object only when `status == "ok"`. That fixed `cmd:`/`url:`
+but demoted every negative result too — `missing`, `mismatch`, `not_a_file`,
+`outside_root`, `unreadable`. Glm reproduced it with two real objects: a directory
+(`not_a_file`) and a deleted file (`missing`) both became legacy text, indistinguishable
+from "there was never anything to check here". The ledger kept a count and dropped the
+reason, so `audit` could no longer say which file disappeared.
+
+**Only `unverifiable` means "there are no bytes to observe".** Everything else is a
+finding about evidence that exists or once existed, and it stays in `evidence` where
+`verify-evidence` reports it on every run.
+
+### Also fixed: the evidence root was the process cwd
+
+`verify_evidence([valid], ".")` used the current directory as the base. Decision #56 says
+the evidence root is stated, never guessed; adoption had no source-tree base and used
+whatever happened to be cwd. `adopt()` now passes the source graph's directory. Measured
+on the live graph the two bases agree 21/29 with 0 differences, because the team always
+runs from the workspace root — **that is luck, not correctness**, and it changes silently
+with cwd.
+
+### Why the status is not stored on the object
+
+The obvious follow-up — keep the object and write `verify_status` into it — does not work:
+`validate_evidence` drops unknown keys (measured), so the field is stripped on the way to
+disk. The reason stays recomputable instead, which is the only version that cannot rot.
+
+```
+unit tests   Ran 544 / OK (skipped=1)      # 539 -> 544
+verify.py    9/9, 0 failed
+```
+
 ## [0.38.3] — 2026-11-01
 
 The CRLF fixture, again — because v0.37.4 fixed it in one test file instead of in the place

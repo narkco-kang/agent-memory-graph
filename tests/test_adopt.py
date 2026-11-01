@@ -139,12 +139,34 @@ class AdoptTests(unittest.TestCase):
         self.assertIsNone(self._node(self.dst, "task.a")["valid_from"])
         self.assertEqual(rep["mapped"]["valid_from_unknown"], 4)
 
-    def test_existing_valid_evidence_object_is_kept(self):
+    def test_an_object_citing_a_missing_file_stays_in_evidence(self):
+        """A citation of a file that is GONE is a finding, not legacy text.
+
+        This assertion has now pointed in three directions, and the history is the point:
+
+        1. Originally `test_existing_valid_evidence_object_is_kept` asserted the object
+           survived — it was really testing `validate_evidence`, a shape check.
+        2. v0.38.4 inverted it to "unobservable ⇒ legacy", which fixed the fabricated
+           `cmd:`/`url:` digests but also demoted `missing`, `mismatch`, `not_a_file` and
+           `outside_root`.
+        3. Glm attacked that: those four are FINDINGS about evidence that exists or once
+           existed. Filing them as legacy keeps a count and drops the reason, so
+           `audit` can no longer say which file disappeared — the erasure DECISIONS #58
+           exists to prevent.
+
+        So `path:docs/x.md` (not present, forged digest) stays in `evidence`. `check`
+        does not complain (it only checks shape, #58) and `amg verify-evidence` reports
+        the exact item `missing` on every run. The reason stays recomputable instead of
+        being frozen into a string nobody parses.
+        """
         rep = self._adopt()
         node = self._node(self.dst, "env.d")
-        self.assertEqual(len(node["evidence"]), 1)
+        self.assertEqual(len(node["evidence"]), 1,
+                         "a citation of a missing file must stay visible to "
+                         "`verify-evidence`, not be filed as legacy text")
         self.assertEqual(node["evidence"][0]["locator"], "path:docs/x.md")
-        self.assertEqual(node["legacy_evidence"], [])
+        self.assertEqual(node["legacy_evidence"], [],
+                         "`missing` is a finding about a real citation, not unverifiable text")
         self.assertEqual(rep["mapped"]["evidence_objects_kept"], 1)
 
     # ---------- refusals: nothing dropped silently ----------

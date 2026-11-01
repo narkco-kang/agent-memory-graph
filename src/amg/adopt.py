@@ -30,7 +30,7 @@ from . import protocol
 from .audit import legacy_stats
 from .const import CONCLUSION_TYPES, EDGE_KINDS, NODE_TYPES, SCHEMA, STATUSES, now
 from .errors import ProtocolError
-from .gate import validate_evidence
+from .gate import validate_evidence, verify_evidence
 from .store import Store
 
 LEGACY_SCHEMAS = {"group-kg/v1"}
@@ -53,14 +53,57 @@ def _is_placeholder_source(value) -> bool:
     return text == "" or text in {"unknown", "manual"}
 
 
-def _keep_evidence_object(item) -> "dict | None":
-    """Only an already-valid object survives; everything else is legacy text."""
+def _keep_evidence_object(item, root: str) -> "dict | None":
+    """Keep an object only when its digest can actually be observed. Otherwise it is legacy.
+
+    The old docstring said "Only an already-valid object survives" and meant it: it called
+    `validate_evidence`, which checks shape only. A `cmd:` or `url:` object carrying an
+    invented `content_sha256` passed that check and was kept as first-class evidence — while
+    `amg verify-evidence` calls the same item `unverifiable` and prints "no bytes observed;
+    not a pass".
+
+    Measured before this change: `{"locator": "url:https://…", "content_sha256": "bbbb…",
+    "captured_at": …}` went in as `kept`, `legacy_evidence` stayed `[]`, and the node stopped
+    being counted `done-no-evidence`. Adoption claimed to be stricter than the verifier it
+    feeds. That is the defect DECISIONS #58 names for `check`: a shape check standing in for
+    a proof.
+
+    So a `path:` object survives only when `verify_evidence` reports `ok`. Everything else —
+    `unverifiable`, `mismatch`, `missing`, `outside_root`, `not_a_file`, `unreadable` — goes
+    to `legacy_evidence` verbatim and the node is counted as debt, which is what it is.
+
+    `root` is the SOURCE graph's directory: every `path:` locator in a legacy graph was
+    written against the tree that graph lived in, so that is the only base against which
+    answering "can these bytes be observed" is not a guess. Passing something else (the
+    current directory, the destination) reports `outside_root` for everything outside it —
+    which would file real evidence as legacy, the mirror-image of the bug being fixed.
+    """
     if not isinstance(item, dict):
         return None
     try:
-        return validate_evidence([item], 0)[0]
+        valid = validate_evidence([item], 0)[0]
     except ProtocolError:
         return None
+    rows = verify_evidence([valid], root)
+    status = rows[0].get("status") if rows else None
+    # Only `unverifiable` means there are no bytes to observe at all — `cmd:` / `url:` and
+    # nothing else. Every other non-ok status is a FINDING about evidence that exists or
+    # once existed (`missing`, `mismatch`, `not_a_file`, `outside_root`, `unreadable`), and
+    # filing a finding as "legacy text" erases why it was not ok: the ledger keeps a count
+    # and the reason is gone, which is the erasure DECISIONS #58 exists to prevent.
+    #
+    # The first version of this fix keyed on `status != "ok"` and demoted all of them. An
+    # attacker (Glm) reproduced the damage with two real objects: a directory
+    # (`not_a_file`) and a deleted file (`missing`) both became legacy — indistinguishable
+    # from "there was never anything to check here".
+    #
+    # The status is deliberately NOT stored on the evidence object: `validate_evidence`
+    # drops unknown keys (measured), so a `verify_status` field would be stripped on the
+    # way to disk and the reason would vanish anyway. The verifier recomputes it every run;
+    # a stored copy would only be one more thing that can rot.
+    if status == "unverifiable":
+        return None
+    return valid
 
 
 def _list(items) -> str:
@@ -76,6 +119,10 @@ def adopt(src: str, dst: str, group: str = None, drop_dangling: bool = False,
     with open(src_file, "rb") as fh:
         raw = fh.read()
     src_sha = _sha256_bytes(raw)
+    # The base every `path:` locator in this graph was written against. Deciding whether an
+    # evidence object can be observed is meaningless without it: resolved anywhere else, a
+    # real file outside that tree reads as `outside_root` and gets filed as legacy.
+    legacy_root = os.path.dirname(os.path.abspath(src_file))
     doc = json.loads(raw.decode("utf-8"))
     schema_before = doc.get("schema")
     if schema_before == SCHEMA:
@@ -146,7 +193,7 @@ def adopt(src: str, dst: str, group: str = None, drop_dangling: bool = False,
         kept, legacy = [], []
         for item in (n.get("evidence") or []):
             if isinstance(item, dict):
-                valid = _keep_evidence_object(item)
+                valid = _keep_evidence_object(item, legacy_root)
                 if valid is not None:
                     kept.append(valid)
                     continue
