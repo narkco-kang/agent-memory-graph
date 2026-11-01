@@ -28,6 +28,9 @@ import unittest
 HERE = os.path.dirname(os.path.abspath(__file__))
 ROOT = os.path.dirname(HERE)
 sys.path.insert(0, os.path.join(ROOT, "src"))
+sys.path.insert(0, HERE)
+
+from helpers import write_fixture  # noqa: E402  (needs the src path inserted above)
 
 CLI = [sys.executable, "-m", "amg.cli"]
 FORGED = "0" * 64
@@ -48,10 +51,12 @@ def make_graph(forged=True):
     """
     root = tempfile.mkdtemp(prefix="amg-shapeonly-")
     proof = os.path.join(root, "proof.md")
-    with open(proof, "w", encoding="utf-8") as fh:
-        fh.write("the real bytes\n")
-    import hashlib
-    real = hashlib.sha256(b"the real bytes\n").hexdigest()
+    # v0.38.2 shipped this test with a bare `open(..., "w")` and a hard-coded
+    # `sha256(b"the real bytes\n")`. On windows-latest the file holds `\r\n`, the digest
+    # did not match, and the control case failed — the same mistake v0.37.4 fixed, made
+    # again because the fix lived in one test file rather than in a shared helper.
+    # `write_fixture` pins the newline and returns the digest it actually wrote.
+    real = write_fixture(proof, "the real bytes\n")
     node = {
         "id": "claim", "type": "artifact", "label": "a claim", "status": "done",
         "owner": "t", "source": "cmd:test", "note": "",

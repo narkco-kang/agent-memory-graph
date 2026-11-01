@@ -22,6 +22,30 @@ def _digest_of(rel_path):
         return SHA
 
 
+def write_fixture(path, text, newline="\n"):
+    """Write `text` to `path` with a pinned newline, and return the digest of what landed.
+
+    Use this for any fixture whose digest a test will declare. Two releases have now gone
+    red on Windows for the same reason: `open(path, "w")` translates `\\n` to `\\r\\n` there,
+    so the file holds `b"...\\r\\n"` while the test declares `sha256(b"...\\n")`. The digest
+    does not match, the node lands in `mismatch`, and a test that was supposed to prove
+    something about the code proves something about the platform instead.
+
+    v0.37.4 fixed this inside `test_audit_verify_buckets`; v0.38.2 shipped
+    `test_check_is_shape_only` that reproduced it verbatim, because the fix lived in one
+    file instead of in the place every test writes from. Returning the digest read back
+    from disk — rather than one computed from the string — makes the mistake impossible to
+    repeat: there is nothing left to declare by hand.
+    """
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline=newline) as fh:
+        fh.write(text)
+    with open(path, "rb") as fh:
+        return hashlib.sha256(fh.read()).hexdigest()
+
+
 def ev(locator="path:docs/API.md", sha=None, captured="2026-10-29T10:00:00+08:00", grade=None):
     """Evidence item. `sha` defaults to the REAL digest of the referenced file.
 

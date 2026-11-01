@@ -3,6 +3,39 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.38.3] — 2026-11-01
+
+The CRLF fixture, again — because v0.37.4 fixed it in one test file instead of in the place
+every test writes from.
+
+v0.38.2 shipped `test_check_is_shape_only.py` with a bare `open(..., "w")` and a hard-coded
+`sha256(b"the real bytes\n")`. On windows-latest the file holds `b"the real bytes\r\n"`, the
+digest did not match, and the control case failed:
+
+```
+FAIL: test_with_a_correct_digest_the_two_commands_agree
+AssertionError: 1 != 0 : ✗ claim path:proof.md [mismatch]
+```
+
+`tests/helpers.py` now owns one `write_fixture(path, text, newline="\n")` that pins the
+newline **and returns the digest it actually read back from disk**. There is nothing left to
+declare by hand, so the mistake cannot be repeated by writing it a third time.
+
+Verified by simulating the Windows translation locally:
+
+```
+write_fixture(p, "the real bytes\n", newline="\r\n")
+  bytes on disk        b"the real bytes\r\n"
+  digest returned      f4f79b10…   == sha256(bytes on disk)   -> True
+  hard-coded "\n" digest                                   -> False   (the old failure)
+```
+
+Mutating the newline pin away cannot be observed on POSIX (both newline modes write the
+same bytes there), so the proof here is the read-back, not the pin.
+
+Local: `Ran 539 / OK (skipped=1)`, `verify.py 9/9`. **The Windows CI run of this tag is the
+acceptance** — this machine cannot prove a platform it does not have.
+
 ## [0.38.2] — 2026-11-01
 
 `check` verifies shape; `verify-evidence` verifies truth. Saying so in a decision page,
