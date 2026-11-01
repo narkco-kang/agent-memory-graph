@@ -297,7 +297,14 @@ class Memory:
                 # Same rule as add_node: reaching `done` must mean the declared
                 # digests are the digests of the bytes, not merely well-formed hex.
                 verify_evidence_on_write(node.get("evidence"), self._evidence_base(), node_id)
-            node["evidence_grade"] = min([e.get("grade", 5) for e in node.get("evidence", [])], default=None)
+            # A legacy node can still hold bare-string evidence. This line used to assume
+            # every entry was a dict, so `status` — the only verb that can REPAIR such a
+            # node — crashed with "'str' object has no attribute 'get'" on exactly the
+            # data it exists to fix. Non-object entries carry no grade; `check` reports
+            # them as IR-4 format violations, which is where that belongs.
+            node["evidence_grade"] = min(
+                [e.get("grade", 5) for e in node.get("evidence", []) if isinstance(e, dict)],
+                default=None)
             enforce_conclusion(node, node.get("evidence", []))
             self._log(doc, "set-status", node_id, f"{old}->{new_status}: {note}", by)
             self._commit(doc, commit)

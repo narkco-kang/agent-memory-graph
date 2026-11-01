@@ -5,7 +5,6 @@ import tempfile
 
 from amg import Memory
 import pathlib
-
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
 #: A digest that is well-formed but wrong. Kept for tests that need a claim nobody
@@ -41,17 +40,45 @@ def ev(locator="path:docs/API.md", sha=None, captured="2026-10-29T10:00:00+08:00
 
 
 class TempGraph:
-    def __init__(self):
+    """A throwaway graph, with the evidence base scoped to its lifetime.
+
+    Why the save/restore exists (v0.38.0): `Memory.evidence_root` is a CLASS attribute,
+    on purpose — decision #56 gives one evidence base per process rather than one per
+    node. This helper used to set it to `ROOT` and never put it back, so whichever test
+    file ran first decided the evidence base for every test after it. The symptom was
+    exactly today's recurring one: each file passed alone, the suite failed, because the
+    object under measurement had been changed by the test that ran before it.
+
+    Restoring in `close()` is not enough — tests that fail before `close()` would still
+    leak. `__exit__` plus `restore()` cover both, and `_save_base` runs before anything
+    that can raise.
+    """
+
+    def __init__(self, evidence_root=ROOT):
         self.dir = tempfile.mkdtemp(prefix="amg-test-")
+        # Whatever the previous holder left, remember it so close() can put it back.
+        self._previous_base = Memory.evidence_root
         # `ev()` cites real files in the repo, so write-time verification resolves
-        # against the repo root. Tests that cite files inside the throwaway graph
-        # directory set `Memory.evidence_root = None` (or their own base) themselves.
-        Memory.evidence_root = ROOT
+        # against the repo root. A test that cites files inside its own throwaway graph
+        # passes evidence_root=None (the graph dir) instead.
+        Memory.evidence_root = evidence_root
         self.m = Memory.init(self.dir, "t", goal="test")
 
     def reopen(self):
         self.m = Memory.open(self.dir)
         return self.m
 
+    def restore(self):
+        """Put the evidence base back the way this helper found it."""
+        Memory.evidence_root = self._previous_base
+
     def close(self):
         shutil.rmtree(self.dir, ignore_errors=True)
+        self.restore()
+
+    def __enter__(self):
+        return self
+
+    def __exit__(self, *exc):
+        self.close()
+        return False
