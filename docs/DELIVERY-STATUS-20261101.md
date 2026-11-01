@@ -164,17 +164,3 @@ amg verify-evidence  checked 718 → ok 23 / mismatch 5 / missing 3 / unverifiab
 零外部冷启动证据、realtext 只是同域回归集、`unverifiable` 类证据（687 条）不构成通过。
 
 **不得写**：「完整可交付」「所有已知问题已解决」。
-
----
-
-## 附：本盘点的图谱节点记录
-
-群图里的节点是唯一权威记录（`knowledge-graph/graphs/记忆架构开源.json`）。
-为了让项目资料夹里也有这份记录本身而不只是一个指针，节点快照同时导出到本仓库：
-
-- [`docs/DELIVERY-STATUS-NODE-20261101.json`](DELIVERY-STATUS-NODE-20261101.json)
-
-| 节点 id | 状态 | 说明 |
-|---|---|---|
-| `artifact.mem-arch-delivery-status-20261101` | superseded | 文档原先放在仓库外，证据指向旧路径，已作废 |
-| `artifact.mem-arch-delivery-status-20261101-v2` | done | 文档移入 `docs/` 后的现行节点 |
