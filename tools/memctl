@@ -42,6 +42,14 @@ import json
 import os
 import subprocess
 import sys
+
+# Windows consoles default to cp1252; memctl prints Chinese verdicts and would
+# die with UnicodeEncodeError before reaching its exit code (see issue cp1252).
+for _stream in (sys.stdout, sys.stderr):
+    try:
+        _stream.reconfigure(encoding="utf-8", errors="replace")
+    except (AttributeError, ValueError):
+        pass
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
