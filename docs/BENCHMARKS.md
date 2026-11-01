@@ -78,6 +78,20 @@ milliseconds, and **one write 147 ms** — the number behind the cold-archive
 trigger. [`WRITE-COST.md`](WRITE-COST.md) breaks that number down (parse 75 ms /
 render 50 ms / `fsync` 23 ms) and prices the options against it.
 
+## What `recall@k` means here
+
+Before any number below is compared to a bar, this is the definition it uses:
+
+    recall@k = mean over queries of ( |top-k ∩ gold| / |gold| )
+
+That is **coverage**: the fraction of each query's gold set that reached the top k,
+averaged over queries. It is not hit-or-miss, and the two differ on multi-gold queries.
+A query with two gold nodes where only one is retrieved scores 0.5 here and 1.0 under
+hit-or-miss. On the realtext set that gap is measurable: coverage **0.692**,
+hit-or-miss **0.731** — and a 0.70 bar is met under one definition and missed under the
+other. So a recall number is only comparable to a bar when the definition travels with it;
+a bare "recall@5 0.7+ / 0.7-" is a claim that has not said what it measures.
+
 ## Retrieval quality (not latency)
 
 Latency is measured above; quality is measured separately and pre-registered in
