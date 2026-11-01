@@ -3,6 +3,34 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.38.5] — 2026-11-01
+
+Decision #59: adoption must be explainable. The rule the fix in v0.38.4 answers to.
+
+v0.38.4 stopped `adopt` from laundering evidence it could not verify. It took three
+attempts to get the boundary right, and each wrong version was wrong in a different
+direction:
+
+1. keep anything `validate_evidence` accepts — a shape check standing in for a proof;
+2. keep only `status == "ok"` — which also demoted `missing`, `mismatch`, `not_a_file`,
+   `outside_root`, `unreadable`, erasing *why* an item was not ok;
+3. keep everything except `unverifiable` — the shipped behaviour.
+
+The durable rule is not a status list, because every wrong version was a list that was
+right about one case and wrong about its neighbour:
+
+> **For every evidence item, `adopt`'s disposition must be recomputable from
+> `verify-evidence`. If `adopt` moves an item somewhere that cannot explain why, the
+> direction is wrong.**
+
+That asks no status to be enumerated, and it fails the moment a future change files a
+finding where a later reader cannot recover the reason.
+
+```
+docs/decisions/59-adopt-must-be-explainable.md   body 3,918 B  manifest count 59
+unit tests   Ran 544 / OK (skipped=1)
+verify.py    9/9, 0 failed
+```
 ## [0.38.4] — 2026-11-01
 
 Adoption laundered evidence it could not verify, and the first fix laundered findings.

@@ -93,3 +93,4 @@ split: the previous single file could hold 34 decisions and then stopped.
 | [56](decisions/56-audit-evidence-root.md) | The evidence root is stated, never guessed; a path string is not an identity. | active | ✓ |
 | [57](decisions/57-graph-file-is-shared.md) | Two writers open one physical file; a symlink bridge splits the graph. | active | ✓ |
 | [58](decisions/58-check-is-shape-only.md) | `check` verifies shape, not truth: a forged digest passes it. | active | ✓ |
+| [59](decisions/59-adopt-must-be-explainable.md) | Adoption must be explainable: every disposition recomputable by `verify-evidence`. | active | ✓ |
