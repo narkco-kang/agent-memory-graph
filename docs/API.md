@@ -83,7 +83,7 @@ fail loudly instead of guessing, and `tests/test_exit_codes.py` scans
 | exit | codes | meaning |
 |---|---|---|
 | `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` · `E_NO_EXPECTATION` · `E_BAD_FINGERPRINT` · `E_BAD_HANDOFF` · `E_HANDOFF_TOO_LARGE` · `E_ARCHIVE_LAYER` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
-| `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_EVIDENCE_MISMATCH` · `E_EVIDENCE_OUTSIDE_ROOT` · `E_EVIDENCE_UNVERIFIED` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` · `E_INSECURE_GRAPH` · `E_ARCHIVE_VERIFY` | the evidence gate rejected the content, or the graph would break an invariant |
+| `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_EVIDENCE_MISMATCH` · `E_EVIDENCE_OUTSIDE_ROOT` · `E_EVIDENCE_UNVERIFIED` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` · `E_INSECURE_GRAPH` · `E_ARCHIVE_VERIFY` · `E_GRAPH_SHAPE` | the evidence gate rejected the content, or the graph would break an invariant |
 | `0` | — | success / clean `check` / clean `audit` |
 | `3` | — | lock timeout or IO failure (not a `ProtocolError`) |
 

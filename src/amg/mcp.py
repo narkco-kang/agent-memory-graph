@@ -13,6 +13,17 @@ Design constraints, on purpose:
   prompt-injected client cannot mutate the graph through this server. It does
   not protect the file from other processes: see docs/THREAT-MODEL.md.
 
+- **reload per request.** v0.36.1 added `serve(reopen=...)`: the graph is re-read
+  before every `tools/call`, so a long-lived server sees what another process
+  (e.g. `kg.py`, which the team writes with) has committed since it started. The
+  measured cost is ~7.7 ms per request against a ~3.3 ms search. Re-reading is
+  what makes a read-only live view possible without restarting the server.
+- **shape gate on reload.** Re-reading a graph we did not write means it can be
+  in a shape this build does not understand. Scoring skips a node whose `label`
+  is not a string, so such a node is silently unreachable while `len(hits)` stays
+  full — measured, not hypothesised. `check_shape` turns that silent miss into an
+  explicit `E_GRAPH_SHAPE` error instead of returning a plausible answer.
+
 stdout carries protocol messages only; anything diagnostic goes to stderr, so a
 client never sees a corrupted frame.
 """
@@ -20,6 +31,7 @@ import json
 import sys
 
 from . import __version__
+from .const import SCHEMA
 from .errors import ProtocolError
 
 PROTOCOL_VERSION = "2025-06-18"
@@ -193,7 +205,55 @@ def handle(memory, message: dict, read_only: bool = False) -> dict:
     raise JsonRpcError(-32601, f"unknown method: {method}")
 
 
-def serve(memory, stdin=None, stdout=None, read_only: bool = False) -> int:
+def check_shape(doc: dict, allowed_schemas=("amg/v1", "group-kg/v1")) -> None:
+    """Reject a graph whose shape would make search silently incomplete.
+
+    Why this exists (measured on the team's own graph, 506 nodes):
+
+    - a node whose `label` is not a string gets no score, so it is unreachable
+      for every query, while `search` still returns a full `k` of other hits.
+      The failure is invisible: the node is still in the document, the count is
+      unchanged, only the answer is missing it.
+    - nothing on the direct-read path validates `schema`, so a graph that has
+      drifted into an unknown shape is served as if it were fine.
+
+    Raises `E_GRAPH_SHAPE` instead of returning plausible-but-incomplete hits.
+    """
+    schema = doc.get("schema")
+    if schema not in allowed_schemas:
+        raise ProtocolError(
+            "E_GRAPH_SHAPE",
+            f"graph schema {schema!r} is not one of {sorted(allowed_schemas)}; "
+            f"refusing to serve a graph this build cannot read faithfully")
+    nodes = doc.get("nodes")
+    if not isinstance(nodes, list):
+        raise ProtocolError("E_GRAPH_SHAPE", "graph 'nodes' is not a list")
+    for index, node in enumerate(nodes):
+        if not isinstance(node, dict):
+            raise ProtocolError("E_GRAPH_SHAPE", f"nodes[{index}] is not an object")
+        nid = node.get("id")
+        if not isinstance(nid, str) or not nid:
+            raise ProtocolError(
+                "E_GRAPH_SHAPE", f"nodes[{index}] has a non-string id: {nid!r}")
+        label = node.get("label")
+        if not isinstance(label, str):
+            raise ProtocolError(
+                "E_GRAPH_SHAPE",
+                f"node {nid!r} has a non-string label ({type(label).__name__}); "
+                f"it would be silently unreachable in search results")
+
+
+def serve(memory, stdin=None, stdout=None, read_only: bool = False, reopen=None) -> int:
+    """Serve JSON-RPC over stdio.
+
+    `reopen`, when given, is a zero-argument callable returning a fresh `Memory`.
+    It is called before every `tools/call`, so a long-lived server sees commits
+    made by other processes. The reopened instance is shape-checked; a graph the
+    server cannot read faithfully produces an error, never partial hits.
+
+    `read_only` is passed down on every request: reopening must not be a way to
+    escape the read-only guarantee, and `Memory` refuses commits itself anyway.
+    """
     stdin = stdin or sys.stdin
     stdout = stdout or sys.stdout
     for raw in stdin:
@@ -208,8 +268,20 @@ def serve(memory, stdin=None, stdout=None, read_only: bool = False) -> int:
             stdout.write(json.dumps(resp) + "\n")
             stdout.flush()
             continue
+        active = memory
+        if reopen is not None and message.get("method") == "tools/call":
+            try:
+                active = reopen()
+                check_shape(active.doc)
+            except Exception as exc:
+                response = {"jsonrpc": "2.0", "id": message.get("id"),
+                            "error": {"code": -32603,
+                                      "message": f"reload failed: {type(exc).__name__}: {exc}"}}
+                stdout.write(json.dumps(response, ensure_ascii=False) + "\n")
+                stdout.flush()
+                continue
         try:
-            response = handle(memory, message, read_only=read_only)
+            response = handle(active, message, read_only=read_only)
         except JsonRpcError as exc:
             response = {"jsonrpc": "2.0", "id": message.get("id"),
                         "error": {"code": exc.code, "message": exc.message}}

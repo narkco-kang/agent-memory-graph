@@ -195,16 +195,25 @@ def cmd_mcp(a):
     `--read-only` is enforced twice on purpose: the server refuses the write
     tools before dispatch, and the `Memory` instance refuses every commit. The
     second layer is what makes the guarantee independent of the tool list.
+
+    v0.36.1: the graph is re-read before every `tools/call` unless `--no-reload`
+    is given, so a long-lived server sees what another process wrote (the team
+    writes with `kg.py`, which this build does not run). Each reload is the same
+    `Memory.open(..., read_only=a.read_only)` as the first one, so reloading
+    cannot become a way to escape read-only.
     """
     from . import mcp as mcp_mod
     m = Memory.open(a.dir, read_only=a.read_only)
+    mcp_mod.check_shape(m.doc)
     for item in m.security_findings():
         sys.stderr.write(f"amg mcp: warning [{item['code']}] {item['detail']}\n")
     mode = "read-only" if a.read_only else "read-write"
+    reload_note = "no-reload (graph cached at startup)" if a.no_reload else "reload per tools/call"
     sys.stderr.write(f"amg mcp: serving {os.path.abspath(a.dir)} over stdio "
-                     f"(no network, no auth, {mode})\n")
+                     f"(no network, no auth, {mode}, {reload_note})\n")
     sys.stderr.flush()
-    return mcp_mod.serve(m, read_only=a.read_only)
+    reopen = None if a.no_reload else (lambda: Memory.open(a.dir, read_only=a.read_only))
+    return mcp_mod.serve(m, read_only=a.read_only, reopen=reopen)
 
 
 def cmd_handoff(a):
@@ -437,6 +446,10 @@ ERROR_EXIT_CODES = frozenset({
     "E_DUP_ID", "E_DUP_EDGE", "E_NO_NODE", "E_IMMUTABLE",
     # adopt-specific: the legacy source itself violates the protocol
     "E_ADOPT_UNSUPPORTED", "E_ADOPT_DANGLING",
+    # live view: the graph's shape would make search silently incomplete (a node
+    # that cannot be scored is unreachable while the page still looks full).
+    # That is content the protocol cannot read faithfully, not a wrong call.
+    "E_GRAPH_SHAPE",
     # the file no longer matches the fingerprint recorded outside it
     "E_FINGERPRINT_MISMATCH",
     # the graph sits outside the only boundary this project has (see THREAT-MODEL)
@@ -651,6 +664,8 @@ def build_parser():
     s = sub.add_parser("mcp"); s.add_argument("dir")
     s.add_argument("--read-only", action="store_true", dest="read_only",
                    help="refuse write tools; the graph cannot be modified through this session")
+    s.add_argument("--no-reload", action="store_true", dest="no_reload",
+                   help="cache the graph at startup instead of re-reading before every tools/call")
     s.set_defaults(func=cmd_mcp)
 
     s = sub.add_parser("handoff")

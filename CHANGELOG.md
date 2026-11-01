@@ -3,6 +3,37 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.36.1] — 2026-11-01
+
+A read-only *live* view: the server re-reads the graph before every call, so a long-lived
+`amg mcp` session sees what another process wrote, and a graph it cannot read faithfully is
+refused instead of silently answered.
+
+### Added
+
+- `amg mcp --read-only` combined with per-request reload (`serve(reopen=...)`) makes a live view
+  possible without restarting the server: before each `tools/call` the graph is re-opened, so a
+  write committed by `kg.py` (or any other process) is visible to the next call. Measured cost
+  **7.7 ms** per request against a **3.3 ms** search. `--no-reload` opts out.
+- `check_shape()` refuses a graph whose shape would make `search` silently incomplete, raising
+  `E_GRAPH_SHAPE` **and naming the offending node**. Without it, a node whose `label` is not a
+  string is scored as nothing: it stays in the document, `len(hits)` stays full, and the answer
+  simply never contains it — a measured silent miss, not a hypothetical one. Allowed schemas:
+  `amg/v1`, `group-kg/v1`.
+- Read-only is enforced at two independent points — the tool layer refuses `memory_add` /
+  `memory_status` / `memory_supersede`, and `Memory._commit` rejects every write — so reloading
+  cannot bypass it. Verified: source graph sha256 unchanged across a read-only session.
+
+### Notes on what this does **not** claim
+
+- A direct read of `group-kg/v1` is for **retrieval only**: `check` reports 708 schema errors on
+  that shape, so a live view is not a gate and never replaces the adopted copy for validation.
+- Scores are comparable **within one data plane**. `adopt` backfills `source` (130 nodes) and
+  `source` carries weight 0.5, so a direct-read score and an adopted score are not the same
+  measurement; a regression guard must stay on one plane.
+- The team's own graph was used as the dogfooding target (`kg.py` keeps writing, `amg` reads
+  read-only). That is **not** external validation: it is the same organisation's data.
+
 ## [0.36.0] — 2026-10-31
 
 Anchoring stops being a gate and becomes a tie-breaker, and the tests that guard it are proven to
