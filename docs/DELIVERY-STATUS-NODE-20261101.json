@@ -1,0 +1,58 @@
+{
+ "$comment": "Project-local record of the group-graph nodes for this delivery inventory. The live nodes are in knowledge-graph/graphs/记忆架构开源.json (team graph, shared). This file exists so the project folder holds the record itself, not only a pointer.",
+ "graph_file": "knowledge-graph/graphs/记忆架构开源.json",
+ "graph_rev": 1234,
+ "exported_at": "2026-11-01T19:10:00+08:00",
+ "nodes": [
+  {
+   "id": "artifact.mem-arch-delivery-status-20261101",
+   "type": "artifact",
+   "label": "记忆架构开源 交付盘点（已完成/未完成/还需多久）",
+   "status": "superseded",
+   "owner": null,
+   "source": "用户 2026-11-01T18:16 直接要求：介绍项目完成了什么、还有什么没完成，汇总为一份图谱和 MD 文档",
+   "note": "三档交付判据分开答：A 功能可运行=已达成（v0.38.5 发布、CI 41288542008/41288539428 双 success、546 测试、23 命令、MCP 8 工具）；B 缺陷清零=未达成，剩 3 个真代码缺陷全在检索层（anchor-key 让无锚正确答案不可达，有锚 100% vs 无锚 0% 为正确性 P1；anchor-trap adopt 前后相反；tie-break 由节点 id 字母序决定）；C 冷启动=未达成且外部依赖不可自证。时间：A 今天约 40 分钟（版本修复发 v0.38.6）；B1 记账/口径约 2h；B2 239 条迁移落盘约 2h（需 ≥2 成员结论）；B3 检索层约 1 天；合计缺陷清零约 1.5 天。另记本轮新发现：3 个 task 图里还 in_progress 但代码已实现（audit.py:346 三桶、mcp.py reopen+check_shape），属记账债。对外口径：不得写「完整可交付」「所有已知问题已解决」。",
+   "evidence": [
+    {
+     "locator": "path:docs/memory-arch/DELIVERY-STATUS-20261101.md",
+     "content_sha256": "5644f3d7534c3af4380cc2c3a231a66fe192b942e49be8f1d1729ab6400d9ee9",
+     "captured_at": "2026-11-01T18:26:00+08:00",
+     "graph_rev": 1225
+    }
+   ],
+   "conclusion": true,
+   "evidence_grade": 5,
+   "valid_from": null,
+   "valid_until": "2026-11-01T18:40:15+08:00",
+   "valid_time_known": false,
+   "recorded_at": "2026-11-01T18:18:36+08:00",
+   "superseded_at": "2026-11-01T18:40:15+08:00",
+   "updatedAt": "2026-11-01T18:40:15+08:00"
+  },
+  {
+   "id": "artifact.mem-arch-delivery-status-20261101-v2",
+   "type": "artifact",
+   "label": "记忆架构开源 交付盘点（已移入项目仓库 docs/）",
+   "status": "done",
+   "owner": null,
+   "source": "用户 2026-11-01T18:16 直接要求交付盘点；18:5x 要求把文档与节点移回项目资料夹，不再另存其他位置",
+   "note": "与 artifact.mem-arch-delivery-status-20261101 内容完全相同（sha 未变 5644f3d7…9ee9），仅位置由 workspace/docs/memory-arch/ 移入项目仓库 agent-memory-graph/docs/。三档判据：A 功能可运行=已达成（v0.38.5/v0.38.6/v0.38.7 均已发布，CI 双绿，557 测试）；B 缺陷清零=未达成，剩检索层 #2 adopt 对称性（需合成复现）与 tie-break 已由 #60 处理为「报出不解释」；C 冷启动=外部依赖不可自证。旧节点走 supersede 留痕，不删（铁律 11）。",
+   "evidence": [
+    {
+     "locator": "path:agent-memory-graph/docs/DELIVERY-STATUS-20261101.md",
+     "content_sha256": "5644f3d7534c3af4380cc2c3a231a66fe192b942e49be8f1d1729ab6400d9ee9",
+     "captured_at": "2026-11-01T19:05:00+08:00",
+     "graph_rev": 1233
+    }
+   ],
+   "conclusion": true,
+   "evidence_grade": 5,
+   "valid_from": null,
+   "valid_until": null,
+   "valid_time_known": false,
+   "recorded_at": "2026-11-01T18:40:11+08:00",
+   "superseded_at": null,
+   "updatedAt": "2026-11-01T18:40:11+08:00"
+  }
+ ]
+}
