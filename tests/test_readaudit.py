@@ -94,7 +94,11 @@ class ReadAuditCliTests(unittest.TestCase):
     def cli(self, *args):
         env = dict(os.environ)
         env["PYTHONPATH"] = os.path.join(ROOT, "src")
-        return subprocess.run([sys.executable, "-m", "amg.cli", *args],
+        argv = list(args)
+        # `search` states its evidence base explicitly (decision #56).
+        if argv and argv[0] == "search" and "--root" not in argv:
+            argv += ["--root", argv[1]]
+        return subprocess.run([sys.executable, "-m", "amg.cli", *argv],
                               capture_output=True, text=True, encoding="utf-8", env=env, cwd=ROOT)
 
     def test_cli_audit_read(self):

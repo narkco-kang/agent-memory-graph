@@ -121,10 +121,35 @@ class VerifyEvidenceCliTests(unittest.TestCase):
         self.assertEqual(cli("init", self.dir, "--group", "t").returncode, 0)
 
     def add(self, node_id, locator, digest, status="done"):
-        res = cli("add", self.dir, "--id", node_id, "--type", "decision",
-                  "--label", "a claim", "--source", "group:t", "--status", status,
-                  "--evidence", f"{locator}|{digest}|2026-10-31T00:00:00+08:00")
-        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        """Write a node with a DECLARED digest, without proving it.
+
+        These tests exercise the READ-side verifier (`verify-evidence`), which is
+        exactly what must be able to inspect a graph that already contains claims
+        nobody proved. Write-time verification (v0.37.0) now refuses to create such
+        a node through `amg add`, so this helper appends it directly — that is the
+        only way to test how the reader handles legacy or smuggled data.
+        """
+        import hashlib
+        path = os.path.join(self.dir, "graph.json")
+        with open(path, encoding="utf-8") as fh:
+            doc = json.load(fh)
+        rev = int(doc.get("rev", 0)) + 1
+        doc["nodes"].append({
+            "id": node_id, "type": "decision", "label": "a claim", "status": status,
+            "owner": None, "source": "group:t", "note": "",
+            "evidence": [{"locator": locator, "content_sha256": digest,
+                          "captured_at": "2026-10-31T00:00:00+08:00", "graph_rev": rev}],
+            "conclusion": True, "evidence_grade": 5, "valid_from": None,
+            "valid_until": None, "valid_time_known": False,
+            "recorded_at": "2026-10-31T00:00:00+08:00",
+        })
+        doc["rev"] = rev
+        doc.setdefault("changes", []).append(
+            {"at": "2026-10-31T00:00:00+08:00", "by": "test", "op": "add-node",
+             "target": node_id, "note": "direct append", "rev": rev})
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(doc, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
 
     def test_matching_evidence_exits_zero(self):
         self.add("decision.ok", "path:note.txt", sha(b"the bytes"))
@@ -163,10 +188,9 @@ class VerifyEvidenceCliTests(unittest.TestCase):
         self.assertFalse(report["ok"])
 
     def test_outside_root_exits_one_even_without_strict(self):
-        res = cli("add", self.dir, "--id", "decision.out", "--type", "decision",
-                  "--label", "a claim", "--source", "group:t", "--status", "done",
-                  "--evidence", f"path:/etc/hosts|{'0' * 64}|2026-10-31T00:00:00+08:00")
-        self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
+        # Direct append: the reader must be able to see evidence that escapes the root,
+        # and v0.37.0 refuses to CREATE such a node through `amg add`.
+        self.add("decision.out", "path:/etc/hosts", "0" * 64)
         res = cli("verify-evidence", self.dir, "--json")
         self.assertEqual(res.returncode, 1)
         self.assertIn("E_EVIDENCE_OUTSIDE_ROOT", res.stderr)

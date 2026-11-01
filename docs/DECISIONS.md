@@ -90,3 +90,5 @@ split: the previous single file could hold 34 decisions and then stopped.
 | [53](decisions/53-arm-name-must-match-code.md) | An arm is described by its implementation, not the idea it resembles. | active | ✓ |
 | [54](decisions/54-decisions-need-a-discussion.md) | A decision entry must name the group discussion that produced it. | active | ✓ |
 | [55](decisions/55-anchor-is-a-tie-breaker.md) | Anchoring is a tie-breaker, not a gate. | active | ✓ |
+| [56](decisions/56-audit-evidence-root.md) | The evidence root is stated, never guessed; a path string is not an identity. | active | ✓ |
+| [57](decisions/57-graph-file-is-shared.md) | Two writers open one physical file; a symlink bridge splits the graph. | active | ✓ |

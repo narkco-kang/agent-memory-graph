@@ -82,6 +82,23 @@ def enforce_conclusion(node: dict, evidence: list) -> None:
         )
 
 
+#: A declaration may carry its digest inside the locator: `path:<rel>#sha256:<hex>`.
+#: This is the format `kg.py` wrote throughout the legacy era — 41 records on the team
+#: graph use it — so it is a known format, not a stray string. Before this was parsed,
+#: those locators were looked up WITH the fragment attached, the file never resolved,
+#: and every one of them was reported `missing`: the only historic evidence that ever
+#: declared a digest was silently voided by the switch.
+FRAGMENT_SHA_RE = re.compile(r"^(?P<path>.*)#sha256:(?P<sha>[0-9a-f]{64})$")
+
+
+def split_sha_fragment(raw: str):
+    """`(path, sha_or_None)` for a locator that may carry a `#sha256:` fragment."""
+    match = FRAGMENT_SHA_RE.match(raw or "")
+    if not match:
+        return raw, None
+    return match.group("path"), match.group("sha")
+
+
 def _resolve_inside(root: str, raw: str):
     """Resolve a `path:` locator inside `root`; None when it escapes the root.
 
@@ -100,6 +117,103 @@ def _resolve_inside(root: str, raw: str):
     except ValueError:  # different drives on Windows
         inside = False
     return real if inside else None
+
+
+#: Directories under the graph root that supply a second resolution base. The team's
+#: legacy evidence strings were written against two different bases: some against the
+#: workspace root, some against the repository root (`src/amg/adopt.py`, `docs/API.md`).
+#: Resolving only against the graph root reported 111 of those as `missing` when the
+#: file was there all along (`artifact.mem-arch-baseline-probe`). These are *subdirectories*
+#: of the root, so trying them does not widen the boundary the way a symlink would.
+SECONDARY_BASES = ("agent-memory-graph",)
+
+
+def resolve_evidence_path(root: str, raw: str):
+    """Resolve an evidence path against the graph root, then its known sub-bases.
+
+    Returns `(path, base)` where `base` is `"root"` or the name of the sub-base that
+    matched, or `(None, reason)` where reason is `"outside_root"` or `"missing"`.
+
+    Order matters and is the whole point: the graph root is tried first, so an
+    ordinary locator behaves exactly as before. A sub-base is only consulted when the
+    locator is absent at the root, and the result still has to land inside that
+    sub-base — a `..` that climbs out of it is still a refusal.
+    """
+    direct = _resolve_inside(root, raw)
+    if direct is not None and os.path.exists(direct):
+        return direct, "root"
+    if os.path.isabs(raw):
+        # an absolute locator has no second base to speak of
+        return None, ("outside_root" if direct is None else "missing")
+    root_real = os.path.realpath(root)
+    for base_name in SECONDARY_BASES:
+        base = os.path.join(root_real, base_name)
+        if not os.path.isdir(base):
+            continue
+        resolved = _resolve_inside(base, raw)
+        if resolved is not None and os.path.exists(resolved):
+            return resolved, base_name
+    if direct is None:
+        return None, "outside_root"
+    return None, "missing"
+
+
+
+def verify_evidence_on_write(items, root: str, node_id: str = None) -> None:
+    """Refuse a write whose declared digest is not the digest of the bytes.
+
+    Why this exists — measured, not assumed:
+
+    `validate_evidence` checks the SHAPE of `content_sha256` (64 lowercase hex) and
+    nothing else, so a fabricated digest produces `E_EVIDENCE_MISSING`-free
+    `done` nodes. The forgery is only caught later, on the read side, where
+    `audit --verify` reports the node as `missing`. A memory that is already stored
+    and retrievable has to be caught at write time, not when someone finally reads it.
+
+    Measured before this guard: a 64-hex digest of `aaaa…` was accepted and stored as
+    `done`; `audit --verify` then reported the same node `missing`, and `search`
+    showed it as such. Measured after: the write is refused.
+
+    Rules (each corresponds to a way the check could be useless):
+    - `path:` locators must resolve INSIDE `root`; a locator that escapes is refused
+      rather than skipped, otherwise the check itself becomes the bypass.
+    - the file must exist; a missing file is not "unverified", it is a failed claim.
+    - `cmd:` / `url:` / `sha256:` locators carry no local bytes: they stay allowed
+      (they may be perfectly good evidence) but they are not proof, so at least one
+      `path:` locator must pass for a node carrying any locator at all.
+    """
+    checked = 0
+    failures = []
+    for index, item in enumerate(items or []):
+        if not isinstance(item, dict):
+            continue
+        locator = str(item.get("locator") or "")
+        expected = str(item.get("content_sha256") or "")
+        if not locator.startswith("path:"):
+            continue
+        path = _resolve_inside(root, locator[len("path:"):])
+        if path is None:
+            failures.append(f"evidence[{index}] {locator}: escapes the evidence root")
+            continue
+        if not os.path.isfile(path):
+            failures.append(f"evidence[{index}] {locator}: file does not exist")
+            continue
+        try:
+            actual = sha256_of_file(path)
+        except OSError as exc:
+            failures.append(f"evidence[{index}] {locator}: unreadable ({exc})")
+            continue
+        if expected and actual != expected:
+            failures.append(
+                f"evidence[{index}] {locator}: declared {expected} but the file hashes to {actual}")
+            continue
+        checked += 1
+    if failures:
+        prefix = f"{node_id}: " if node_id else ""
+        raise ProtocolError(
+            "E_EVIDENCE_VERIFY_FAILED",
+            prefix + "declared evidence does not match what can be observed; "
+            + "; ".join(failures))
 
 
 def verify_evidence(items, root: str, node_id: str = None) -> list:

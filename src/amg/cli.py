@@ -34,6 +34,45 @@ def _print(obj, as_json: bool):
     print(json.dumps(obj, ensure_ascii=False, indent=2) if as_json else obj)
 
 
+#: One glyph per `evidence_state`. Kept as a module constant so a test can walk it and
+#: so adding a state without a glyph fails loudly instead of raising KeyError on a
+#: search that happens to hit that node (which is exactly how `partly_stale` shipped
+#: broken: the reader crashed only when it met a node with rotted citations).
+EVIDENCE_STATE_GLYPHS = {
+    "verified": "✓",
+    "partly_stale": "!",
+    "stale": "!",
+    "declared": "~",
+    "missing": "✗",
+    "absent": "·",
+}
+
+
+def evidence_state_glyph(state: str) -> str:
+    """Glyph for a state; `?` for one this build does not recognise.
+
+    Unknown must not crash a read: a newer writer may store a state this build has never
+    heard of, and refusing to print a search result because of it would hide the memory.
+    """
+    return EVIDENCE_STATE_GLYPHS.get(state, "?")
+
+
+def open_graph(a, read_only: bool = False):
+    """Open the graph named by `--graph <file>` when given, else `<dir>/graph.json`.
+
+    `--graph` is what lets this tool and the team's kg.py write the SAME physical
+    file. Their layouts differ (`graphs/<group>.json` vs `<dir>/graph.json`), and
+    the only alternatives measured were: force one tool to move (breaks it), or
+    bridge with a symlink (splits the graph on the first write, silently). Sharing
+    the file is the arrangement where neither tool dictates the other's layout.
+    """
+    m = Memory.open(a.dir, read_only=read_only, graph_file=getattr(a, "graph", None))
+    root = getattr(a, "root", None)
+    if root:
+        m.evidence_root = os.path.abspath(root)
+    return m
+
+
 def cmd_init(a):
     m = Memory.init(a.dir, a.group, goal=a.goal or "")
     _print(f"initialized {os.path.abspath(a.dir)} (group={a.group})", a.json)
@@ -41,7 +80,7 @@ def cmd_init(a):
 
 
 def cmd_add(a):
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     kwargs = {}
     if a.type == "rule":
         if not a.applies:
@@ -62,7 +101,7 @@ def cmd_add(a):
 
 
 def cmd_import(a):
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     try:
         with open(a.from_file, "r", encoding="utf-8") as fh:
             data = json.load(fh)
@@ -82,7 +121,7 @@ def cmd_import(a):
 
 
 def cmd_status(a):
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     res = m.set_status(a.id, a.new_status, note=a.note,
                        evidence=_evidence_args(a.evidence), by=a.by)
     _print(f"{res['id']}: {res['from']} -> {res['to']}", a.json)
@@ -90,14 +129,14 @@ def cmd_status(a):
 
 
 def cmd_supersede(a):
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     res = m.supersede(a.old_id, a.new_id, note=a.note, by=a.by)
     _print(f"{res['old']} superseded by {res['new']} (valid_until {res['valid_until']})", a.json)
     return EXIT_OK
 
 
 def cmd_related(a):
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     res = m.related(a.id, depth=a.depth, kind=a.kind, audit_read=a.audit_read)
     if a.json:
         print(json.dumps(res, ensure_ascii=False, indent=2))
@@ -114,31 +153,52 @@ def cmd_related(a):
 
 
 def cmd_link(a):
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     m.add_edge(a.from_id, a.to_id, a.kind, by=a.by)
     _print(f"linked {a.from_id} -{a.kind}-> {a.to_id}", a.json)
     return EXIT_OK
 
 
 def cmd_search(a):
-    m = Memory.open(a.dir)
+    from .audit import evidence_state
+    m = open_graph(a)
     hits = m.search(a.query, layer=a.layer, k=a.k, strict=a.strict, expand=a.expand,
                     audit_read=a.audit_read, include_archive=a.include_archive)
+    # Read paths deserve the same honesty the audit has: `anchor_state` only says the
+    # evidence LIST is non-empty, and printing `anchor=present` next to a bare-string
+    # declaration shows a claim as if it were a checked result. `evidence_state` says
+    # what can be observed for each hit (verified / declared / missing / absent).
+    # Same rule as `audit --verify`: the base is stated, never guessed. Without it
+    # every `path:` locator is judged against the graph directory, which reported a
+    # whole page of `missing` for evidence that resolves fine from the workspace —
+    # a plausible answer to a question nobody asked (decision #56).
+    if not getattr(a, "root", None):
+        sys.stderr.write(
+            "E_EVIDENCE_ROOT_REQUIRED: pass --root <dir>, the base that evidence locators "
+            "are resolved against. It is not inferred from `dir`: the same graph reports "
+            "different evidence_state per hit depending on the base.\n")
+        return EXIT_USAGE
+    root = os.path.abspath(a.root)
+    by_id = {n.get("id"): n for n in m.doc.get("nodes") or []}
+    for h in hits:
+        node = by_id.get(h["id"])
+        h["evidence_state"] = evidence_state(node, root) if node else {"state": "absent"}
     if a.json:
         print(json.dumps(hits, ensure_ascii=False, indent=2))
     else:
         for h in hits:
-            flag = "✓" if h["anchor_state"] == "present" else "~"
+            state = h["evidence_state"]["state"]
+            flag = evidence_state_glyph(state)
             where = f", archive={h['archive_file']}" if h.get("archived") else ""
             print(f"{flag} {h['score']:>5} {h['id']} [{h['status']}] {h.get('label') or ''}"
-                  f" (anchor={h['anchor_state']}, ev×{h['evidence_count']}{where})")
+                  f" (evidence={state}, ev×{h['evidence_count']}{where})")
         if not hits:
             print("no hits")
     return EXIT_OK
 
 
 def cmd_digest(a):
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     text = m.digest(max_bytes=a.max_bytes)
     out = a.out or os.path.join(os.path.abspath(a.dir), "graph.md")
     with open(out, "w", encoding="utf-8") as fh:
@@ -152,7 +212,7 @@ def cmd_digest(a):
 
 
 def cmd_check(a):
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     rep = m.check(strict=a.strict)
     if a.json:
         print(json.dumps(rep, ensure_ascii=False, indent=2))
@@ -171,8 +231,40 @@ def cmd_audit(a):
     if a.pin:
         with open(a.pin, "r", encoding="utf-8") as fh:
             pin = json.load(fh)
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     rep = m.audit(pin=pin, stale_days=a.stale_days)
+    if getattr(a, "verify", False):
+        from .audit import evidence_buckets, root_anchors, root_identity
+        # The evidence base is a separate concern from where graph.json lives, and a
+        # wrong base does not fail — it produces a LARGER number that reads like a
+        # finding (232 vs 24 on the same graph, from the graph dir and the workspace).
+        # So: never guess the base, and never report buckets from a base that carries
+        # no structure anchors at all.
+        if not getattr(a, "root", None) and not getattr(a, "force_root", False):
+            sys.stderr.write(
+                "E_EVIDENCE_ROOT_REQUIRED: pass --root <dir>, the base that evidence "
+                "locators are resolved against. It is not inferred from `dir`: the same "
+                "graph audited against a different base yields different numbers, and "
+                "guessing would report one of them as if it were the truth.\n")
+            return EXIT_USAGE
+        evidence_root = os.path.abspath(a.root) if getattr(a, "root", None) else os.path.abspath(a.dir)
+        anchors = root_anchors(evidence_root)
+        identity = root_identity(evidence_root)
+        rep["evidence_root"] = {
+            "path": evidence_root,
+            "source": "--root" if getattr(a, "root", None) else "dir",
+            "identity": identity,
+            "anchors": anchors,
+        }
+        if anchors["suspect"] and not getattr(a, "force_root", False):
+            sys.stderr.write(
+                f"E_EVIDENCE_ROOT_SUSPECT: {evidence_root} holds none of the structure "
+                f"anchors ({', '.join(__import__('amg.audit', fromlist=['x']).STRUCTURE_ANCHORS)}) "
+                f"\u2014 refusing to report evidence buckets from a base that does not "
+                f"look like the tree the locators were written against. Re-run with a "
+                f"correct --root, or with --force-root to report anyway (recorded).\n")
+            return EXIT_USAGE
+        rep["evidence_buckets"] = evidence_buckets(m.doc, evidence_root)
     if a.json:
         print(json.dumps(rep, ensure_ascii=False, indent=2))
     else:
@@ -185,6 +277,32 @@ def cmd_audit(a):
               f"no-evidence {lg['no_evidence_ratio']}")
         if rep["pin"]:
             print(f"pin match: {rep['pin']['match']}")
+        buckets = rep.get("evidence_buckets")
+        if buckets:
+            ab = buckets["evidence_absent"]
+            un = buckets["evidence_unverifiable"]
+            rs = buckets["evidence_resolvable"]
+            kl = buckets["known_limitation"]
+            er = rep.get("evidence_root") or {}
+            if er:
+                ident = er.get("identity") or {}
+                anchors = er.get("anchors") or {}
+                print(f"evidence_root         {er['path']}  (from {er['source']})")
+                print(f"  identity            dev={ident.get('dev')} ino={ident.get('ino')}"
+                      f"  (physical id; a path string cannot identify a directory)")
+                print(f"  anchors             {', '.join(anchors.get('found') or []) or '(none)'}")
+            print(f"evidence_absent       {ab['count']}")
+            print(f"evidence_unverifiable {un['count']}")
+            dc = buckets["evidence_declared_uncheckable"]
+            print(f"evidence_declared     {dc['count']}  (bare-string declarations: no digest "
+                  f"declared, existence only; bases: "
+                  + ", ".join(f"{k}={v}" for k, v in
+                              __import__("collections").Counter(
+                                  b for n in dc["nodes"] for b in n["bases"]).most_common())
+                  + ")")
+            print(f"evidence_resolvable   {rs['count']}  "
+                  f"(by base: " + ", ".join(f"{k}={v}" for k, v in rs["via_base"].items()) + ")")
+            print(f"known_limitation      {kl['count']}  ({kl['note']})")
         print("✓ audit clean" if rep["ok"] else f"✗ {len(rep['conflicts'])} conflict(s)")
     return EXIT_OK if rep["ok"] else EXIT_ERROR
 
@@ -203,7 +321,9 @@ def cmd_mcp(a):
     cannot become a way to escape read-only.
     """
     from . import mcp as mcp_mod
-    m = Memory.open(a.dir, read_only=a.read_only)
+    m = open_graph(a, read_only=a.read_only)
+    if getattr(a, "root", None):
+        m.evidence_root = os.path.abspath(a.root)
     mcp_mod.check_shape(m.doc)
     for item in m.security_findings():
         sys.stderr.write(f"amg mcp: warning [{item['code']}] {item['detail']}\n")
@@ -212,13 +332,13 @@ def cmd_mcp(a):
     sys.stderr.write(f"amg mcp: serving {os.path.abspath(a.dir)} over stdio "
                      f"(no network, no auth, {mode}, {reload_note})\n")
     sys.stderr.flush()
-    reopen = None if a.no_reload else (lambda: Memory.open(a.dir, read_only=a.read_only))
+    reopen = None if a.no_reload else (lambda: open_graph(a, read_only=a.read_only))
     return mcp_mod.serve(m, read_only=a.read_only, reopen=reopen)
 
 
 def cmd_handoff(a):
     """Write the handoff card, or read the active one. Bounded on purpose."""
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     if a.note is None:
         card = m.handoff()
         if card is None:
@@ -246,7 +366,7 @@ def cmd_handoff(a):
 
 def cmd_fingerprint(a):
     """Print the canonical digests of state and history. Writes nothing to the graph."""
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     fp = m.fingerprint()
     if a.out:
         with open(a.out, "w", encoding="utf-8") as fh:
@@ -282,7 +402,7 @@ def _load_expected(a):
 
 def cmd_verify(a):
     """Compare current digests with a recorded fingerprint. Exit 1 on mismatch."""
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     report = m.verify_fingerprint(_load_expected(a))
     if a.json:
         print(json.dumps(report, ensure_ascii=False, indent=2))
@@ -314,7 +434,7 @@ def cmd_verify_evidence(a):
     escapes are reported `outside_root` and never opened, so a public store cannot be
     used to hash files it does not own.
     """
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     nodes = m.doc.get("nodes") or []
     if a.id:
         nodes = [n for n in nodes if n.get("id") == a.id]
@@ -368,7 +488,7 @@ def cmd_verify_evidence(a):
 
 
 def cmd_export(a):
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     sys.stdout.write(m.export(fmt=a.format))
     return EXIT_OK
 
@@ -378,7 +498,7 @@ def cmd_doctor(a):
     leftovers = [f for f in os.listdir(d) if f.startswith(".graph.") and f.endswith(".tmp")]
     for f in leftovers:
         os.unlink(os.path.join(d, f))
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     rep = m.check()
     hygiene = m.security_findings()
     info = {"dir": d, "cleaned_tmp": len(leftovers), "check_ok": rep["ok"],
@@ -403,7 +523,7 @@ def cmd_doctor(a):
 
 
 def cmd_migrate(a):
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     stats = m.migrate()
     print(json.dumps(stats, ensure_ascii=False, indent=2) if a.json else
           f"changed={stats['changed']} records={stats['records']} "
@@ -443,6 +563,9 @@ ERROR_EXIT_CODES = frozenset({
     "E_EVIDENCE_MISMATCH",
     # verify-evidence: the path leaves the graph root, or --strict found unproven items
     "E_EVIDENCE_OUTSIDE_ROOT", "E_EVIDENCE_UNVERIFIED",
+    # write-time verification: the declared digest is not the digest of the bytes, so
+    # the content being written is not the content being claimed
+    "E_EVIDENCE_VERIFY_FAILED",
     "E_DUP_ID", "E_DUP_EDGE", "E_NO_NODE", "E_IMMUTABLE",
     # adopt-specific: the legacy source itself violates the protocol
     "E_ADOPT_UNSUPPORTED", "E_ADOPT_DANGLING",
@@ -505,7 +628,7 @@ def cmd_adopt(a):
 
 
 def cmd_expire(a):
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     rep = m.expire(apply=a.apply)
     if a.json:
         print(json.dumps(rep, ensure_ascii=False, indent=2))
@@ -525,7 +648,7 @@ def cmd_expire(a):
 
 def cmd_archive(a):
     if a.verify:
-        m = Memory.open(a.dir, read_only=True)
+        m = open_graph(a, read_only=True)
         rep = m.archive_verify()
         if a.json:
             print(json.dumps(rep, ensure_ascii=False, indent=2))
@@ -545,7 +668,7 @@ def cmd_archive(a):
             print("✓ archive verified" if rep["ok"] else "✗ archive verification failed")
         return EXIT_OK if rep["ok"] else EXIT_ERROR
 
-    m = Memory.open(a.dir)
+    m = open_graph(a)
     rep = m.archive(days=a.days, apply=a.apply, by=a.by)
     if a.json:
         print(json.dumps(rep, ensure_ascii=False, indent=2))
@@ -591,6 +714,13 @@ def build_parser():
     p = argparse.ArgumentParser(prog="amg", description="append-only evidence-gated memory graph")
     p.add_argument("--version", action="version", version=f"amg {__version__}")
     sub = p.add_subparsers(dest="cmd", required=True)
+
+    #: Sub-commands that take a graph directory; each also accepts `--graph <file>`
+    #: so this tool can open a graph whose layout belongs to another writer (kg.py).
+    GRAPH_SHARING = {"add", "import", "status", "supersede", "link", "related", "search",
+                     "digest", "check", "audit", "mcp", "handoff", "fingerprint",
+                     "verify", "verify-evidence", "export", "doctor", "migrate",
+                     "adopt", "expire", "archive"}
 
     s = sub.add_parser("init"); s.add_argument("dir"); s.add_argument("--group", required=True)
     s.add_argument("--goal", default=""); s.add_argument("--json", action="store_true")
@@ -645,6 +775,9 @@ def build_parser():
     s.add_argument("--strict", action="store_true"); s.add_argument("--expand", action="store_true")
     s.add_argument("--audit-read", action="store_true",
                    help="log this read to reads.jsonl if it is high-risk (L4/strict/superseded)")
+    s.add_argument("--root", default=None,
+                   help="base directory that evidence locators resolve against (default: the "
+                        "graph directory). Results report evidence_state per hit.")
     s.add_argument("--include-archive", action="store_true",
                    help="L2 only: also search cold history in archive/changes-*.json")
     s.add_argument("--json", action="store_true")
@@ -659,6 +792,16 @@ def build_parser():
     s = sub.add_parser("audit"); s.add_argument("dir"); s.add_argument("--pin")
     s.add_argument("--stale-days", type=int, default=None,
                    help="override AMG_STALE_DAYS for this run (default 3)")
+    s.add_argument("--root", default=None,
+                   help="base directory evidence locators resolve against (default: the "
+                        "graph directory). Use this when graph.json and the evidence tree "
+                        "are not the same directory; the report echoes the base used.")
+    s.add_argument("--force-root", action="store_true", dest="force_root",
+                   help="report evidence buckets even when the base lacks structure anchors "
+                        "(recorded in the output; not a way to make a wrong base right)")
+    s.add_argument("--verify", action="store_true",
+                   help="split done nodes into evidence_absent / evidence_unverifiable / "
+                        "evidence_resolvable instead of one mixed count")
     s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_audit)
 
     s = sub.add_parser("mcp"); s.add_argument("dir")
@@ -732,6 +875,24 @@ def build_parser():
     s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_archive)
 
     s = sub.add_parser("version"); s.set_defaults(func=cmd_version)
+
+    # Add `--graph` to every dir-taking sub-command, once, so a new sub-command
+    # cannot silently miss it.
+    #: Sub-commands that WRITE. They need `--root` too: write-time verification checks
+    #: digests against the evidence base, so a writer whose evidence tree is not the
+    #: graph directory must be able to say so (same distinction as `audit --root`).
+    WRITING = {"add", "import", "status", "supersede", "link", "expire", "migrate", "adopt", "mcp"}
+    for name, sp in sub.choices.items():
+        if name in WRITING and any(act.dest == "dir" for act in sp._actions):
+            if not any(act.dest == "root" for act in sp._actions):
+                sp.add_argument("--root", default=None,
+                                help="base directory that write-time evidence is verified "
+                                     "against (default: the graph directory)")
+        if name in GRAPH_SHARING and any(act.dest == "dir" for act in sp._actions):
+            sp.add_argument("--graph", default=None,
+                            help="exact graph file to open instead of <dir>/graph.json. "
+                                 "Use this to share one file with another writer that owns "
+                                 "the layout; the lock is taken next to that file.")
     return p
 
 

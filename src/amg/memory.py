@@ -1,5 +1,6 @@
 """Memory — the single public entry point (library face, 5 core methods)."""
 import json
+import os
 
 from . import audit as audit_mod
 from . import digest as digest_mod
@@ -13,7 +14,7 @@ from . import retrieval
 from .const import EDGE_KINDS, NODE_TYPES, SCHEMA, STATUSES, now, parse_ts
 from .errors import ProtocolError
 from .audit import expiry_eligible
-from .gate import enforce_conclusion, validate_evidence
+from .gate import enforce_conclusion, validate_evidence, verify_evidence_on_write
 from .store import Store
 
 _UNSET = object()
@@ -40,12 +41,23 @@ def _validity_ended(node: dict, at) -> bool:
 
 
 class Memory:
+    #: Base that `path:` evidence is resolved against at write time. Defaults to the
+    #: graph directory (the historical behaviour), and is a class attribute so a
+    #: caller whose evidence tree is not the graph directory can state it once — the
+    #: same distinction `audit --root` makes on the read side. Setting it globally is
+    #: deliberate: a per-call argument would let a single writer quietly pick a base
+    #: per node, which is exactly the freedom decision #56 removed for reads.
+    evidence_root = None
+
     def __init__(self, store: Store, doc: dict, read_only: bool = False):
         self.store = store
         self._doc = doc
         # Read-only is enforced at the single write choke point (`_commit`), not
         # by each caller, so a new mutating method cannot forget to check it.
         self.read_only = read_only
+
+    def _evidence_base(self) -> str:
+        return os.path.abspath(self.evidence_root) if self.evidence_root else self.store.dir
 
     # ---------- lifecycle ----------
     @classmethod
@@ -59,14 +71,17 @@ class Memory:
         return cls(store, doc)
 
     @classmethod
-    def open(cls, path: str, read_only: bool = False) -> "Memory":
+    def open(cls, path: str, read_only: bool = False, graph_file: str = None) -> "Memory":
         """Load an existing graph.
 
         With `read_only=True` every mutation raises `E_READ_ONLY` before any
         byte is written. Opening never creates the directory or the file, so a
         read-only open of a missing graph is `E_NO_GRAPH` and leaves no trace.
+
+        `graph_file` opens an exact file instead of `<path>/graph.json`, so the team's
+        existing `graphs/<group>.json` can be shared rather than relocated.
         """
-        store = Store(path)
+        store = Store(path, graph_file=graph_file)
         return cls(store, store.read_locked(), read_only=read_only)
 
     @classmethod
@@ -141,6 +156,11 @@ class Memory:
             raise ProtocolError("E_BAD_VALID_RANGE",
                                 f"{id}: valid_until {valid_until} is earlier than valid_from {valid_from}")
         ev = validate_evidence(evidence, rev)
+        if status == "done" and ev:
+            # Shape is not proof. A 64-hex digest that does not match the bytes was
+            # stored as `done` and only surfaced later as `missing` on the read side;
+            # the memory was already written and retrievable by then.
+            verify_evidence_on_write(ev, self._evidence_base(), id)
         if type == "rule":
             # L4 rules must declare their scope and lifetime explicitly:
             # an applicable rule with no scope cannot be machine-checked.
@@ -273,6 +293,10 @@ class Memory:
                     evidence, int(doc.get("rev", 0)) + 1)
             node["status"] = new_status
             node["updatedAt"] = now()
+            if new_status == "done" and node.get("evidence"):
+                # Same rule as add_node: reaching `done` must mean the declared
+                # digests are the digests of the bytes, not merely well-formed hex.
+                verify_evidence_on_write(node.get("evidence"), self._evidence_base(), node_id)
             node["evidence_grade"] = min([e.get("grade", 5) for e in node.get("evidence", [])], default=None)
             enforce_conclusion(node, node.get("evidence", []))
             self._log(doc, "set-status", node_id, f"{old}->{new_status}: {note}", by)

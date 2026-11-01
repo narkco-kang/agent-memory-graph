@@ -82,8 +82,10 @@ fail loudly instead of guessing, and `tests/test_exit_codes.py` scans
 
 | exit | codes | meaning |
 |---|---|---|
-| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` · `E_NO_EXPECTATION` · `E_BAD_FINGERPRINT` · `E_BAD_HANDOFF` · `E_HANDOFF_TOO_LARGE` · `E_ARCHIVE_LAYER` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
-| `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_EVIDENCE_MISMATCH` · `E_EVIDENCE_OUTSIDE_ROOT` · `E_EVIDENCE_UNVERIFIED` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` · `E_INSECURE_GRAPH` · `E_ARCHIVE_VERIFY` · `E_GRAPH_SHAPE` | the evidence gate rejected the content, or the graph would break an invariant |
+| `2` | `E_NO_GRAPH` · `E_BAD_TYPE` · `E_BAD_STATUS` · `E_BAD_LAYER` · `E_BAD_EDGE` · `E_BAD_FORMAT` · `E_BAD_ID` · `E_EXISTS` · `E_RULE_APPLIES` · `E_RULE_EXPIRES` · `E_USE_SUPERSEDE` · `E_BAD_SUPERSEDE` · `E_BAD_VALID_TIME` · `E_BAD_VALID_RANGE` · `E_ALREADY_AMG` · `E_BAD_BATCH` · `E_BAD_FILE` · `E_BAD_DEPTH`* · `E_READ_ONLY` · `E_NO_EXPECTATION` · `E_BAD_FINGERPRINT` · `E_BAD_HANDOFF` · `E_HANDOFF_TOO_LARGE` · `E_ARCHIVE_LAYER` · `E_EVIDENCE_ROOT_REQUIRED` · `E_EVIDENCE_ROOT_SUSPECT` | wrong argument, unknown enum, or wrong target — the call was wrong, not the data |
+`audit --verify`, `search --root` and `evidence_state`: evidence base, three buckets, write-time proof — see [AUDIT.md](AUDIT.md) and [decisions/56](decisions/56-audit-evidence-root.md).
+
+| `1` | `E_NO_SOURCE` · `E_NOTE_REQUIRED` · `E_EVIDENCE_MISSING` · `E_EVIDENCE_FORMAT` · `E_EVIDENCE_MISMATCH` · `E_EVIDENCE_VERIFY_FAILED` · `E_EVIDENCE_OUTSIDE_ROOT` · `E_EVIDENCE_UNVERIFIED` · `E_DUP_ID` · `E_DUP_EDGE` · `E_NO_NODE` · `E_IMMUTABLE` · `E_ADOPT_UNSUPPORTED`* · `E_ADOPT_DANGLING`* · `E_FINGERPRINT_MISMATCH` · `E_INSECURE_GRAPH` · `E_ARCHIVE_VERIFY` · `E_GRAPH_SHAPE` | the evidence gate rejected the content, or the graph would break an invariant |
 | `0` | — | success / clean `check` / clean `audit` |
 | `3` | — | lock timeout or IO failure (not a `ProtocolError`) |
 
@@ -197,15 +199,7 @@ providing less, since an attacker regenerates the whole chain in one pass.
 
 ## Read-side audit (opt-in, v0.3)
 
-`--audit-read` on `search` / `related` writes a JSONL event to `<graph>/reads.jsonl`
-only when the read is **high-risk**: `--layer L4` (rule access), `--strict`
-queries, or results that include `superseded` nodes. Default reads stay zero-cost
-and are not logged.
-
-- Not written into `changes[]`: read events would drown the write ledger, and
-  `changes[]` is append-only so it could never be rotated.
-- Bounded and rotated: 1 MiB per segment, one older segment kept (`reads.jsonl.1`).
-- `reads.jsonl` contains query text — treat it as data, not as a secret store.
+`--audit-read` logs only high-risk reads; details in [AUDIT.md](AUDIT.md).
 
 ## Python
 

@@ -107,6 +107,7 @@ Read in this order; each one narrows the next:
 | [`CONCURRENCY.md`](CONCURRENCY.md) | What concurrent writers do; why the tail exists | measured |
 | [`DESIGN-HISTORY.md`](DESIGN-HISTORY.md) | How to make writes cheap without losing atomicity | **proposal, not built** |
 | [`OPERATIONS.md`](OPERATIONS.md) | Runbook: healthcheck, schedule, backups, burst sizing, failure meanings | operational guide |
+| [`AUDIT.md`](AUDIT.md) | Evidence base, the three buckets, `evidence_state` on hits, write-time proof | contract, CI-enforced |
 | [`THREAT-MODEL.md`](THREAT-MODEL.md) | Who the security boundary is; what read-only cannot do | contract / decision |
 | [`SCHEDULING.md`](SCHEDULING.md) | How to expire on a timer without a daemon | operational |
 | [`HANDOFF.md`](HANDOFF.md) | The bounded handover card: four questions, one 4 KB answer | operational |

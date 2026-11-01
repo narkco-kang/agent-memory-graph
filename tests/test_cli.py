@@ -6,13 +6,29 @@ import tempfile
 import unittest
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
-SHA = "c" * 64
+SHA = "c" * 64          # well-formed but wrong: a claim nobody proved
+#: The REAL digest of README.md. Tests that only care about the conclusion gate (and
+#: not about forgery) use this, because v0.37.0 proves the digest at write time.
+import hashlib as _h
+import os as _os
+_REAL_SHA = _h.sha256(open(_os.path.join(_os.path.dirname(_os.path.dirname(
+    _os.path.abspath(__file__))), "README.md"), "rb").read()).hexdigest()
+
+
+_WRITING = {"add", "import", "status", "supersede", "link", "expire", "migrate", "adopt"}
 
 
 def run(*args, cwd=None):
+    """Run the CLI. Writing sub-commands get `--root ROOT` so a fixture that cites
+    `path:README.md` is verified against the repository, not the temp graph dir."""
     env = dict(os.environ)
     env["PYTHONPATH"] = os.path.join(ROOT, "src")
-    return subprocess.run([sys.executable, "-m", "amg.cli", *args],
+    argv = list(args)
+    # `search` and `audit --verify` state the evidence base explicitly (decision #56),
+    # so every fixture that would otherwise get a guessed base passes it here.
+    if argv and argv[0] in (_WRITING | {"search", "audit"}) and "--root" not in argv:
+        argv += ["--root", ROOT]
+    return subprocess.run([sys.executable, "-m", "amg.cli", *argv],
                           capture_output=True, text=True, encoding="utf-8", env=env, cwd=cwd or ROOT)
 
 
@@ -69,7 +85,7 @@ with open(path, "w", encoding="utf-8") as fh:
         self.assertIn("E_EVIDENCE_MISSING", bad.stderr)
         ok = run("add", self.dir, "--id", "decision.d", "--type", "decision",
                  "--label", "D", "--source", "s", "--status", "done",
-                 "--evidence", f"path:README.md|{SHA}|2026-10-29T10:00:00+08:00")
+                 "--evidence", f"path:README.md|{_REAL_SHA}|2026-10-29T10:00:00+08:00")
         self.assertEqual(ok.returncode, 0)
 
     def test_search_json_and_digest(self):
@@ -114,7 +130,7 @@ class SupersedeCliTests(unittest.TestCase):
 
     def _seed(self):
         run("init", self.dir, "--group", "t")
-        ev = f"path:README.md|{SHA}|2026-10-30T09:00:00+08:00"
+        ev = f"path:README.md|{_REAL_SHA}|2026-10-30T09:00:00+08:00"
         run("add", self.dir, "--id", "decision.a", "--type", "decision", "--label", "A",
             "--source", "s", "--status", "done", "--evidence", ev)
         run("add", self.dir, "--id", "decision.b", "--type", "decision", "--label", "B",

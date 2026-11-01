@@ -25,7 +25,8 @@ class McpTests(unittest.TestCase):
         env = dict(os.environ)
         env["PYTHONPATH"] = os.path.join(ROOT, "src")
         payload = "\n".join(messages) + "\n"
-        res = subprocess.run([sys.executable, "-m", "amg.cli", "mcp", self.dir],
+        res = subprocess.run([sys.executable, "-m", "amg.cli", "mcp", self.dir,
+                              "--root", ROOT],
                              input=payload, capture_output=True, text=True,
                              encoding="utf-8", env=env, cwd=ROOT, timeout=60)
         lines = [l for l in res.stdout.splitlines() if l.strip()]
@@ -55,7 +56,11 @@ class McpTests(unittest.TestCase):
         self.assertEqual(len(tools), 8)
 
     def test_add_then_search_roundtrip(self):
-        evidence = [{"locator": "path:README.md", "content_sha256": SHA,
+        # Write-time verification (v0.37.0) proves the digest, so this uses the real
+        # digest of the cited file; a placeholder digest is now refused, by design.
+        import hashlib
+        _sha = hashlib.sha256(open(os.path.join(ROOT, "README.md"), "rb").read()).hexdigest()
+        evidence = [{"locator": "path:README.md", "content_sha256": _sha,
                      "captured_at": "2026-10-30T10:00:00+08:00"}]
         replies, _ = self.speak([
             frame(jsonrpc="2.0", id=1, method="tools/call", params={

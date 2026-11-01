@@ -31,6 +31,9 @@ def sha(path):
 class HealthcheckTests(unittest.TestCase):
     def setUp(self):
         self.g = TempGraph()
+        # This file's evidence lives next to the graph, so the base is the graph dir.
+        from amg import Memory as _M
+        _M.evidence_root = None
         self.proof = os.path.join(self.g.dir, "proof.txt")
         with open(self.proof, "wb") as fh:
             fh.write(b"proof bytes")
@@ -56,11 +59,9 @@ class HealthcheckTests(unittest.TestCase):
         self.assertIn("do not match", res.stdout)
 
     def test_outside_root_evidence_is_a_problem(self):
-        self.g.m.add_node("decision.out", "decision", "outside", source="group:t",
-                          status="done",
-                          evidence=[{"locator": "path:/etc/hosts",
-                                     "content_sha256": "0" * 64,
-                                     "captured_at": "2026-10-31T00:00:00+08:00"}])
+        self._append_direct("decision.out", [{"locator": "path:/etc/hosts",
+                                              "content_sha256": "0" * 64,
+                                              "captured_at": "2026-10-31T00:00:00+08:00"}])
         res = run(self.g.dir)
         self.assertEqual(res.returncode, 1)
         self.assertIn("leave the graph directory", res.stdout)
@@ -186,14 +187,40 @@ class HealthcheckTests(unittest.TestCase):
         self.assertIn("missing", res.stdout)
         self.assertIn("verdict: NEEDS ATTENTION", res.stdout)
 
+    def _append_direct(self, node_id, evidence, status="done"):
+        """Append a node WITHOUT write-time verification.
+
+        These tests check what the READER does with evidence it cannot accept (a
+        directory, a path outside the root). v0.37.0 refuses to create such a node
+        through the normal path, so the fixture has to place it directly — otherwise
+        the test would exercise the guard instead of the reader.
+        """
+        path = os.path.join(self.g.dir, "graph.json")
+        with open(path, encoding="utf-8") as fh:
+            doc = json.load(fh)
+        rev = int(doc.get("rev", 0)) + 1
+        doc["nodes"].append({
+            "id": node_id, "type": "decision", "label": node_id, "status": status,
+            "owner": None, "source": "group:t", "note": "", "evidence": evidence,
+            "conclusion": True, "evidence_grade": 5, "valid_from": None,
+            "valid_until": None, "valid_time_known": False,
+            "recorded_at": "2026-10-31T00:00:00+08:00",
+        })
+        doc["rev"] = rev
+        doc.setdefault("changes", []).append(
+            {"at": "2026-10-31T00:00:00+08:00", "by": "test", "op": "add-node",
+             "target": node_id, "note": "direct", "rev": rev})
+        with open(path, "w", encoding="utf-8") as fh:
+            json.dump(doc, fh, ensure_ascii=False, indent=2)
+            fh.write("\n")
+        self.g.reopen()
+
     def test_directory_as_evidence_is_a_problem(self):
         target = os.path.join(self.g.dir, "proofdir")
         os.mkdir(target)
-        self.g.m.add_node("decision.dir", "decision", "directory", source="group:t",
-                          status="done",
-                          evidence=[{"locator": "path:proofdir",
-                                     "content_sha256": "d" * 64,
-                                     "captured_at": "2026-10-31T00:00:00+08:00"}])
+        self._append_direct("decision.dir", [{"locator": "path:proofdir",
+                                              "content_sha256": "d" * 64,
+                                              "captured_at": "2026-10-31T00:00:00+08:00"}])
         res = run(self.g.dir)
         self.assertEqual(res.returncode, 1, res.stdout + res.stderr)
         self.assertIn("not_a_file", res.stdout)

@@ -162,7 +162,7 @@ class ArchiveSearchCliTests(unittest.TestCase):
             buf = io.StringIO()
             with contextlib.redirect_stdout(buf):
                 code = cli_mod.main(["search", self.g.dir, "alpha", "--layer", "L2",
-                                     "--include-archive", "--json"])
+                                     "--include-archive", "--json", "--root", self.g.dir])
         self.assertEqual(code, 0)
         hits = json.loads(buf.getvalue())
         self.assertEqual(len(hits), 1)
@@ -172,7 +172,7 @@ class ArchiveSearchCliTests(unittest.TestCase):
         with at(NOW):
             self.assertEqual(quiet(cli_mod.main,
                                    ["search", self.g.dir, "alpha", "--layer", "L3",
-                                    "--include-archive"]), 2)
+                                    "--include-archive", "--root", self.g.dir]), 2)
 
 
 if __name__ == "__main__":

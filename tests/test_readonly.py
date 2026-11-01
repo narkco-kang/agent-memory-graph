@@ -22,8 +22,12 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 from amg import Memory, ProtocolError  # noqa: E402
 from amg import mcp as mcp_mod  # noqa: E402
 
-SHA = "e" * 64
-EVIDENCE = [{"locator": "path:README.md", "content_sha256": SHA,
+SHA = "e" * 64          # well-formed but wrong
+#: REAL digest of README.md: v0.37.0 proves the digest at write time, and this file is
+#: about the read-only guarantee, not about forgery.
+EVIDENCE = [{"locator": "path:README.md",
+             "content_sha256": hashlib.sha256(
+                 open(os.path.join(ROOT, "README.md"), "rb").read()).hexdigest(),
              "captured_at": "2026-10-30T10:00:00+08:00"}]
 
 
@@ -122,7 +126,7 @@ class McpReadOnlyTests(unittest.TestCase):
     def speak(self, messages, read_only):
         env = dict(os.environ)
         env["PYTHONPATH"] = os.path.join(ROOT, "src")
-        cmd = [sys.executable, "-m", "amg.cli", "mcp", self.dir]
+        cmd = [sys.executable, "-m", "amg.cli", "mcp", self.dir, "--root", ROOT]
         if read_only:
             cmd.append("--read-only")
         res = subprocess.run(cmd, input="\n".join(messages) + "\n", capture_output=True,

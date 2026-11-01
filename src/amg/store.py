@@ -52,9 +52,25 @@ def dumps(doc: dict) -> str:
 
 
 class Store:
-    def __init__(self, path: str):
-        self.dir = os.path.abspath(path)
-        self.file = os.path.join(self.dir, "graph.json")
+    def __init__(self, path: str, graph_file: str = None):
+        """`path` is a graph directory (<dir>/graph.json); `graph_file` names the file.
+
+        `graph_file` exists so this tool can share ONE physical file with another
+        writer that already owns the layout. The team's `kg.py` keeps group graphs at
+        `graphs/<group>.json` and decides that name itself; forcing it to move would
+        break the other tool, and bridging the two with a symlink was measured to
+        split the graph: `os.replace` swaps the link, not its target, so the write
+        lands beside the real file and both look successful. Sharing the file is the
+        only arrangement where neither tool dictates the other's layout.
+        """
+        if graph_file:
+            self.file = os.path.abspath(graph_file)
+            self.dir = os.path.dirname(self.file)
+        else:
+            self.dir = os.path.abspath(path)
+            self.file = os.path.join(self.dir, "graph.json")
+        # The lock sits next to the graph, whichever way the path was given, so both
+        # writers contend on the same lock.
         self.lockfile = os.path.join(self.dir, ".lock")
         # Lock observations, aggregated in O(1) memory. Behaviour is unchanged:
         # these numbers exist to answer "was a slow write slow because it waited

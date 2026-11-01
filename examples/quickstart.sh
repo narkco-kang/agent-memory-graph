@@ -10,10 +10,10 @@ export PYTHONPATH="$REPO/src"
 python3 -m amg.cli init   "$DIR" --group demo --goal "demonstrate amg"
 python3 -m amg.cli add    "$DIR" --id task.a --type task --label "write parser" --source "standup 2026-10-29"
 python3 -m amg.cli status "$DIR" task.a in_progress --note "started"
-python3 -m amg.cli add    "$DIR" --id decision.p --type decision --label "parser is done" --source "review" --status done \
+python3 -m amg.cli add    "$DIR" --root "$REPO" --id decision.p --type decision --label "parser is done" --source "review" --status done \
   --evidence "path:README.md|$SHA|2026-10-29T18:00:00+08:00|2"
-python3 -m amg.cli search "$DIR" "parser" --json
+python3 -m amg.cli search "$DIR" --root "$REPO" "parser" --json
 python3 -m amg.cli check  "$DIR" --strict
 python3 -m amg.cli digest "$DIR" --max-bytes 4096
-python3 -m amg.cli audit  "$DIR"
+python3 -m amg.cli audit  "$DIR" --root "$REPO"
 echo "graph at: $DIR"
