@@ -16,6 +16,7 @@ What a mutation must break, and why the tests are shaped this way:
 """
 import json
 import os
+import re
 import subprocess
 import sys
 import tempfile
@@ -31,20 +32,67 @@ import pathlib
 SHA = "a" * 64
 
 
+def sha256_bytes(data: bytes) -> str:
+    return __import__("hashlib").sha256(data).hexdigest()
+
+
+#: Fixture files are written with an explicit newline so the bytes on disk are the bytes
+#: the digest is computed from. Why this is not paranoia (v0.37.4, Windows CI red):
+#:
+#: `open(path, "w", encoding="utf-8")` translates `\n` to `\r\n` on Windows. The fixture
+#: then held `present\r\n` while the test declared `sha256(b"present\n")`, so the digest
+#: did not match, the node landed in `evidence_unverifiable` as `mismatch`, and
+#: `evidence_resolvable` came back empty. Two tests failed on windows-latest and passed
+#: everywhere else — not because the code differs by platform, but because the fixture
+#: silently changed what it wrote.
+#:
+#: The first guess was drive letters and case sensitivity in `_resolve_inside`. It was
+#: wrong: `_resolve_inside` was never reached, because the file it named did exist and
+#: resolved fine. The bytes had changed underneath the declaration — which is the exact
+#: failure this project exists to report, arriving here as a test bug.
+FIXTURE_NEWLINE = "\n"
+
+
+def write_fixture(path, text):
+    """Write fixture text with LF endings on every platform, then return its real digest.
+
+    The digest is read back from disk rather than assumed, so a fixture that ever again
+    grows a newline translation fails loudly here instead of silently emptying a bucket.
+    """
+    parent = os.path.dirname(path)
+    if parent:
+        os.makedirs(parent, exist_ok=True)
+    with open(path, "w", encoding="utf-8", newline=FIXTURE_NEWLINE) as fh:
+        fh.write(text)
+    with open(path, "rb") as fh:
+        return sha256_bytes(fh.read())
+
+
 def make_root(with_sub_base=True):
-    """A graph root with one resolvable file, one missing file and an optional repo/ sub-base."""
+    """A graph root with one resolvable file, one missing file and an optional repo/ sub-base.
+
+    The digest of every fixture written here is registered in `FIXTURE_DIGESTS`, keyed by
+    the root, so a test declares `digest_of(self.root, "here.md")` instead of hashing a
+    hard-coded string it only hopes is what landed on disk.
+    """
     root = tempfile.mkdtemp(prefix="amg-buckets-")
-    with open(os.path.join(root, "here.md"), "w", encoding="utf-8") as fh:
-        fh.write("present\n")
+    digests = {"here.md": write_fixture(os.path.join(root, "here.md"), "present\n")}
     # a structure anchor, so this temporary root is not refused as "not the work tree"
-    with open(os.path.join(root, "README.md"), "w", encoding="utf-8") as fh:
-        fh.write("# fixture root\n")
+    digests["README.md"] = write_fixture(os.path.join(root, "README.md"), "# fixture root\n")
     if with_sub_base:
-        os.makedirs(os.path.join(root, "agent-memory-graph", "src"), exist_ok=True)
-        with open(os.path.join(root, "agent-memory-graph", "src", "adopt.py"), "w",
-                  encoding="utf-8") as fh:
-            fh.write("# adopt\n")
+        digests["agent-memory-graph/src/adopt.py"] = write_fixture(
+            os.path.join(root, "agent-memory-graph", "src", "adopt.py"), "# adopt\n")
+    FIXTURE_DIGESTS[root] = digests
     return root
+
+
+#: root -> {fixture relative path: digest of the bytes actually on disk}
+FIXTURE_DIGESTS = {}
+
+
+def digest_of(root, rel):
+    """The digest of the bytes `make_root` actually wrote for `rel` under `root`."""
+    return FIXTURE_DIGESTS[root][rel]
 
 
 def node(nid, evidence, status="done"):
@@ -62,7 +110,7 @@ CLI = [sys.executable, "-m", "amg.cli"]
 class BucketTest(unittest.TestCase):
     def setUp(self):
         self.root = make_root()
-        self.sha = __import__("hashlib").sha256(b"present\n").hexdigest()
+        self.sha = digest_of(self.root, "here.md")
 
     def write(self, document):
         with open(os.path.join(self.root, "graph.json"), "w", encoding="utf-8") as fh:
@@ -117,7 +165,7 @@ class BucketTest(unittest.TestCase):
 
     def test_resolvable_reports_which_base_matched(self):
         root = make_root()
-        sha = __import__("hashlib").sha256(b"# adopt\n").hexdigest()
+        sha = digest_of(root, "agent-memory-graph/src/adopt.py")
         b = evidence_buckets(doc(node("v", [{"locator": "path:src/adopt.py",
                                              "content_sha256": sha,
                                              "captured_at": "2026-01-01T00:00:00Z"}])), root)
@@ -287,6 +335,92 @@ class EvidenceRootTest(unittest.TestCase):
         ident = rep["evidence_root"]["identity"]
         st = os.stat(self.root)
         self.assertEqual((ident["dev"], ident["ino"]), (st.st_dev, st.st_ino))
+
+
+class FixtureBytesTest(unittest.TestCase):
+    """The fixture must declare the digest of the bytes it actually wrote.
+
+    v0.37.4 shipped four releases whose CI was red before anyone looked. One of them was
+    this suite: `open(path, "w")` writes `\\r\\n` on Windows, so the fixture held
+    `present\\r\\n` while the test declared `sha256(b"present\\n")`. The digest did not
+    match, the node landed in `evidence_unverifiable` as `mismatch`, and
+    `evidence_resolvable` came back empty — two errors on windows-latest, green
+    everywhere else.
+
+    The first diagnosis was drive letters and case sensitivity in `_resolve_inside`. That
+    was wrong: the path resolved fine and the file was there. What had changed was the
+    content, underneath a declaration that assumed it had not.
+
+    These tests run on any platform. They cannot reproduce the Windows byte, but they can
+    hold the property that made the bug possible: no digest here may be a hard-coded
+    assumption about what a writer produced.
+    """
+
+    def test_the_declared_digest_is_the_digest_on_disk(self):
+        root = make_root()
+        for rel in ("here.md", "README.md", "agent-memory-graph/src/adopt.py"):
+            path = os.path.join(root, *rel.split("/"))
+            with open(path, "rb") as fh:
+                on_disk = sha256_bytes(fh.read())
+            self.assertEqual(
+                digest_of(root, rel), on_disk,
+                f"{rel}: the registered digest is not the digest of the bytes on disk",
+            )
+
+    def test_fixture_writing_is_pinned_to_lf(self):
+        """The pin is what makes the bytes platform-independent; assert it is still there."""
+        self.assertEqual(FIXTURE_NEWLINE, "\n",
+                         "FIXTURE_NEWLINE must stay '\\n'; None re-enables the platform "
+                         "translation that made the Windows digest disagree")
+        root = make_root()
+        with open(os.path.join(root, "here.md"), "rb") as fh:
+            raw = fh.read()
+        self.assertNotIn(b"\r\n", raw,
+                         "the fixture file grew a CRLF; a digest computed from the "
+                         "source text would no longer describe it")
+        self.assertEqual(raw, b"present\n")
+
+    def test_the_writer_actually_passes_the_newline_pin(self):
+        """MUTATION GUARD: drop `newline=` from write_fixture's open() and this fails.
+
+        Asserting the constant is not enough: the constant can stay while the `open()`
+        call stops passing it. On POSIX that mutation is invisible — `open(..., "w")` and
+        `open(..., "w", newline="\\n")` write identical bytes — so no runtime assertion
+        available on this machine can tell them apart. The call itself has to be checked.
+        """
+        source = pathlib.Path(__file__).read_text(encoding="utf-8")
+        writer = source.split("def write_fixture(", 1)[1].split("\ndef ", 1)[0]
+        self.assertIn("newline=FIXTURE_NEWLINE", writer,
+                      "write_fixture no longer passes the newline pin to open(); on "
+                      "Windows it will write CRLF and every digest in this module becomes "
+                      "a guess again")
+
+    def test_no_test_in_this_module_hashes_a_string_literal(self):
+        """A digest must never be `sha256(b"...")` — that is the assumption, not a fact.
+
+        Parsed with `ast` rather than matched line by line: a line-based scan caught this
+        test's own docstring and its pattern, and then the docstring's continuation lines
+        as well. Only a real call node whose argument is a bytes literal counts.
+        """
+        import ast
+
+        tree = ast.parse(pathlib.Path(__file__).read_text(encoding="utf-8"))
+        offenders = []
+        for node in ast.walk(tree):
+            if not isinstance(node, ast.Call):
+                continue
+            func = node.func
+            name = getattr(func, "id", None) or getattr(func, "attr", None)
+            if name != "sha256":
+                continue
+            for arg in node.args:
+                if isinstance(arg, ast.Constant) and isinstance(arg.value, bytes):
+                    offenders.append(f"line {node.lineno}: sha256({arg.value!r})")
+        self.assertEqual(
+            offenders, [],
+            "these calls declare a digest from a string literal instead of from the "
+            f"bytes on disk: {offenders}",
+        )
 
 
 if __name__ == "__main__":
