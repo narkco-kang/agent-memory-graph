@@ -200,6 +200,7 @@ providing less, since an attacker regenerates the whole chain in one pass.
 ## Read-side audit (opt-in, v0.3)
 
 `--audit-read` logs only high-risk reads; details in [AUDIT.md](AUDIT.md).
+`check --baseline` files known legacy violations by node id; see [AUDIT.md](AUDIT.md).
 
 ## Python
 

@@ -53,7 +53,13 @@ for _stream in (sys.stdout, sys.stderr):
 import time
 
 HERE = os.path.dirname(os.path.abspath(__file__))
-WORKSPACE = os.path.dirname(HERE)
+#: The directory that holds `knowledge-graph/graphs`. Defaults to the repository root —
+#: the layout a clone has. A deployment that keeps its graphs elsewhere (the team's live
+#: workspace does: the graphs are beside the repo, not inside it) sets MEMCTL_WORKSPACE.
+#: Without this the repo copy and the deployed copy resolve to different graph directories
+#: and report different backends while both looking correct — measured, not hypothesised:
+#: `tools/memctl backend` in the repo said `kg` while the deployment said `amg`.
+WORKSPACE = os.environ.get("MEMCTL_WORKSPACE") or os.path.dirname(HERE)
 GRAPHS = os.path.join(WORKSPACE, "knowledge-graph", "graphs")
 KG = os.path.join(WORKSPACE, "knowledge-graph", "kg.py")
 CONF = os.environ.get("MEMCTL_CONF") or os.path.join(HERE, ".memctl.json")
@@ -188,6 +194,8 @@ def cmd_add(a) -> int:
             args += ["--source", a.source]
         if a.note:
             args += ["--note", a.note]
+        for ev in getattr(a, "evidence", None) or []:
+            args += ["--evidence", ev]
         args += ["--by", "memctl"]
         return run_kg(args)
     extra = ["--id", a.id, "--type", a.type, "--label", a.label]
@@ -197,6 +205,17 @@ def cmd_add(a) -> int:
     extra += ["--source", a.source or "memctl"]
     if a.note:
         extra += ["--note", a.note]
+    # Evidence is what turns a `done` node from a claim into something checkable. Without
+    # this flag the unified entry point could not write one at all, so every note written
+    # through it was unverifiable by construction (issue.mem-arch-memctl-no-evidence).
+    for ev in getattr(a, "evidence", None) or []:
+        extra += ["--evidence", ev]
+    # Without an explicit base, amg verifies write-time digests against the GRAPH
+    # directory. Every artefact this team cites lives under the workspace (docs/, src/,
+    # ...), so that default could not accept a single real digest: `--evidence` was
+    # accepted and then always rejected as "file does not exist". The base has to be
+    # stated, and the workspace is the tree the evidence is actually relative to.
+    extra += ["--root", WORKSPACE]
     extra += ["--by", "memctl"]
     return run_amg("add", a.group, extra)
 
@@ -488,6 +507,9 @@ def build_parser():
     s.add_argument("--type", required=True); s.add_argument("--label", required=True)
     s.add_argument("--status", default="open"); s.add_argument("--source")
     s.add_argument("--note", default="")
+    s.add_argument("--evidence", action="append", metavar="LOCATOR|SHA256|CAPTURED_AT[|GRADE]",
+                   help="证据条目，可重复。带 sha 的证据才会被实算校验；写成 "
+                        "path:<rel>#sha256:<hex> 时 hex 必须与文件实算一致，否则拒写")
     s.set_defaults(func=cmd_add)
 
     s = sub.add_parser("status", help="改节点状态")

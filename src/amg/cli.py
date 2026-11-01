@@ -214,15 +214,88 @@ def cmd_digest(a):
 def cmd_check(a):
     m = open_graph(a)
     rep = m.check(strict=a.strict)
+    baseline_path = getattr(a, "baseline", None)
+
+    if getattr(a, "write_baseline", False):
+        if not baseline_path:
+            sys.stderr.write("E_BASELINE_PATH: --write-baseline needs --baseline FILE\n")
+            return EXIT_USAGE
+        from . import baseline as baseline_mod
+        doc = baseline_mod.build(rep["errors"])
+        if os.path.exists(baseline_path):
+            # Never overwrite a baseline wholesale: that would excuse anything added since,
+            # which is the one thing this mechanism must not allow.
+            old = baseline_mod.load(baseline_path)
+            grown = set(doc["nodes"]) - set(old.get("nodes") or {})
+            if grown:
+                sys.stderr.write(
+                    "E_BASELINE_GROW: refusing to add "
+                    f"{len(grown)} new node(s) to an existing baseline: "
+                    f"{', '.join(sorted(grown)[:5])}\n"
+                    "A baseline may shrink; if a new violation is legitimate debt it has to "
+                    "be argued for, not swept in by re-running a command.\n")
+                return EXIT_ERROR
+        baseline_mod.save(baseline_path, doc)
+        print(f"wrote baseline: {doc['total']} violation(s) on {len(doc['nodes'])} node(s) -> {baseline_path}")
+        return EXIT_OK
+
+    if getattr(a, "prune_baseline", False):
+        if not baseline_path:
+            sys.stderr.write("E_BASELINE_PATH: --prune-baseline needs --baseline FILE\n")
+            return EXIT_USAGE
+        from . import baseline as baseline_mod
+        base = baseline_mod.load(baseline_path)
+        summary = baseline_mod.summary(rep["errors"], base)
+        pruned = baseline_mod.load(baseline_path)
+        for nid in summary["silent_nodes"]:
+            pruned["nodes"].pop(nid, None)
+        pruned["total"] = sum(v["count"] for v in pruned["nodes"].values())
+        baseline_mod.save(baseline_path, pruned)
+        print(f"pruned {len(summary['silent_nodes'])} silent node(s); "
+              f"baseline now {pruned['total']} violation(s) on {len(pruned['nodes'])} node(s)")
+        return EXIT_OK
+
+    summary = None
+    if baseline_path:
+        # A baseline excuses registered legacy nodes and nothing else. Everything it
+        # excuses is still printed: "600 known" is not "clean".
+        from . import baseline as baseline_mod
+        base = baseline_mod.load(baseline_path)
+        summary = baseline_mod.summary(rep["errors"], base)
+        rep["baseline"] = {
+            "path": baseline_path,
+            "total": summary["total"],
+            "known": summary["known_count"],
+            "new": summary["new_count"],
+            "registered_nodes": summary["registered_nodes"],
+            "silent_nodes": summary["silent_nodes"],
+        }
+        rep["ok"] = summary["ok"]
     if a.json:
         print(json.dumps(rep, ensure_ascii=False, indent=2))
     else:
         print(f"nodes {rep['counts']['nodes']} / edges {rep['counts']['edges']} / changes {rep['counts']['changes']}")
-        for e in rep["errors"]:
-            print(f"✗ {e}")
+        if summary is None:
+            for e in rep["errors"]:
+                print(f"✗ {e}")
+        else:
+            for e in summary["new"]:
+                print(f"✗ {e}")
+            print(f"· {summary['known_count']} known violation(s) on {summary['registered_nodes']} "
+                  f"registered node(s), not repeated here — they are debt, not health "
+                  f"(`amg check --baseline {baseline_path} --json` lists them)")
+            if summary["silent_nodes"]:
+                print(f"· {len(summary['silent_nodes'])} registered node(s) no longer fail; "
+                      f"prune the baseline to keep it shrinking: {', '.join(summary['silent_nodes'][:5])}")
         for h in rep["hints"]:
             print(f"· {h}")
-        print("✓ check passed" if rep["ok"] else f"✗ {len(rep['errors'])} error(s)")
+        if summary is None:
+            print("✓ check passed" if rep["ok"] else f"✗ {len(rep['errors'])} error(s)")
+        elif rep["ok"]:
+            print(f"✓ no new violations ({summary['known_count']} known, {summary['total']} total)")
+        else:
+            print(f"✗ {summary['new_count']} new violation(s) ({summary['known_count']} known, "
+                  f"{summary['total']} total)")
     return EXIT_OK if rep["ok"] else EXIT_ERROR
 
 
@@ -787,7 +860,17 @@ def build_parser():
     s.add_argument("--out"); s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_digest)
 
     s = sub.add_parser("check"); s.add_argument("dir"); s.add_argument("--strict", action="store_true")
-    s.add_argument("--json", action="store_true"); s.set_defaults(func=cmd_check)
+    s.add_argument("--json", action="store_true")
+    s.add_argument("--baseline", default=None, metavar="FILE",
+                   help="excuse the violations registered in FILE; anything not registered "
+                        "still fails. Every excused violation is counted and printed.")
+    s.add_argument("--write-baseline", action="store_true",
+                   help="register the current violations in --baseline. This is a separate, "
+                        "visible act: it is never done as a side effect of a check.")
+    s.add_argument("--prune-baseline", action="store_true",
+                   help="drop entries that no longer fire. The baseline may shrink or stay "
+                        "the same; nothing re-adds an entry automatically.")
+    s.set_defaults(func=cmd_check)
 
     s = sub.add_parser("audit"); s.add_argument("dir"); s.add_argument("--pin")
     s.add_argument("--stale-days", type=int, default=None,

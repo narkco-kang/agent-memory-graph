@@ -108,3 +108,35 @@ logged.
   `changes[]` is append-only so it could never be rotated.
 - Bounded and rotated: 1 MiB per segment, one older segment kept (`reads.jsonl.1`).
 - `reads.jsonl` contains query text — treat it as data, not as a secret store.
+
+## `check --baseline`: debt with a name, not an exemption (v0.38.0)
+
+`amg check --strict` on the team graph reports 1011 errors. All but five are legacy
+nodes written before the amg schema existed; none can be fixed without fabricating
+evidence, and all are real. A check that is permanently red carries no information.
+
+```
+amg check <dir> --strict --baseline FILE                    # excuse only what is registered
+amg check <dir> --strict --baseline FILE --write-baseline   # register the current set
+amg check <dir> --strict --baseline FILE --prune-baseline   # drop entries that no longer fire
+```
+
+Five rules, each with a test that fails if it is broken:
+
+1. **Registered by node id, not by count.** A baseline reading "1006 known" would
+   accept 1006 of anything. A baseline that names nodes cannot: a violation on an
+   unregistered node is new.
+2. **Compared by problem kind, not by node.** A registered node that grows a second
+   kind of problem returns to the report in full — its old registration no longer
+   describes it. A node whose identical messages were merely recounted stays known.
+3. **Document-level errors are never excused.** `schema mismatch` and duplicate edges
+   belong to no node, so they cannot be registered. On the team graph these are the
+   five that stay red after a baseline is written — deliberately.
+4. **`--write-baseline` refuses to grow an existing baseline** (`E_BASELINE_GROW`).
+   A baseline may shrink; a new violation has to be argued for, not swept in by
+   re-running a command.
+5. **A plain check never rewrites the baseline.** Every excused violation is counted
+   and printed on each run: "1006 known" is not the same claim as "clean".
+
+What it is not: it does not verify anything, does not make the graph good, and is not
+an exemption registry. It is a filing cabinet — the debt keeps its size and its names.
