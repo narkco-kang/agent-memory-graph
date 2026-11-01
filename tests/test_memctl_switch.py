@@ -19,6 +19,7 @@ import subprocess
 import sys
 import tempfile
 import unittest
+import pathlib
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 MEMCTL = os.path.join(os.path.dirname(ROOT), "tools", "memctl")
@@ -209,7 +210,7 @@ class CorruptionBaselineTest(unittest.TestCase):
     def freeze(self, entries):
         """Freeze a baseline the way `switch` does at its first run."""
         path = os.path.join(self.ws, ".conf.json")
-        conf = json.load(open(path)) if os.path.exists(path) else {"backend": "kg"}
+        conf = json.loads(pathlib.Path(path).read_text(encoding="utf-8")) if os.path.exists(path) else {"backend": "kg"}
         conf.setdefault("corruption_baseline", {})["grp"] = entries
         with open(path, "w", encoding="utf-8") as fh:
             json.dump(conf, fh)
@@ -243,9 +244,9 @@ class CorruptionBaselineTest(unittest.TestCase):
         self.write([self.change(1), self.change(None)], 1)
         self.freeze([{"index": 1, "at": "2026-11-01T00:00:00+08:00", "op": "add-node",
                       "target": "t", "rev": None}])
-        first = json.load(open(path))
+        first = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
         run_tool(self.ws, self.tool, "verify", "grp")
-        second = json.load(open(path))
+        second = json.loads(pathlib.Path(path).read_text(encoding="utf-8"))
         self.assertEqual(first["corruption_baseline"], second["corruption_baseline"],
                          "verify must never extend the baseline")
 
@@ -295,15 +296,15 @@ class AlreadySwitchedStillFreezesTest(unittest.TestCase):
     def test_a_second_call_does_not_freeze_twice(self):
         self.write_broken()
         run_tool(self.ws, self.tool, "switch", "grp", "amg")
-        first = json.load(open(os.path.join(self.ws, ".conf.json")))["corruption_baseline"]
+        first = json.loads(pathlib.Path(os.path.join(self.ws, ".conf.json")).read_text(encoding="utf-8"))["corruption_baseline"]
         run_tool(self.ws, self.tool, "switch", "grp", "amg")
-        second = json.load(open(os.path.join(self.ws, ".conf.json")))["corruption_baseline"]
+        second = json.loads(pathlib.Path(os.path.join(self.ws, ".conf.json")).read_text(encoding="utf-8"))["corruption_baseline"]
         self.assertEqual(first, second, "the baseline may only be written once")
 
     def test_a_clean_group_needs_no_baseline(self):
         res = run_tool(self.ws, self.tool, "switch", "grp", "amg")
         self.assertEqual(res.returncode, 0, res.stdout + res.stderr)
-        conf = json.load(open(os.path.join(self.ws, ".conf.json")))
+        conf = json.loads(pathlib.Path(os.path.join(self.ws, ".conf.json")).read_text(encoding="utf-8"))
         self.assertNotIn("grp", conf.get("corruption_baseline") or {})
 
 

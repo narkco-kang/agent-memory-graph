@@ -27,6 +27,7 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 
 from amg import mcp as mcp_mod  # noqa: E402
 from amg.errors import ProtocolError  # noqa: E402
+import pathlib
 
 SCHEMA_OK = {"schema": "group-kg/v1", "group": "t", "nodes": [], "edges": [], "changes": []}
 
@@ -151,7 +152,7 @@ class ReloadSeesExternalWriteTest(unittest.TestCase):
         before = Memory.open(path, read_only=True)
         self.assertFalse(any(h["id"] == "late" for h in before.search("late arrival", k=3)))
 
-        data = json.load(open(os.path.join(path, "graph.json"), encoding="utf-8"))
+        data = json.loads(pathlib.Path(os.path.join(path, "graph.json")).read_text(encoding="utf-8"))
         data["nodes"].append(node("late", "late arrival marker"))
         with open(os.path.join(path, "graph.json"), "w", encoding="utf-8") as fh:
             json.dump(data, fh, ensure_ascii=False)
@@ -271,9 +272,9 @@ class ReloadKeepsReadOnlyEndToEndTest(unittest.TestCase):
     def test_graph_file_is_unchanged_after_the_session(self):
         import hashlib
         path = os.path.join(self.dir, "graph.json")
-        before = hashlib.sha256(open(path, "rb").read()).hexdigest()
+        before = hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
         self._call("memory_search", {"query": "alpha", "k": 3})
-        after = hashlib.sha256(open(path, "rb").read()).hexdigest()
+        after = hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
         self.assertEqual(before, after, "a read-only session must not touch the file")
 
 
@@ -327,7 +328,7 @@ class ReloadIsRealEndToEndTest(unittest.TestCase):
                              "the node must not exist yet")
 
             # another process writes, while this server keeps running
-            data = json.load(open(os.path.join(d, "graph.json"), encoding="utf-8"))
+            data = json.loads(pathlib.Path(os.path.join(d, "graph.json")).read_text(encoding="utf-8"))
             data["nodes"].append(node("midway", "mid session marker"))
             with open(os.path.join(d, "graph.json"), "w", encoding="utf-8") as fh:
                 json.dump(data, fh, ensure_ascii=False)

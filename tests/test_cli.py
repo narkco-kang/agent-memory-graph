@@ -11,8 +11,8 @@ SHA = "c" * 64          # well-formed but wrong: a claim nobody proved
 #: not about forgery) use this, because v0.37.0 proves the digest at write time.
 import hashlib as _h
 import os as _os
-_REAL_SHA = _h.sha256(open(_os.path.join(_os.path.dirname(_os.path.dirname(
-    _os.path.abspath(__file__))), "README.md"), "rb").read()).hexdigest()
+_REAL_SHA = _h.sha256(__import__("pathlib").Path(_os.path.join(_os.path.dirname(_os.path.dirname(
+    _os.path.abspath(__file__))), "README.md")).read_bytes()).hexdigest()
 
 
 _WRITING = {"add", "import", "status", "supersede", "link", "expire", "migrate", "adopt"}

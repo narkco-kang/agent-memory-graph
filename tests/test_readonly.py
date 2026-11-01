@@ -11,6 +11,7 @@ Two layers are tested separately because they fail differently:
 import hashlib
 import json
 import os
+import pathlib
 import subprocess
 import sys
 import tempfile
@@ -27,7 +28,7 @@ SHA = "e" * 64          # well-formed but wrong
 #: about the read-only guarantee, not about forgery.
 EVIDENCE = [{"locator": "path:README.md",
              "content_sha256": hashlib.sha256(
-                 open(os.path.join(ROOT, "README.md"), "rb").read()).hexdigest(),
+                 pathlib.Path(os.path.join(ROOT, "README.md")).read_bytes()).hexdigest(),
              "captured_at": "2026-10-30T10:00:00+08:00"}]
 
 

@@ -15,6 +15,7 @@ misreading this project keeps removing: a claim rendered as a result.
 """
 import json
 import os
+import pathlib
 import subprocess
 import sys
 import tempfile
@@ -39,7 +40,7 @@ def make_root():
 
 def sha_of(root, name):
     import hashlib
-    return hashlib.sha256(open(os.path.join(root, name), "rb").read()).hexdigest()
+    return hashlib.sha256(pathlib.Path(os.path.join(root, name)).read_bytes()).hexdigest()
 
 
 class EvidenceStateTest(unittest.TestCase):

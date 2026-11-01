@@ -26,6 +26,7 @@ sys.path.insert(0, os.path.join(ROOT, "src"))
 
 from amg.audit import evidence_buckets  # noqa: E402
 from amg.gate import resolve_evidence_path  # noqa: E402
+import pathlib
 
 SHA = "a" * 64
 
@@ -189,7 +190,7 @@ class VerifyFlagTest(unittest.TestCase):
         total = sum(b[k]["count"] for k in (
             "evidence_absent", "evidence_unverifiable",
             "evidence_resolvable", "evidence_declared_uncheckable"))
-        done = sum(1 for n in json.load(open(os.path.join(self.root, "graph.json")))["nodes"]
+        done = sum(1 for n in json.loads(pathlib.Path(os.path.join(self.root, "graph.json")).read_text(encoding="utf-8"))["nodes"]
                    if n.get("status") == "done")
         self.assertEqual(total, done)
 

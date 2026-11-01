@@ -1,5 +1,6 @@
 import json
 import os
+import pathlib
 import subprocess
 import sys
 import tempfile
@@ -59,7 +60,7 @@ class McpTests(unittest.TestCase):
         # Write-time verification (v0.37.0) proves the digest, so this uses the real
         # digest of the cited file; a placeholder digest is now refused, by design.
         import hashlib
-        _sha = hashlib.sha256(open(os.path.join(ROOT, "README.md"), "rb").read()).hexdigest()
+        _sha = hashlib.sha256(pathlib.Path(os.path.join(ROOT, "README.md")).read_bytes()).hexdigest()
         evidence = [{"locator": "path:README.md", "content_sha256": _sha,
                      "captured_at": "2026-10-30T10:00:00+08:00"}]
         replies, _ = self.speak([

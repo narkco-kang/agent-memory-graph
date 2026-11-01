@@ -16,6 +16,7 @@ Rules enforced at write time (each is a way the check could otherwise be useless
 import hashlib
 import json
 import os
+import pathlib
 import subprocess
 import sys
 import tempfile
@@ -46,7 +47,7 @@ def item(locator, digest, captured="2026-11-01T00:00:00Z"):
 
 
 def real_digest(root, name="proof.md"):
-    return hashlib.sha256(open(os.path.join(root, name), "rb").read()).hexdigest()
+    return hashlib.sha256(pathlib.Path(os.path.join(root, name)).read_bytes()).hexdigest()
 
 
 class GateLevelTest(unittest.TestCase):

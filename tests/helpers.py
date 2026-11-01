@@ -4,6 +4,7 @@ import shutil
 import tempfile
 
 from amg import Memory
+import pathlib
 
 ROOT = os.path.dirname(os.path.dirname(os.path.abspath(__file__)))
 
@@ -17,7 +18,7 @@ SHA2 = "b" * 64
 def _digest_of(rel_path):
     path = os.path.join(ROOT, rel_path)
     try:
-        return hashlib.sha256(open(path, "rb").read()).hexdigest()
+        return hashlib.sha256(pathlib.Path(path).read_bytes()).hexdigest()
     except OSError:
         return SHA
 
