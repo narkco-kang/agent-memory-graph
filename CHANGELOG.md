@@ -3,6 +3,37 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.38.7] — 2026-11-01
+
+A tie is reported, not explained away (DECISIONS #60). No secondary sort key was shipped.
+
+`rank_key` breaks exact ties by node id, so the 5th and 6th hits can swap without any
+change in relevance. Measured exposure on the frozen corpus: **5 of 26 queries (19.2%)**
+have 5th and 6th on the same score (26 tie groups / 34 adjacent positions in top-10).
+On the team graph the same measurement is 3 of 120 (2.5%). Every hit now carries
+`tie_size` and `tie_group`, so a reader can see which positions are not a ranking
+judgement. **`tie_size` never enters the r@5 numerator** — a hit at position 6 that ties
+with position 5 is still a miss, and `tests/test_tie_break_and_tie_size.py` fails if that
+ever changes.
+
+Direction A (a secondary key built from the number of matched fields) was implemented,
+measured and **rejected**: score is a weighted sum over matched fields, so an equal score
+already implies an equal field composition. Measured on the corpus, 0 of 34 tie pairs were
+separable; on the team graph, 0 of 120 queries changed. A tie-break that cannot break a
+tie is worse than none. `rank_key` is still `(raw, anchor_present, node_id)` and a test
+asserts that signature so a fourth component cannot return quietly.
+
+Found and fixed while signing this release:
+
+- `Memory.search` carried a `tie_break` parameter that nothing read — a dead flag that
+  looked like a feature. Removed.
+- The `rank_key` comment cited DECISIONS #59 (adopt) where it meant #60. Corrected.
+- `experiments/retrieval_eval/result.json` had not been regenerated since `18db270`
+  (v0.13.0) and still reported recall@5 0.808 while the docs had published 0.865 for
+  many releases. Re-running the eval on a clean v0.38.6 checkout reproduces 0.865, so the
+  published number was right and its committed artefact was stale. The file is now
+  regenerated and pins `git_rev`. **A published metric had no current ledger behind it.**
+
 ## [0.38.6] — 2026-11-01
 
 `amg version` told the truth again. v0.38.5 shipped with `__version__ = "0.36.1"`

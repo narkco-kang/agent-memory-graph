@@ -50,6 +50,12 @@ def rank_key(raw, anchor_present, node_id):
     reported on every hit (`anchor_state`) and `--strict` still returns anchored hits only; it
     no longer outranks relevance.
     """
+    # Direction ① (a secondary key that is not the alphabet) was implemented, measured and
+    # rejected — see DECISIONS #60. `matched_fields` cannot separate a tie: score is a
+    # weighted sum over matched fields, so equal score already implies equal composition.
+    # Measured on the official corpus: 26 tie groups, 0 separable (0%). On the team graph,
+    # 0/120 queries changed. A tie-break that cannot break a tie is worse than none — it
+    # looks like the alphabet is gone while the alphabet still decides.
     return (round(raw, 3), bool(anchor_present), node_id or "")
 
 
@@ -229,6 +235,10 @@ def search(doc: dict, query: str, layer: str = "L3", k: int = 10, strict: bool =
             "score": round(raw / scale, 3),
             "score_kind": "idf",
             "matched_fields": fields,
+            # Filled in after sorting: how many hits in the final result share this exact
+            # score. Direction ② — report the tie instead of silently resolving it.
+            "tie_size": 1,
+            "tie_group": None,
             "anchor_state": "present" if ev else "none",
             "evidence_count": len(ev),
             "evidence_grade": n.get("evidence_grade"),
@@ -239,6 +249,17 @@ def search(doc: dict, query: str, layer: str = "L3", k: int = 10, strict: bool =
     scored.sort(key=lambda item: rank_key(item[0], item[1]["anchor_state"] == "present",
                                           item[1]["id"]), reverse=True)
     hits = [hit for _, hit in scored[:k]]
+    # Direction ②: number the tie groups within the returned window and record each group's
+    # size. A reader who sees `tie_size: 4` knows those four positions are not a ranking
+    # judgement; without it, four alphabetical neighbours look like four ranked results.
+    _by_score = {}
+    for _h in hits:
+        _by_score.setdefault(_h["score"], []).append(_h)
+    for _group, (_score, _members) in enumerate(
+            sorted(_by_score.items(), key=lambda kv: -kv[0]), start=1):
+        for _h in _members:
+            _h["tie_size"] = len(_members)
+            _h["tie_group"] = _group if len(_members) > 1 else None
     if expand and layer != "L2":
         hits = _expand(doc, hits, strict=strict)
     return hits

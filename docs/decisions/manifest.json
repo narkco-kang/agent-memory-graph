@@ -1,6 +1,6 @@
 {
   "schema": "amg-decision-pages/v1",
-  "count": 59,
+  "count": 60,
   "pages": [
     {
       "n": 1,
@@ -532,6 +532,15 @@
       "signed": true,
       "body_sha256": "ea4cebe397c97c7bf9465ab44767693b299ce35b16e7c97262ecf9706ea8ed13",
       "body_bytes": 3918
+    },
+    {
+      "n": 60,
+      "slug": "60-ties-are-reported-not-invented.md",
+      "title": "A tie is reported, not explained away. No secondary key was shipped.",
+      "status": "active",
+      "signed": true,
+      "body_sha256": "303daa7b15361f65b801e95e9836063852366d84a0414054cdc8a440e6c81a83",
+      "body_bytes": 3522
     }
   ]
 }

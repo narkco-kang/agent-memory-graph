@@ -8,13 +8,13 @@
     5,
     10
   ],
-  "git_rev": "18db270",
+  "git_rev": "4e6fd56",
   "summary": {
     "overall": {
       "n": 26,
-      "mrr@10": 0.763,
-      "recall@1": 0.654,
-      "recall@5": 0.808,
+      "mrr@10": 0.821,
+      "recall@1": 0.731,
+      "recall@5": 0.865,
       "recall@10": 0.865
     },
     "keyword": {
@@ -26,23 +26,23 @@
     },
     "paraphrase": {
       "n": 10,
-      "mrr@10": 0.433,
-      "recall@1": 0.3,
-      "recall@5": 0.55,
+      "mrr@10": 0.583,
+      "recall@1": 0.5,
+      "recall@5": 0.7,
       "recall@10": 0.7
     },
     "paraphrase-H1": {
       "n": 5,
-      "mrr@10": 0.367,
-      "recall@1": 0.2,
-      "recall@5": 0.5,
+      "mrr@10": 0.5,
+      "recall@1": 0.4,
+      "recall@5": 0.6,
       "recall@10": 0.6
     },
     "paraphrase-H2": {
       "n": 5,
-      "mrr@10": 0.5,
-      "recall@1": 0.4,
-      "recall@5": 0.6,
+      "mrr@10": 0.667,
+      "recall@1": 0.6,
+      "recall@5": 0.8,
       "recall@10": 0.8
     },
     "keyword-H1": {
@@ -61,16 +61,16 @@
     },
     "authored-split-A": {
       "n": 14,
-      "mrr@10": 0.952,
-      "recall@1": 0.893,
+      "mrr@10": 1.0,
+      "recall@1": 0.964,
       "recall@5": 1.0,
       "recall@10": 1.0
     },
     "authored-split-B": {
       "n": 12,
-      "mrr@10": 0.542,
-      "recall@1": 0.375,
-      "recall@5": 0.583,
+      "mrr@10": 0.611,
+      "recall@1": 0.458,
+      "recall@5": 0.708,
       "recall@10": 0.708
     }
   },
@@ -106,20 +106,20 @@
       ],
       "overlap": 0.25,
       "ranked": [
+        "decision.atomic-replace",
+        "question.vector-value",
+        "task.cold-archive",
+        "issue.lock-timeout",
+        "issue.unbounded-digest",
         "task.digest-budget",
         "decision.read-only",
-        "decision.atomic-replace",
-        "issue.lock-timeout",
-        "question.vector-value",
-        "issue.unbounded-digest",
-        "task.batch-write",
-        "rule.no-fabricated-hash",
-        "issue.double-write",
-        "issue.cjk-tokenization"
+        "decision.plain-json",
+        "rule.docs-equal-code",
+        "task.batch-write"
       ],
-      "reciprocal_rank": 0.3333333333333333,
+      "reciprocal_rank": 1.0,
       "bucket": "paraphrase",
-      "recall@1": 0.0,
+      "recall@1": 1.0,
       "recall@5": 1.0,
       "recall@10": 1.0,
       "half": "paraphrase-H1"
@@ -159,10 +159,10 @@
         "decision.read-only",
         "rule.append-only-history",
         "task.expiry-command",
+        "decision.no-daemon",
         "question.vector-value",
         "decision.zero-deps",
-        "decision.two-key-ranking",
-        "decision.no-daemon"
+        "decision.two-key-ranking"
       ],
       "reciprocal_rank": 1.0,
       "bucket": "paraphrase",
@@ -200,8 +200,8 @@
       "ranked": [
         "task.vector-search",
         "decision.read-only",
-        "decision.no-daemon",
-        "decision.atomic-replace"
+        "decision.atomic-replace",
+        "decision.no-daemon"
       ],
       "reciprocal_rank": 0.0,
       "bucket": "paraphrase",
@@ -242,9 +242,9 @@
         "task.cold-archive",
         "question.vector-value",
         "task.digest-budget",
+        "decision.atomic-replace",
         "rule.no-fabricated-hash",
-        "rule.docs-equal-code",
-        "decision.atomic-replace"
+        "rule.docs-equal-code"
       ],
       "reciprocal_rank": 0.0,
       "bucket": "paraphrase",
@@ -281,10 +281,10 @@
       "overlap": 0.0,
       "ranked": [
         "question.vector-value",
-        "task.read-audit",
-        "task.cold-archive",
         "rule.no-fabricated-hash",
         "rule.docs-equal-code",
+        "task.read-audit",
+        "task.cold-archive",
         "issue.unbounded-digest",
         "issue.cjk-tokenization",
         "decision.atomic-replace"
@@ -369,11 +369,11 @@
       "ranked": [
         "decision.read-only",
         "issue.double-write",
+        "decision.lock-strategy",
+        "decision.no-daemon",
         "task.digest-budget",
         "task.batch-write",
         "issue.lock-timeout",
-        "decision.no-daemon",
-        "decision.lock-strategy",
         "decision.atomic-replace",
         "rule.no-fabricated-hash",
         "question.vector-value"
@@ -419,8 +419,8 @@
         "decision.read-only",
         "task.digest-budget",
         "issue.unbounded-digest",
-        "issue.lock-timeout",
         "decision.no-daemon",
+        "issue.lock-timeout",
         "decision.atomic-replace",
         "task.batch-write",
         "rule.no-fabricated-hash",
@@ -462,21 +462,21 @@
       ],
       "overlap": 0.125,
       "ranked": [
-        "task.digest-budget",
-        "issue.lock-timeout",
         "issue.double-write",
-        "decision.read-only",
-        "task.batch-write",
+        "issue.lock-timeout",
         "rule.no-fabricated-hash",
         "issue.unbounded-digest",
-        "decision.two-key-ranking",
         "decision.lock-strategy",
+        "task.digest-budget",
+        "decision.read-only",
+        "task.batch-write",
+        "decision.two-key-ranking",
         "decision.atomic-replace"
       ],
-      "reciprocal_rank": 0.16666666666666666,
+      "reciprocal_rank": 0.3333333333333333,
       "bucket": "paraphrase",
       "recall@1": 0.0,
-      "recall@5": 0.0,
+      "recall@5": 1.0,
       "recall@10": 1.0,
       "half": "paraphrase-H2"
     },
@@ -532,9 +532,9 @@
       "overlap": 0.8,
       "ranked": [
         "issue.lock-timeout",
+        "rule.docs-equal-code",
         "task.windows-lock",
         "decision.lock-strategy",
-        "rule.docs-equal-code",
         "issue.double-write",
         "artifact.store-module"
       ],
@@ -557,19 +557,19 @@
       "ranked": [
         "decision.two-key-ranking",
         "issue.double-write",
+        "decision.lock-strategy",
         "task.digest-budget",
         "decision.read-only",
         "task.batch-write",
-        "issue.lock-timeout",
         "decision.zero-deps",
-        "decision.lock-strategy",
+        "issue.lock-timeout",
         "decision.atomic-replace",
         "task.read-audit"
       ],
       "reciprocal_rank": 0.5,
       "bucket": "paraphrase",
       "recall@1": 0.0,
-      "recall@5": 0.5,
+      "recall@5": 1.0,
       "recall@10": 1.0,
       "half": "paraphrase-H1"
     },
@@ -641,20 +641,20 @@
       ],
       "overlap": 0.167,
       "ranked": [
+        "decision.plain-json",
         "task.digest-budget",
         "decision.read-only",
-        "decision.plain-json",
+        "task.expiry-command",
+        "rule.append-only-history",
         "issue.lock-timeout",
         "decision.atomic-replace",
-        "task.expiry-command",
         "task.batch-write",
         "rule.no-fabricated-hash",
-        "rule.append-only-history",
         "question.vector-value"
       ],
-      "reciprocal_rank": 0.3333333333333333,
+      "reciprocal_rank": 1.0,
       "bucket": "paraphrase",
-      "recall@1": 0.0,
+      "recall@1": 1.0,
       "recall@5": 1.0,
       "recall@10": 1.0,
       "half": "paraphrase-H2"
