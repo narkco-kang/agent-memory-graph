@@ -3,6 +3,24 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.38.6] — 2026-11-01
+
+`amg version` told the truth again. v0.38.5 shipped with `__version__ = "0.36.1"`
+hardcoded in `src/amg/__init__.py` while `pyproject.toml` said 0.38.5, so anyone who
+installed 0.38.5 and ran `amg version` was told 0.36.1 — and every bug report keyed on
+that number pointed at the wrong release.
+
+CI was green on that release, and 544 tests passed: nothing asserted that the runtime
+version string agreed with the packaging metadata. `tests/test_version_consistency.py`
+now does, reading `pyproject.toml` independently and comparing. Mutation-checked: setting
+`__version__` back to `0.36.1` turns it red.
+
+Also measured while investigating (recorded, no code change): the "anchor key hides
+unanchored results" defect is already gone as of v0.36.0 (DECISIONS #55 moved anchoring
+from the first sort key to the second). Self-label retrieval is 40/40 top-5 for anchored
+nodes and 40/40 top-5 for unanchored nodes on the team graph. The issue that recorded the
+old 100%-vs-0% measurement was stale, not describing current behaviour.
+
 ## [0.38.5] — 2026-11-01
 
 Decision #59: adoption must be explainable. The rule the fix in v0.38.4 answers to.
