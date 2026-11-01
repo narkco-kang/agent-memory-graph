@@ -3,6 +3,24 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.38.8] — 2026-11-01
+
+`recall@k` is now defined where it is quoted, and the project's own documents ship in
+its own artifacts.
+
+`BENCHMARKS.md` quoted `recall@5` 0.865 without ever saying what it measures. The
+implementation (`run_eval.py:77,103`) computes per-query `|top-k ∩ gold| / |gold|` and
+averages it — that is **coverage**, not hit-or-miss. Multi-gold queries are where the
+two diverge: one of two gold nodes retrieved scores 0.5 under coverage and 1.0 under
+hit-or-miss. On the realtext set that gap is **0.692 vs 0.731**, so a 0.70 bar is met
+under one definition and missed under the other. The definition now sits above the
+numbers it qualifies.
+
+Two documents had also been written outside the repository, in the team workspace:
+`docs/DELIVERY-STATUS-20261101.md` (the delivery inventory) and a snapshot of the graph
+nodes behind it. Both now live in `docs/` and are listed in `docs/README.md`; the
+sdist carries them, which `tools/verify.py` checks.
+
 ## [0.38.7] — 2026-11-01
 
 A tie is reported, not explained away (DECISIONS #60). No secondary sort key was shipped.

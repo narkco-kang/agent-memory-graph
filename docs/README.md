@@ -113,6 +113,8 @@ Read in this order; each one narrows the next:
 | [`HANDOFF.md`](HANDOFF.md) | The bounded handover card: four questions, one 4 KB answer | operational |
 | [`PRIOR-ART.md`](PRIOR-ART.md) | What others did first, verified in full text | verified reference |
 | [`DECISIONS.md`](DECISIONS.md) | Index of the 48 decisions: status, signature, link to each page | decision record |
+| [`DELIVERY-STATUS-20261101.md`](DELIVERY-STATUS-20261101.md) | What is finished, what is not, and how long the rest takes — every figure measured the same day | delivery inventory |
+| [`DELIVERY-STATUS-NODE-20261101.json`](DELIVERY-STATUS-NODE-20261101.json) | The graph-node record behind the inventory, kept with the project | record |
 | [`decisions/`](decisions/) | One page per decision — evidence, cost, and reversals | decision record |
 
 Root-level documents: **[`../CHANGELOG.md`](../CHANGELOG.md)**, **`../RELEASE.md`**,
