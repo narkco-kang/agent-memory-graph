@@ -3,6 +3,376 @@
 All notable changes to this project are documented here.
 The format follows Keep a Changelog, and this project adheres to SemVer.
 
+## [0.38.2] — 2026-11-01
+
+`check` verifies shape; `verify-evidence` verifies truth. Saying so in a decision page,
+and pinning it with tests in both directions (DECISIONS #58).
+
+Measured: a node declaring `content_sha256 = 000…000` for a file that hashes to something
+else gets `✓ check passed` from `amg check --strict`, and `E_EVIDENCE_MISMATCH` from
+`amg verify-evidence`. Both are right about different questions — `protocol.check` never
+calls `verify_evidence`. This was never a bug; it was a command whose name made everyone
+read one answer as the other.
+
+### Added
+- `docs/decisions/58-check-is-shape-only.md`, with the exact source path and the four
+  commands' distinct judgements spelled out.
+- `tests/test_check_is_shape_only.py`: a forged digest must pass `check` (mutation: wire
+  `verify_evidence` into it and this fails), the same graph must fail `verify-evidence`
+  (mutation: trust the declared digest and this fails), a correct digest makes both agree,
+  and — the assertion the other three rest on — the two commands must return *different*
+  verdicts on the same forged graph.
+
+### Corrected
+- A reported `2 errors` after `supersede` was a construction error, not a property of
+  supersede: the replacement node in that run carried no evidence, so the second error was
+  its own IR-4 conflict. With a compliant replacement the count stays at 1 — the old
+  node's error, permanently. Stated here because the wrong version makes the correct
+  repair look like a bad one.
+
+## [0.38.1] — 2026-11-01
+
+### v0.38.1
+
+Two bugs, one shape: a mechanism that ran against state nobody had checked it against.
+
+### `status` crashed on exactly the nodes it exists to repair
+
+`memory.py` computed `evidence_grade` with `min(e.get("grade", 5) for e in evidence)`.
+A legacy node holds bare strings, so `status` — the only verb that can touch such a
+node — died with `'str' object has no attribute 'get'`. The repair path failed on the
+data that needed repair. Non-object entries now carry no grade; `check` already reports
+them as IR-4 format violations, which is where that belongs.
+
+### `Memory.evidence_root` leaked between tests
+
+`TempGraph` assigned it as a class attribute and never restored it, so whichever test
+ran first decided the evidence base for every test after it. One test file passed; the
+full suite failed with `file does not exist`.
+
+Reproduced:
+
+```
+after one TempGraph()   Memory.evidence_root = .../agent-memory-graph   ← still set
+is a class attribute    True
+second TempGraph()      .../agent-memory-graph                           ← never restored
+```
+
+`TempGraph` now saves the previous value and restores it in `close()` / `__exit__`.
+`Memory.evidence_root` itself is untouched: decision #56 says the evidence root is
+stated, never guessed, so making it per-instance would hand every writer the power to
+choose a base per node — the freedom #56 removed.
+
+### The mutation that looked like it passed
+
+Restoring to a hard-coded `None` passed the whole suite, because every test happened to
+start from `None`. That is not a guard working, it is a guard never hit. A test that
+starts from a non-None baseline makes that mutation fail, and it does now.
+
+Same shape as the `egg-info` cache earlier today: green because nothing touched it.
+Two cases in one day is a pattern, not bad luck.
+
+```
+unit tests   forward    Ran 531 / OK (skipped=1)
+unit tests   reversed   Ran 531 / OK (skipped=1)    # order-independent
+verify.py    9/9, 0 failed
+```
+
+## [0.38.0] — 2026-11-01
+
+### v0.38.0
+
+Debt with a name, and an entry point that can finally write evidence.
+
+### `amg check --baseline` — registered debt is not health
+
+The team graph carries 1011 violations under `--strict`, 824 without it, because
+`done without evidence` is a hint unless strict is asked for. Neither number could be
+told apart from "the graph is fine", so every check was unreadable.
+
+`--baseline FILE` excuses exactly the violations registered in FILE and nothing else.
+Five rules, each with a mutation that fails if it breaks:
+
+| rule | if it breaks |
+| --- | --- |
+| registration is per node **and** per problem kind | a new kind on a known node is swallowed |
+| a new violation on a registered node is still reported | growth passes silently |
+| document-level errors can never be registered | "the schema is wrong" is filed as debt |
+| `--write-baseline` refuses to add to an existing baseline (`E_BASELINE_GROW`) | debt is swept in by re-running a command |
+| `--prune-baseline` drops entries that no longer fire | the ledger inflates |
+
+Measured on a copy of the real team graph:
+
+```
+amg check --strict                                    1011 error(s)   exit 1
+--write-baseline     -> 1006 violation(s) on 546 node(s)
+--baseline            -> 5 new violation(s)  exit 1    (schema mismatch + 4 duplicate edges)
+inject a new done-without-evidence node -> named, 6 new, exit 1
+--write-baseline again -> E_BASELINE_GROW, refuses to add 1 new node(s), exit 1
+```
+
+The 5 that stay are document-level: they belong to no node, so registering them would
+be exactly the hiding this machine exists to prevent.
+
+### `memctl add --evidence` — and the base it was missing
+
+The entry point passed `--evidence` through but never `--root`, so amg verified
+digests against its default base, the graph directory. Every artefact this team cites
+lives under the workspace. The flag was accepted and then always rejected with
+"file does not exist": it looked implemented and could not write one real digest.
+
+`--root WORKSPACE` is passed now, and `tests/test_memctl_evidence_root.py` drives the
+real `amg` binary end to end instead of reading memctl's source text for the flag.
+Removing `--root` reproduces the original error. Two negative cases travel with it: a
+wrong digest is still rejected, and `../../etc/passwd` does not resolve — a base that
+accepts anything is an oracle, not a base.
+
+`MEMCTL_WORKSPACE` lets the repository copy point at the real workspace. Before that
+the copy inside the repo resolved its graphs to a directory that does not exist while
+the workspace copy worked, and both were green.
+
+### Numbers, with the口径 stated
+
+```
+amg check                 824 error(s)    (done-without-evidence is a hint)
+amg check --strict       1011 error(s)
+with --baseline            5 new violation(s) (1006 known, 1011 total)  exit 1
+unit tests        Ran 518 / OK (skipped=1)      # -W error::ResourceWarning
+tools/verify.py   9/9, 0 failed
+```
+
+Any statement of the 824/1011 number has to say which mode produced it. Two numbers
+under one word is how this project kept reporting health it did not have.
+
+### Not done, and not claimed
+
+The 543 of 558 nodes whose evidence is a bare string are **registered**, not repaired.
+Backfilling was measured and rejected: amg accepts `captured_at: "unknown"`, and a
+backfilled node reports `verified` exactly like a real capture. That act would destroy
+the distinction `stale` exists to make, and it cannot be undone.
+
+## [0.37.4] — 2026-11-01
+
+### v0.37.4
+
+Two Windows-only CI failures, both in the tests rather than the code.
+
+### The fixture declared a digest it had not written
+
+`open(path, "w", encoding="utf-8")` translates `\n` to `\r\n` on Windows. The
+test fixture then held `present\r\n` while the test declared
+`sha256(b"present\n")`. The digest did not match, the node landed in
+`evidence_unverifiable` as `mismatch`, and `evidence_resolvable` came back empty:
+
+```
+test_resolvable_reports_which_base_matched
+  row = b["evidence_resolvable"]["nodes"][0]
+IndexError: list index out of range
+
+test_the_four_outcomes_are_separate_keys
+  assertEqual(b["evidence_resolvable"]["count"], 1)
+AssertionError: 0 != 1
+```
+
+The first guess was drive letters and case sensitivity in `_resolve_inside`. It
+was wrong: that function was never reached, because the file it named did exist.
+The bytes had changed underneath the declaration.
+
+The fix stops assuming what landed on disk. `write_fixture` pins the newline and
+returns the digest of the bytes it actually wrote; `digest_of` serves that value
+to the tests. Two mutation guards cover it:
+
+| mutation | result |
+| --- | --- |
+| A: hardcode `sha256(b"present\n")` again | fails |
+| B: drop `newline=` from `write_fixture`'s `open()` | fails |
+
+Guard B cannot fail on POSIX by construction (`newline=None` and `newline="\n"`
+write identical bytes there), so it asserts that the `open()` call carries the
+pin rather than relying on a runtime difference macOS does not have.
+
+### `memctl` on a cp1252 console
+
+`memctl` reconfigures its streams to UTF-8, so a console that cannot encode
+Chinese prints it instead of dying. Verified by running with
+`PYTHONIOENCODING=cp1252`: Chinese output intact, exit code 0.
+
+### Evidence
+
+```
+Ran 506 tests / OK (skipped=1)      # -W error::ResourceWarning
+tools/verify.py                     9/9, 0 failed
+```
+
+The Windows CI run of this tag is the acceptance for both fixes. Local evidence
+alone cannot prove a platform this machine does not have.
+
+## [0.37.3] — 2026-11-01
+
+### Why
+
+v0.37.2's test jobs failed on macOS, Ubuntu and Windows. Every `test_memctl_switch`
+test errored in `setUp`, before any assertion.
+
+`MEMCTL` was resolved as `os.path.join(os.path.dirname(ROOT), "tools", "memctl")` —
+the directory *next to* the repository. On the machine where it was written that path
+exists (the team keeps tools there), so the suite was green locally. In CI that
+directory is whatever the runner has, the copy failed, and 18 tests errored.
+
+The suite was not testing the shipped tool; it was testing a neighbour's copy of it.
+
+### What changed
+
+- `tools/memctl` is now part of this repository.
+- `MEMCTL` resolves inside `ROOT`.
+- `MANIFEST.in` ships it: `recursive-include tools *.py memctl`. The script has no
+  extension, which is also why the earlier `*.py` rule had dropped it from the sdist.
+
+### Verification
+
+- 502 tests OK (skipped=1) with `-W error::ResourceWarning`
+- `tools/verify.py`: 9/9 steps pass
+- sdist contains `tools/memctl`
+
+### The pattern this release cycle
+
+Four releases in a row, the local gate was green and CI was red, for the same reason:
+
+1. `search` crashed on a state the display map did not know (493 green tests)
+2. `dist/` was checked by hand and passed by hand
+3. the local `-W error::ResourceWarning` gate passed while CI's identical gate failed
+4. the test suite exercised a memctl that lived outside the repo
+
+Each time the guard ran, but not against the thing that breaks. The fixes have been
+the same shape: make the guard look at the actual artifact.
+
+## [0.37.2] — 2026-11-01
+
+### Why
+
+v0.37.1's `package` job failed: it runs the test suite unpacked from the sdist with
+`-W error::ResourceWarning`, and the suite leaked file handles — bare
+`json.load(open(...))`, `open(p, "rb").read()`, and a bare README digest read.
+
+The local gate runs the same flag and was green. The difference is garbage-collection
+timing: the local interpreter did not collect those file objects while a warning filter
+was armed, while the sdist job (Python 3.12, running from an unpacked tarball) did.
+
+This is the third variant of one pattern in this cycle:
+- `search` crashed on a state the display map did not know, though 493 tests were green
+- `dist/` was checked by hand and passed by hand
+- the local warning gate passed while CI's identical gate failed
+
+All three share a shape: the guard ran, but not against the thing that breaks.
+
+### What changed
+
+Every file read in the test suite now goes through
+`pathlib.Path(...).read_text()` / `.read_bytes()`, which closes on return.
+No test was relaxed and no warning filter was narrowed.
+
+### Verification
+
+- 502 tests OK (skipped=1) with `-W error::ResourceWarning`
+- `tools/verify.py`: 9/9 steps pass
+
+### Note
+
+v0.37.0 and v0.37.1 both have red CI. Their wheel builds are unaffected by these test
+leaks (the leaks are in tests, not in `src/amg/`), but if you want a release whose CI is
+green, use v0.37.2.
+
+## [0.37.1] — 2026-11-01
+
+### Why this release exists
+
+v0.37.0 shipped an sdist that silently dropped the entire `docs/` tree. CI caught it
+with 75 `sdist is missing docs/...` problems, but the release was already published.
+
+Root cause: the committed `MANIFEST.in` lacked `recursive-include docs *.md *.json`.
+The working copy had the line, so a local rebuild looked green. CI builds from the
+committed tree, so CI was the only thing that could see the difference. The stale
+`dist/` that originally surfaced the problem was a symptom; the missing line was the cause.
+
+It is the same shape as the defect that started it: the artifact was checked by hand and
+passed by hand, and the guard that would have noticed ran only when someone mutated
+MANIFEST.in manually.
+
+### What changed
+
+- `MANIFEST.in` now commits `recursive-include docs *.md *.json`.
+- `tests/test_manifest_covers_tree.py` fails the unit suite if a `recursive-include` line
+  the tree needs is removed, or if any file under `docs/` is not matched by a rule.
+  It deliberately does not reproduce setuptools globbing or inspect built artifacts;
+  `tools/check_dist.py` keeps that job, run against real artifacts by `tools/verify.py`.
+
+### Verification
+
+- 502 tests OK (skipped=1)
+- `tools/verify.py`: 9/9 steps pass, including `artifacts in dist/`
+- sdist contains 114 `docs/decisions/` files, `docs/AUDIT.md`, and decision pages 56/57
+
+### Note on v0.37.0
+
+v0.37.0's code is unchanged and correct; only its source distribution was incomplete.
+If you installed from the v0.37.0 wheel, nothing is missing. If you need the documents,
+use v0.37.1.
+
+## [0.37.0] — 2026-11-01
+
+### What changed
+
+### Audit side
+`audit --verify` splits done nodes into separate buckets instead of one mixed count:
+`evidence_absent` / `evidence_unverifiable` / `evidence_declared` / `evidence_resolvable`.
+
+The evidence root is now explicit. `--root` is required for `audit` and `search`; omitting it
+fails with `E_EVIDENCE_ROOT_REQUIRED` rather than silently reporting numbers that depend on
+which directory you happened to run from (the same graph reported 232 vs 24 unverifiable
+nodes under two roots). A structural-anchor check reports `E_EVIDENCE_ROOT_SUSPECT` when the
+root does not look like a working tree. `(dev, ino)` is reported as an identity hint only.
+
+### Read side
+`evidence_state` has six states: `verified` / `partly_stale` / `stale` / `declared` /
+`missing` / `absent`.
+- `stale` means the file exists but its content changed since the digest was declared.
+- `partly_stale` means the node holds both live and rotten references.
+Legacy `path:<rel>#sha256:<hex>` declarations are parsed and verified; on a real corpus this
+moved 20 nodes from `missing` to `verified` and surfaced 6 nodes with expired references that
+the old presence-only check could never report.
+
+Every state has a display glyph, guarded by an enumeration test that fails if a mapping is
+removed.
+
+### Write side
+`done` writes verify the declared digest against the file before writing. A forged digest is
+rejected with `E_EVIDENCE_VERIFY_FAILED`; evidence outside the evidence root is refused,
+never skipped.
+
+### Graph sharing
+- `--graph` opens an exact graph file instead of `<dir>/graph.json`, and `--root` is
+  independent of it, so a graph and its evidence base can live in different places.
+- `memctl` provides one entry point with a switchable backend (`kg` / `amg`), rev continuity
+  and changes self-consistency checks, a corruption baseline frozen once at switch time, and
+  automatic rollback when any switch step fails.
+
+### Docs
+`docs/AUDIT.md` carries audit, read-side and write-gate details; `API.md` points to it.
+
+### Tests
+497 tests OK (skipped=1). `tools/verify.py`: 9/9 steps pass, including all five example
+scripts and the sdist content check.
+
+### Known limitations
+- We do not defend against someone who has write access choosing the evidence root. The
+  target is accidental misreading, not a determined forger. Honest identity for a root needs
+  an anchor outside the graph, which this release does not have.
+- `(dev, ino)` identity can split under bind mounts; unverified on this host.
+- Historical graphs keep evidence that only declares existence; they report `declared`, not
+  `verified`, and this release does not retroactively claim otherwise.
+- A `stale` state means the memory and its cited evidence have diverged; resolving it
+  requires a new evidence declaration, which is a content decision, not a tooling one.
+
 ## [0.36.1] — 2026-11-01
 
 A read-only *live* view: the server re-reads the graph before every call, so a long-lived

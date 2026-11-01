@@ -1,6 +1,6 @@
 {
   "schema": "amg-decision-pages/v1",
-  "count": 57,
+  "count": 58,
   "pages": [
     {
       "n": 1,
@@ -514,6 +514,15 @@
       "signed": true,
       "body_sha256": "b0e1046c6883de998959d5736c4a89e86679c9404605a3e825f5eeedc70871b2",
       "body_bytes": 3426
+    },
+    {
+      "n": 58,
+      "slug": "58-check-is-shape-only.md",
+      "title": "`check` verifies shape, not truth. A forged digest passes it.",
+      "status": "active",
+      "signed": true,
+      "body_sha256": "7bd4fc980d3f257cc921ed74f3b4159137ccb02d304252d67be09f0f82019add",
+      "body_bytes": 3708
     }
   ]
 }
